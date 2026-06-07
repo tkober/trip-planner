@@ -1,0 +1,45 @@
+:host {
+  // grid-row / grid-column set via host bindings.
+  display: block;
+  min-width: 0;
+}
+
+.hotel-cell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 3rem;
+}
+
+.half {
+  flex: 1;
+  min-height: 1.25rem;
+
+  &.filled {
+    cursor: pointer;
+  }
+
+  // Rounded outer corners + small gap mark the start/end of a stay run.
+  &.round-top {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    margin-top: 3px;
+  }
+  &.round-bottom {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    margin-bottom: 3px;
+  }
+}
+
+// Soft per-hotel tints so consecutive stays are easy to tell apart.
+.half.filled[data-color='0'] { background: #cfe0fb; }
+.half.filled[data-color='1'] { background: #d6e8d2; }
+.half.filled[data-color='2'] { background: #fbe3c9; }
+.half.filled[data-color='3'] { background: #e7d6f3; }
+.half.filled[data-color='4'] { background: #f9d4d9; }
+.half.filled[data-color='5'] { background: #cdeaf0; }
+
+.half.filled:hover {
+  filter: brightness(0.97);
+}

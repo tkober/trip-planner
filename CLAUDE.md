@@ -10,10 +10,12 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
 - Multi-trip dashboard: create, open, import, export, delete trips.
 - Trip timeline rendered as a **CSS grid** (one row per day, "Day N" + date in the
   destination tz).
-- Accommodations render as **solid blocks spanning all affected day-rows**
-  (check-in → check-out). Overlapping stays (a hotel switch) are auto-packed into
-  side-by-side lanes. Transport whose departure and arrival fall on different
-  destination-tz days spans the same way. Click a block → details.
+- Accommodations render in a single **hotel lane** as continuous blocks, using a
+  **half-day handoff**: each day's top half is the hotel you wake up in, the bottom
+  half the hotel you sleep in. A continuous stay reads as one solid block; a hotel
+  switch splits that day top/bottom — always one lane, no overlap. Different hotels
+  get distinct tints. Click → details. (Transport whose departure and arrival fall
+  on different destination-tz days still spans via lane-packed `SpanBar` blocks.)
 - Activities and **Transport as separate entities** (flight/train/bus/car), rendered
   interleaved per day, sorted by start time, colour/icon-differentiated by mode.
   Single-day transport is a normal card; day-crossing transport becomes a span block.
@@ -60,9 +62,12 @@ Timeline composition:
 - [DaySection](src/app/trips/timeline/day-section.ts) — one day. Uses
   `display: contents` so its day-marker (col 1) and CDK drop-list content (last col)
   become direct children of the timeline grid, sharing rows with span blocks.
-- [SpanBar](src/app/trips/timeline/span-bar.ts) — a block spanning day-rows
-  (accommodation stay or day-crossing transport); placed via `grid-row`/`grid-column`
-  from a `SpanBlock` (lane-packed in `Timeline.spans`).
+- [HotelCell](src/app/trips/timeline/hotel-cell.ts) — one day's accommodation cell
+  (top = morning hotel, bottom = night hotel); computed in `Timeline.hotelCells`.
+- [SpanBar](src/app/trips/timeline/span-bar.ts) — a block spanning day-rows for
+  day-crossing transport; placed via `grid-row`/`grid-column` from a lane-packed
+  `SpanBlock` (`Timeline.spans`). The grid columns are built in
+  `Timeline.gridTemplateColumns`.
 - [EntryCard](src/app/trips/timeline/entry-card.ts) — one activity/transport.
 - [FlightCard](src/app/trips/timeline/flight-card.ts) — prominent dual-tz flight.
 

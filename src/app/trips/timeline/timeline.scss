@@ -60,16 +60,30 @@
 
 .days-grid {
   display: grid;
-  // [day marker] [N span lanes] [content]. Lanes collapse to nothing at 0.
-  grid-template-columns: 96px repeat(var(--lanes, 0), 46px) minmax(0, 1fr);
+  // grid-template-columns is bound from the component (see gridTemplateColumns):
+  // [day marker] [hotel lane] [N transport lanes] [content].
   column-gap: 0.75rem;
   row-gap: 0;
   align-items: stretch;
+}
 
-  @media (max-width: 640px) {
-    grid-template-columns: 76px repeat(var(--lanes, 0), 40px) minmax(0, 1fr);
-    column-gap: 0.4rem;
-  }
+// Vertical hotel name centered over its stay, in the hotel lane. Click-through
+// so the colored half-cells beneath handle taps (details dialog).
+.stay-label {
+  grid-column: 2 / 3;
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #1c2733;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 0.5rem 0;
 }
 
 .not-found {

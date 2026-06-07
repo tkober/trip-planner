@@ -49,10 +49,10 @@ export class SpanBar {
   readonly block = input.required<SpanBlock>();
   readonly open = output<SpanBlock>();
 
-  // Lane 0 → column 2 (just right of the day-marker spine).
+  // Columns: 1 = day marker, 2 = hotel lane, 3+ = transport lanes.
   readonly gridColumn = computed(() => {
     const lane = this.block().lane;
-    return `${2 + lane} / ${3 + lane}`;
+    return `${3 + lane} / ${4 + lane}`;
   });
 
   // Day position p → grid line p + 1.

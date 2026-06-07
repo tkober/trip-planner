@@ -60,7 +60,11 @@
     </div>
   </header>
 
-  <div class="days-grid" cdkDropListGroup [style.--lanes]="spans().laneCount">
+  <div
+    class="days-grid"
+    cdkDropListGroup
+    [style.grid-template-columns]="gridTemplateColumns()"
+  >
     @for (dv of dayViews(); track dv.day.date; let i = $index) {
       <app-day-section
         [view]="dv"
@@ -73,6 +77,17 @@
         (deleteEntry)="deleteEntry($event)"
         (dropped)="onEntryDropped($event)"
       />
+    }
+    @for (cell of hotelCells(); track cell.rowIndex) {
+      <app-hotel-cell
+        [rowIndex]="cell.rowIndex"
+        [top]="cell.top"
+        [bottom]="cell.bottom"
+        (open)="openAccommodation($event)"
+      />
+    }
+    @for (label of stayLabels(); track label.id) {
+      <div class="stay-label" [style.grid-row]="label.gridRow">{{ label.name }}</div>
     }
     @for (block of spans().blocks; track block.kind + '-' + block.id) {
       <app-span-bar [block]="block" (open)="openSpan($event)" />

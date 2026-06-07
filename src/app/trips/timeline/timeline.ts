@@ -43,6 +43,7 @@ import {
 import { DaySection, DayView } from './day-section';
 import { FlightCard } from './flight-card';
 import { SpanBar, SpanBlock } from './span-bar';
+import { HotelCell, HotelDayCell } from './hotel-cell';
 
 /** Icons per transport mode (shared with the entry cards). */
 const MODE_ICON: Record<TransportMode, string> = {
@@ -70,6 +71,7 @@ interface SpanLayout {
     DaySection,
     FlightCard,
     SpanBar,
+    HotelCell,
   ],
   templateUrl: './timeline.html',
   styleUrl: './timeline.scss',
@@ -120,10 +122,95 @@ export class Timeline {
     return m;
   });
 
+  readonly hasAccommodations = computed(
+    () => (this.trip()?.accommodations.length ?? 0) > 0,
+  );
+
   /**
-   * Spanning blocks: accommodation stays and any transport whose departure and
-   * arrival fall on different destination-tz days. Packed into lanes so
-   * overlapping spans (e.g. a hotel switch) sit side by side.
+   * The timeline grid columns: [day marker] [hotel lane] [N transport lanes]
+   * [content]. Built in TS so the lane `repeat()` is omitted entirely when
+   * there are no lanes (`repeat(0, …)` is invalid CSS and voids the template).
+   */
+  readonly gridTemplateColumns = computed(() => {
+    const marker = 'clamp(72px, 16vw, 96px)';
+    const hotel = this.hasAccommodations() ? 'clamp(40px, 9vw, 52px)' : '0px';
+    const lanes = this.spans().laneCount;
+    const laneCols = lanes > 0 ? ` repeat(${lanes}, clamp(38px, 9vw, 46px))` : '';
+    return `${marker} ${hotel}${laneCols} minmax(0, 1fr)`;
+  });
+
+  /**
+   * Per-day hotel cells. Each day's top half is the hotel you wake up in
+   * (last night's stay) and the bottom half the hotel you sleep in tonight.
+   * A switch day naturally splits top/bottom; a continuous stay reads as one
+   * block. Always a single lane — no overlap.
+   */
+  readonly hotelCells = computed<HotelDayCell[]>(() => {
+    const trip = this.trip();
+    const days = this.days();
+    if (!trip || !days.length || !trip.accommodations.length) return [];
+
+    const colorIndexById = new Map<string, number>();
+    trip.accommodations.forEach((a, i) => colorIndexById.set(a.id, i % 6));
+
+    // The accommodation you sleep in on each day's night, if any.
+    const nightOf = days.map((d) =>
+      trip.accommodations.find(
+        (a) => a.checkInDate <= d.date && d.date < a.checkOutDate,
+      ),
+    );
+
+    const cells: HotelDayCell[] = [];
+    days.forEach((_, i) => {
+      const night = nightOf[i];
+      const morning = i > 0 ? nightOf[i - 1] : undefined;
+      if (!night && !morning) return;
+      const sameRun = !!morning && !!night && morning.id === night.id;
+      cells.push({
+        rowIndex: i + 1,
+        top: morning
+          ? {
+              accommodation: morning,
+              rounded: !sameRun,
+              isStart: false,
+              colorIndex: colorIndexById.get(morning.id) ?? 0,
+            }
+          : undefined,
+        bottom: night
+          ? {
+              accommodation: night,
+              rounded: !sameRun,
+              isStart: !sameRun,
+              colorIndex: colorIndexById.get(night.id) ?? 0,
+            }
+          : undefined,
+      });
+    });
+    return cells;
+  });
+
+  /**
+   * One vertical name label per stay, spanning its day-rows in the hotel lane.
+   * Rendered click-through (the colored half-cells beneath handle clicks).
+   */
+  readonly stayLabels = computed(() => {
+    const trip = this.trip();
+    const days = this.days();
+    if (!trip || !days.length) return [];
+    return trip.accommodations.map((a) => {
+      const s = this.clampIndex(a.checkInDate);
+      const e = this.clampIndex(a.checkOutDate);
+      return {
+        id: a.id,
+        name: a.name,
+        gridRow: `${Math.min(s, e) + 1} / ${Math.max(s, e) + 2}`,
+      };
+    });
+  });
+
+  /**
+   * Spanning blocks for transport whose departure and arrival fall on different
+   * destination-tz days. Lane-packed in case several overlap.
    */
   readonly spans = computed<SpanLayout>(() => {
     const trip = this.trip();
@@ -134,21 +221,6 @@ export class Timeline {
     const destZone = trip.destinationTimeZone;
     const blocks: SpanBlock[] = [];
     const crossingIds = new Set<string>();
-
-    for (const a of trip.accommodations) {
-      const s = this.clampIndex(a.checkInDate);
-      const e = this.clampIndex(a.checkOutDate);
-      blocks.push({
-        id: a.id,
-        kind: 'accommodation',
-        startRow: Math.min(s, e),
-        endRow: Math.max(s, e),
-        lane: 0,
-        title: a.name,
-        icon: 'hotel',
-        accommodation: a,
-      });
-    }
 
     for (const t of trip.transport) {
       if (!t.end) continue;
