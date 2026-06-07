@@ -1,3 +1,14 @@
+:host {
+  display: block;
+}
+
+// Extra breathing room below transport so subsequent items detach from it
+// (stacks on top of the day-content flex gap).
+:host(.is-transport) {
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 .entry {
   --accent: var(--mat-sys-primary);
   display: flex;

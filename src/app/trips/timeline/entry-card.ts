@@ -17,6 +17,10 @@ const MODE_ICON: Record<TransportMode, string> = {
 @Component({
   selector: 'app-entry-card',
   imports: [MatIconModule, MatButtonModule, MatMenuModule],
+  host: {
+    // Transport gets extra room below so the following entry reads as detached.
+    '[class.is-transport]': "entry().kind === 'transport'",
+  },
   template: `
     <div
       class="entry"

@@ -57,11 +57,13 @@
 
   // Make room for a straddle card sitting on the adjacent separator line
   // (it overhangs ~half its height past the line into the neighbouring day).
+  // The extra 0.5rem over the overhang gives straddle (e.g. transport) cards the
+  // same breathing room from neighbours that transport entry cards get.
   &.pad-top {
-    padding-top: 3.75rem;
+    padding-top: 4.25rem;
   }
   &.pad-bottom {
-    padding-bottom: 3.75rem;
+    padding-bottom: 4.25rem;
   }
 
   &.cdk-drop-list-dragging app-entry-card:not(.cdk-drag-placeholder) {
