@@ -61,6 +61,14 @@ export class TripFormDialog {
 
   readonly error = signal('');
 
+  /** When the start changes, seed an empty end date with the same day. */
+  onStartChange(date: string): void {
+    this.startDate.set(date);
+    if (!this.endDate() || this.endDate() < date) {
+      this.endDate.set(date);
+    }
+  }
+
   save(): void {
     const title = this.title().trim();
     if (!title) {

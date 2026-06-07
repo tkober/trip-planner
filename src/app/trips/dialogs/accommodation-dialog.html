@@ -13,8 +13,18 @@
     </mat-form-field>
 
     <div class="row">
-      <app-date-field label="Check-in" [required]="true" [(value)]="checkInDate" />
-      <app-date-field label="Check-out" [required]="true" [(value)]="checkOutDate" />
+      <app-date-field
+        label="Check-in"
+        [required]="true"
+        [value]="checkInDate()"
+        (valueChange)="onCheckInChange($event)"
+      />
+      <app-date-field
+        label="Check-out"
+        [required]="true"
+        [min]="checkInDate()"
+        [(value)]="checkOutDate"
+      />
     </div>
 
     <mat-form-field class="full-width">

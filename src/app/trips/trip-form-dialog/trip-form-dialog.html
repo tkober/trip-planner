@@ -15,8 +15,18 @@
     </mat-form-field>
 
     <div class="row">
-      <app-date-field label="Start date" [required]="true" [(value)]="startDate" />
-      <app-date-field label="End date" [required]="true" [(value)]="endDate" />
+      <app-date-field
+        label="Start date"
+        [required]="true"
+        [value]="startDate()"
+        (valueChange)="onStartChange($event)"
+      />
+      <app-date-field
+        label="End date"
+        [required]="true"
+        [min]="startDate()"
+        [(value)]="endDate"
+      />
     </div>
 
     <app-timezone-select

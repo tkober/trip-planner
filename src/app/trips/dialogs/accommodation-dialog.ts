@@ -52,6 +52,14 @@ export class AccommodationDialog {
   );
   readonly error = signal('');
 
+  /** When check-in changes, seed an empty/earlier check-out with the same day. */
+  onCheckInChange(date: string): void {
+    this.checkInDate.set(date);
+    if (!this.checkOutDate() || this.checkOutDate() < date) {
+      this.checkOutDate.set(date);
+    }
+  }
+
   save(): void {
     const name = this.name().trim();
     if (!name) {

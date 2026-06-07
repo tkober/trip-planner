@@ -26,6 +26,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
         [ngModel]="dateValue()"
         (ngModelChange)="onDate($event)"
         [required]="required()"
+        [min]="minDate()"
+        [max]="maxDate()"
         readonly
         (click)="picker.open()"
       />
@@ -45,17 +47,24 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 export class DateField {
   readonly label = input('Date');
   readonly required = input(false);
+  /** Optional inclusive bounds as "YYYY-MM-DD"; disable earlier/later days. */
+  readonly min = input<string>('');
+  readonly max = input<string>('');
   /** Two-way bound calendar date as "YYYY-MM-DD". */
   readonly value = model<string>('');
 
   /** The string value as a local-midnight Date for the picker. */
-  readonly dateValue = computed<Date | null>(() => {
-    const v = this.value();
+  readonly dateValue = computed<Date | null>(() => this.parse(this.value()));
+  readonly minDate = computed<Date | null>(() => this.parse(this.min()));
+  readonly maxDate = computed<Date | null>(() => this.parse(this.max()));
+
+  /** Parse a "YYYY-MM-DD" string into a local-midnight Date, or null. */
+  private parse(v: string): Date | null {
     if (!v) return null;
     const [y, m, d] = v.split('-').map(Number);
     if (!y || !m || !d) return null;
     return new Date(y, m - 1, d);
-  });
+  }
 
   onDate(date: Date | null): void {
     if (!date) {
