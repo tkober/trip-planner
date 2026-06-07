@@ -6,6 +6,8 @@
 
 <div
   class="day-content"
+  [class.pad-top]="view().padTop"
+  [class.pad-bottom]="view().padBottom"
   [style.grid-row]="rowIndex()"
   cdkDropList
   [cdkDropListData]="view()"

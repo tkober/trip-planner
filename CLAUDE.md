@@ -16,9 +16,12 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   switch splits that day top/bottom — always one lane, no overlap. Different hotels
   get distinct tints. Click → details. (Transport whose departure and arrival fall
   on different destination-tz days still spans via lane-packed `SpanBar` blocks.)
-- Activities and **Transport as separate entities** (flight/train/bus/car), rendered
-  interleaved per day, sorted by start time, colour/icon-differentiated by mode.
-  Single-day transport is a normal card; day-crossing transport becomes a span block.
+- Activities and **Transport as separate entities** (flight/train/bus/car), always
+  rendered as list cards interleaved per day, sorted by start time, colour/icon-
+  differentiated by mode. An entry whose start and end fall on different
+  destination-tz days is drawn as a **straddle card centered on the separator**
+  between the two days (dashed divider = the day boundary; start time on top, arrival
+  on the bottom) so both days stay recognizable.
 - Prominent **departure & return flight cards** with dual-timezone times.
 - Create/edit/delete for every entity via Material dialogs; all destructive actions
   and trip-duration changes are gated by a confirmation modal.
@@ -64,11 +67,12 @@ Timeline composition:
   become direct children of the timeline grid, sharing rows with span blocks.
 - [HotelCell](src/app/trips/timeline/hotel-cell.ts) — one day's accommodation cell
   (top = morning hotel, bottom = night hotel); computed in `Timeline.hotelCells`.
-- [SpanBar](src/app/trips/timeline/span-bar.ts) — a block spanning day-rows for
-  day-crossing transport; placed via `grid-row`/`grid-column` from a lane-packed
-  `SpanBlock` (`Timeline.spans`). The grid columns are built in
+- [EntryCard](src/app/trips/timeline/entry-card.ts) — one single-day activity/transport.
+- [StraddleCard](src/app/trips/timeline/straddle-card.ts) — a day-crossing entry,
+  anchored on the separator line (`grid-row` from `Timeline.layout`, then
+  `translateY(-50%)`); adjacent days get padding so the card has clear space.
+  The grid columns ([marker][hotel][content]) are built in
   `Timeline.gridTemplateColumns`.
-- [EntryCard](src/app/trips/timeline/entry-card.ts) — one activity/transport.
 - [FlightCard](src/app/trips/timeline/flight-card.ts) — prominent dual-tz flight.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +

@@ -11,6 +11,9 @@ export interface DayView {
   day: TripDay;
   entries: TimelineEntry[];
   dropListId: string;
+  /** Reserve space at the top/bottom for a straddle card on that boundary. */
+  padTop: boolean;
+  padBottom: boolean;
 }
 
 /**

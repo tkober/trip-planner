@@ -1,0 +1,105 @@
+:host {
+  // grid-column / grid-row set via host bindings.
+  align-self: start;
+  // Anchored to the day separator line, lift by half to centre on it.
+  transform: translateY(-50%);
+  z-index: 3;
+  display: block;
+  padding: 0.25rem 0;
+}
+
+.straddle {
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container-high);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-left: 4px solid var(--mat-sys-primary);
+  box-shadow: var(--mat-sys-level2);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.half {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.6rem;
+  min-height: 2.1rem;
+  box-sizing: border-box;
+
+  // The dashed divider IS the day boundary — it sits at the card's centre,
+  // which is anchored on the grid separator line between the two days.
+  &.top {
+    border-bottom: 1px dashed var(--mat-sys-outline);
+  }
+}
+
+.bullet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+
+  mat-icon {
+    font-size: 1.15rem;
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+
+  .title {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .time {
+    font-size: 0.78rem;
+    color: var(--mat-sys-on-surface-variant);
+    font-variant-numeric: tabular-nums;
+
+    &.arrival {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+
+    .arr-icon {
+      font-size: 0.95rem;
+      width: 0.95rem;
+      height: 0.95rem;
+    }
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: var(--mat-sys-on-surface-variant);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.bottom .info {
+  // Align arrival text under the title (past the bullet) for visual continuity.
+  padding-left: 2.6rem;
+}
+
+.straddle-menu {
+  flex-shrink: 0;
+}
+
+// Per-transport-mode accent (matches entry cards).
+:host.is-transport[data-mode='flight'] .straddle { border-left-color: #1565c0; .bullet { background: #1565c0; } }
+:host.is-transport[data-mode='train'] .straddle { border-left-color: #2e7d32; .bullet { background: #2e7d32; } }
+:host.is-transport[data-mode='bus'] .straddle { border-left-color: #ef6c00; .bullet { background: #ef6c00; } }
+:host.is-transport[data-mode='car'] .straddle { border-left-color: #6a1b9a; .bullet { background: #6a1b9a; } }

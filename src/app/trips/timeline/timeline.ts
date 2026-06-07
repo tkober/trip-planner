@@ -12,8 +12,8 @@ import {
   ActivityDto,
   TimelineEntry,
   TransportDto,
-  TransportMode,
   TripDto,
+  ZonedTime,
 } from '../../models/trip.model';
 import { TripStoreService } from '../../services/trip-store.service';
 import { TimeZoneService } from '../../services/time-zone.service';
@@ -42,23 +42,14 @@ import {
 } from '../dialogs/details-dialog';
 import { DaySection, DayView } from './day-section';
 import { FlightCard } from './flight-card';
-import { SpanBar, SpanBlock } from './span-bar';
 import { HotelCell, HotelDayCell } from './hotel-cell';
+import { StraddleCard } from './straddle-card';
 
-/** Icons per transport mode (shared with the entry cards). */
-const MODE_ICON: Record<TransportMode, string> = {
-  flight: 'flight',
-  train: 'train',
-  bus: 'directions_bus',
-  car: 'directions_car',
-};
-
-/** Layout result: span blocks plus how many lanes they pack into. */
-interface SpanLayout {
-  blocks: SpanBlock[];
-  laneCount: number;
-  /** Transport ids rendered as span blocks (excluded from per-day entries). */
-  crossingIds: Set<string>;
+/** An entry that crosses a day boundary, anchored on the separator line. */
+interface StraddleItem {
+  entry: TimelineEntry;
+  /** Grid line of the separator between the start and end day. */
+  rowLine: number;
 }
 
 @Component({
@@ -70,8 +61,8 @@ interface SpanLayout {
     MatMenuModule,
     DaySection,
     FlightCard,
-    SpanBar,
     HotelCell,
+    StraddleCard,
   ],
   templateUrl: './timeline.html',
   styleUrl: './timeline.scss',
@@ -126,17 +117,11 @@ export class Timeline {
     () => (this.trip()?.accommodations.length ?? 0) > 0,
   );
 
-  /**
-   * The timeline grid columns: [day marker] [hotel lane] [N transport lanes]
-   * [content]. Built in TS so the lane `repeat()` is omitted entirely when
-   * there are no lanes (`repeat(0, …)` is invalid CSS and voids the template).
-   */
+  /** The timeline grid columns: [day marker] [hotel lane] [content]. */
   readonly gridTemplateColumns = computed(() => {
     const marker = 'clamp(72px, 16vw, 96px)';
     const hotel = this.hasAccommodations() ? 'clamp(40px, 9vw, 52px)' : '0px';
-    const lanes = this.spans().laneCount;
-    const laneCols = lanes > 0 ? ` repeat(${lanes}, clamp(38px, 9vw, 46px))` : '';
-    return `${marker} ${hotel}${laneCols} minmax(0, 1fr)`;
+    return `${marker} ${hotel} minmax(0, 1fr)`;
   });
 
   /**
@@ -209,92 +194,65 @@ export class Timeline {
   });
 
   /**
-   * Spanning blocks for transport whose departure and arrival fall on different
-   * destination-tz days. Lane-packed in case several overlap.
+   * Bucket every activity/transport into its start day, except entries that
+   * cross a destination-tz day boundary — those become straddle cards anchored
+   * on the separator between the two days. Days adjacent to a straddle get extra
+   * padding so the card has clear space above/below the line.
    */
-  readonly spans = computed<SpanLayout>(() => {
+  private readonly layout = computed(() => {
     const trip = this.trip();
     const days = this.days();
     if (!trip || !days.length) {
-      return { blocks: [], laneCount: 0, crossingIds: new Set() };
+      return { dayViews: [] as DayView[], straddles: [] as StraddleItem[] };
     }
     const destZone = trip.destinationTimeZone;
-    const blocks: SpanBlock[] = [];
-    const crossingIds = new Set<string>();
-
-    for (const t of trip.transport) {
-      if (!t.end) continue;
-      const startKey = this.tz.dayKeyInDestination(t.start, destZone);
-      const endKey = this.tz.dayKeyInDestination(t.end, destZone);
-      if (startKey === endKey) continue; // single-day → normal entry card
-      crossingIds.add(t.id);
-      const s = this.clampIndex(startKey);
-      const e = this.clampIndex(endKey);
-      blocks.push({
-        id: t.id,
-        kind: 'transport',
-        startRow: Math.min(s, e),
-        endRow: Math.max(s, e),
-        lane: 0,
-        title: t.title,
-        icon: MODE_ICON[t.mode],
-        mode: t.mode,
-        transport: t,
-      });
-    }
-
-    // Greedy lane packing by start row, then end row.
-    blocks.sort((a, b) => a.startRow - b.startRow || a.endRow - b.endRow);
-    const laneEnds: number[] = [];
-    for (const b of blocks) {
-      let lane = laneEnds.findIndex((end) => end < b.startRow);
-      if (lane === -1) {
-        lane = laneEnds.length;
-        laneEnds.push(b.endRow);
-      } else {
-        laneEnds[lane] = b.endRow;
-      }
-      b.lane = lane;
-    }
-
-    return { blocks, laneCount: laneEnds.length, crossingIds };
-  });
-
-  /** One view-model per day: its entries, sorted, excluding spanning transport. */
-  readonly dayViews = computed<DayView[]>(() => {
-    const trip = this.trip();
-    const days = this.days();
-    if (!trip || !days.length) return [];
-    const destZone = trip.destinationTimeZone;
-    const firstDate = days[0].date;
-    const lastDate = days[days.length - 1].date;
-    const crossingIds = this.spans().crossingIds;
-
     const buckets = new Map<string, TimelineEntry[]>();
     for (const day of days) buckets.set(day.date, []);
+    const straddles: StraddleItem[] = [];
+    const padBottom = new Set<number>();
+    const padTop = new Set<number>();
 
-    const place = (entry: TimelineEntry) => {
-      let key = this.tz.dayKeyInDestination(entry.start, destZone);
-      if (key < firstDate) key = firstDate;
-      if (key > lastDate) key = lastDate;
-      buckets.get(key)!.push(entry);
+    const handle = (entry: TimelineEntry, end?: ZonedTime) => {
+      const startIdx = this.clampIndex(
+        this.tz.dayKeyInDestination(entry.start, destZone),
+      );
+      if (end) {
+        const endIdx = this.clampIndex(
+          this.tz.dayKeyInDestination(end, destZone),
+        );
+        if (endIdx > startIdx) {
+          // Anchor on the separator just below the start day.
+          straddles.push({ entry, rowLine: startIdx + 2 });
+          padBottom.add(startIdx);
+          padTop.add(startIdx + 1);
+          return;
+        }
+      }
+      buckets.get(days[startIdx].date)!.push(entry);
     };
-    for (const activity of trip.activities) {
-      place({ kind: 'activity', activity, start: activity.start });
+
+    for (const a of trip.activities) {
+      handle({ kind: 'activity', activity: a, start: a.start }, a.end);
     }
-    for (const transport of trip.transport) {
-      if (crossingIds.has(transport.id)) continue; // rendered as a span block
-      place({ kind: 'transport', transport, start: transport.start });
+    for (const t of trip.transport) {
+      handle({ kind: 'transport', transport: t, start: t.start }, t.end);
     }
 
-    return days.map((day) => ({
+    const dayViews: DayView[] = days.map((day, i) => ({
       day,
       entries: (buckets.get(day.date) ?? []).sort(
         (a, b) => this.tz.toMillis(a.start) - this.tz.toMillis(b.start),
       ),
       dropListId: 'day-' + day.date,
+      padTop: padTop.has(i),
+      padBottom: padBottom.has(i),
     }));
+
+    return { dayViews, straddles };
   });
+
+  readonly dayViews = computed(() => this.layout().dayViews);
+  readonly straddles = computed(() => this.layout().straddles);
 
   /** Resolve a date to its 0-based day position, clamped to the trip range. */
   private clampIndex(date: string): number {
@@ -303,19 +261,6 @@ export class Timeline {
     if (date <= days[0].date) return 0;
     if (date >= days[days.length - 1].date) return days.length - 1;
     return this.dayIndexByDate().get(date) ?? 0;
-  }
-
-  /** Open the details dialog for a span block (accommodation or transport). */
-  openSpan(block: SpanBlock): void {
-    if (block.accommodation) {
-      this.openAccommodation(block.accommodation);
-    } else if (block.transport) {
-      this.openEntry({
-        kind: 'transport',
-        transport: block.transport,
-        start: block.transport.start,
-      });
-    }
   }
 
   // --- Navigation / trip-level actions -------------------------------------

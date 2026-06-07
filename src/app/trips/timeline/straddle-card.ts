@@ -1,0 +1,73 @@
+import { Component, computed, inject, input, output } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { TimelineEntry, TransportMode } from '../../models/trip.model';
+import { TimeZoneService } from '../../services/time-zone.service';
+
+const MODE_ICON: Record<TransportMode, string> = {
+  flight: 'flight',
+  train: 'train',
+  bus: 'directions_bus',
+  car: 'directions_car',
+};
+
+/**
+ * A list card for an activity/transport that crosses a day boundary in the
+ * destination tz. It is positioned centered on the separator between its start
+ * and end day; the dashed divider through its middle marks the day change, with
+ * the start (top) and end (bottom) date/times keeping the two days recognizable.
+ */
+@Component({
+  selector: 'app-straddle-card',
+  imports: [MatIconModule, MatButtonModule, MatMenuModule],
+  host: {
+    '[style.grid-column]': "'-2 / -1'",
+    '[style.grid-row]': 'gridRow()',
+    '[attr.data-mode]': 'entry().transport?.mode ?? null',
+    '[class.is-transport]': "entry().kind === 'transport'",
+  },
+  templateUrl: './straddle-card.html',
+  styleUrl: './straddle-card.scss',
+})
+export class StraddleCard {
+  private readonly tz = inject(TimeZoneService);
+
+  readonly entry = input.required<TimelineEntry>();
+  readonly destZone = input.required<string>();
+  /** Grid line to anchor on (the separator between the two days). */
+  readonly rowLine = input.required<number>();
+
+  readonly open = output<TimelineEntry>();
+  readonly edit = output<TimelineEntry>();
+  readonly delete = output<TimelineEntry>();
+
+  readonly gridRow = computed(() => `${this.rowLine()} / span 1`);
+
+  readonly icon = computed(() => {
+    const e = this.entry();
+    return e.kind === 'activity' ? 'local_activity' : MODE_ICON[e.transport!.mode];
+  });
+
+  readonly title = computed(
+    () => this.entry().activity?.title ?? this.entry().transport?.title ?? '',
+  );
+
+  readonly startLabel = computed(() => this.label(this.entry().start));
+  readonly endLabel = computed(() => {
+    const end = this.entry().activity?.end ?? this.entry().transport?.end;
+    return end ? this.label(end) : '';
+  });
+
+  readonly subtitle = computed<string | undefined>(() => {
+    const t = this.entry().transport;
+    if (t && (t.fromLocation || t.toLocation)) {
+      return `${t.fromLocation ?? '?'} → ${t.toLocation ?? '?'}`;
+    }
+    return this.entry().activity?.location ?? undefined;
+  });
+
+  private label(zt: { dateTime: string; zone: string }): string {
+    return this.tz.inZone(zt, this.destZone()).toFormat("ccc, d LLL '·' HH:mm");
+  }
+}

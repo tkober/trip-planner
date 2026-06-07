@@ -89,8 +89,15 @@
     @for (label of stayLabels(); track label.id) {
       <div class="stay-label" [style.grid-row]="label.gridRow">{{ label.name }}</div>
     }
-    @for (block of spans().blocks; track block.kind + '-' + block.id) {
-      <app-span-bar [block]="block" (open)="openSpan($event)" />
+    @for (s of straddles(); track s.entry.activity?.id ?? s.entry.transport?.id) {
+      <app-straddle-card
+        [entry]="s.entry"
+        [destZone]="t.destinationTimeZone"
+        [rowLine]="s.rowLine"
+        (open)="openEntry($event)"
+        (edit)="editEntry($event)"
+        (delete)="deleteEntry($event)"
+      />
     }
   </div>
 } @else if (loaded()) {

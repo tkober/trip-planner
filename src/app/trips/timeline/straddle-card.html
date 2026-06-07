@@ -1,0 +1,41 @@
+<div class="straddle" (click)="open.emit(entry())">
+  <div class="half top">
+    <div class="bullet"><mat-icon>{{ icon() }}</mat-icon></div>
+    <div class="info">
+      <div class="title">{{ title() }}</div>
+      <div class="time">{{ startLabel() }}</div>
+    </div>
+    <button
+      matIconButton
+      class="straddle-menu"
+      [matMenuTriggerFor]="menu"
+      (click)="$event.stopPropagation()"
+      aria-label="Entry actions"
+    >
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="open.emit(entry())">
+        <mat-icon>info</mat-icon><span>Details</span>
+      </button>
+      <button mat-menu-item (click)="edit.emit(entry())">
+        <mat-icon>edit</mat-icon><span>Edit</span>
+      </button>
+      <button mat-menu-item (click)="delete.emit(entry())">
+        <mat-icon>delete</mat-icon><span>Delete</span>
+      </button>
+    </mat-menu>
+  </div>
+
+  <div class="half bottom">
+    <div class="info">
+      <div class="time arrival">
+        <mat-icon class="arr-icon">south_east</mat-icon>
+        {{ endLabel() }}
+      </div>
+      @if (subtitle(); as sub) {
+        <div class="subtitle">{{ sub }}</div>
+      }
+    </div>
+  </div>
+</div>
