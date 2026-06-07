@@ -37,12 +37,13 @@
   border-top: 1px solid var(--mat-sys-outline-variant);
   min-height: 1rem;
 
-  // Make room for a straddle card sitting on the adjacent separator line.
+  // Make room for a straddle card sitting on the adjacent separator line
+  // (it overhangs ~half its height past the line into the neighbouring day).
   &.pad-top {
-    padding-top: 2.5rem;
+    padding-top: 3.75rem;
   }
   &.pad-bottom {
-    padding-bottom: 2.5rem;
+    padding-bottom: 3.75rem;
   }
 
   &.cdk-drop-list-dragging app-entry-card:not(.cdk-drag-placeholder) {

@@ -9,6 +9,10 @@
 }
 
 .straddle {
+  // Two EQUAL-height rows so the divider is at the exact vertical centre; the
+  // host is translated up 50%, landing the divider on the day separator line.
+  display: grid;
+  grid-template-rows: 1fr 1fr;
   border-radius: 12px;
   background: var(--mat-sys-surface-container-high);
   border: 1px solid var(--mat-sys-outline-variant);
@@ -22,8 +26,8 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.4rem 0.5rem 0.4rem 0.6rem;
-  min-height: 2.1rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.6rem;
+  min-height: 2.4rem;
   box-sizing: border-box;
 
   // The dashed divider IS the day boundary — it sits at the card's centre,
