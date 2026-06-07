@@ -1,0 +1,80 @@
+@if (trip()) {
+  <section class="view">
+    <header class="view-header">
+      <h2>Transport</h2>
+      <button matButton="filled" (click)="add()">
+        <mat-icon>add</mat-icon> Add
+      </button>
+    </header>
+
+    @if (rows().length) {
+      @for (row of rows(); track row.transport.id) {
+        <article class="detail-card">
+          <div class="card-icon"><mat-icon>{{ row.icon }}</mat-icon></div>
+          <div class="card-body">
+            <button class="card-title link-button" (click)="open(row.transport)">
+              {{ row.transport.title }}
+            </button>
+            <p class="card-sub">
+              {{ row.modeLabel }}
+              @if (row.transport.fromLocation || row.transport.toLocation) {
+                · {{ row.transport.fromLocation || '?' }} → {{ row.transport.toLocation || '?' }}
+              }
+            </p>
+
+            <dl>
+              <dt>Departure</dt>
+              <dd>
+                {{ row.departure.date }} · {{ row.departure.primary }}
+                <span class="zone">{{ row.departure.primaryZone }}</span>
+                @if (!row.departure.sameZone) {
+                  <span class="alt">({{ row.departure.secondary }} {{ row.departure.secondaryZone }})</span>
+                }
+              </dd>
+              @if (row.arrival; as arr) {
+                <dt>Arrival</dt>
+                <dd>
+                  {{ arr.date }} · {{ arr.primary }}
+                  <span class="zone">{{ arr.primaryZone }}</span>
+                  @if (!arr.sameZone) {
+                    <span class="alt">({{ arr.secondary }} {{ arr.secondaryZone }})</span>
+                  }
+                </dd>
+              }
+              @if (row.transport.airline || row.transport.flightNumber) {
+                <dt>Flight</dt>
+                <dd>{{ row.transport.airline }} {{ row.transport.flightNumber }}</dd>
+              }
+            </dl>
+
+            @if (row.transport.bookingUrl) {
+              <div class="links">
+                <a [href]="row.transport.bookingUrl" target="_blank" rel="noopener">
+                  <mat-icon>open_in_new</mat-icon> Booking
+                </a>
+              </div>
+            }
+            @if (row.transport.notes) {
+              <p class="notes">{{ row.transport.notes }}</p>
+            }
+          </div>
+          <div class="card-actions">
+            <button matIconButton [matMenuTriggerFor]="menu" aria-label="Actions">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="edit(row.transport)">
+                <mat-icon>edit</mat-icon><span>Edit</span>
+              </button>
+              <button mat-menu-item (click)="remove(row.transport)">
+                <mat-icon>delete</mat-icon><span>Delete</span>
+              </button>
+            </mat-menu>
+          </div>
+        </article>
+      }
+    } @else {
+      <p class="empty">No transport yet. Add a flight, train, bus or car trip.</p>
+    }
+  </section>
+}

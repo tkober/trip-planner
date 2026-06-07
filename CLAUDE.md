@@ -46,7 +46,20 @@ attachments, trip duplication, dark-mode toggle, undo.
 
 Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
 - `/trips` → [TripList](src/app/trips/trip-list/trip-list.ts) (dashboard).
-- `/trips/:id` → [Timeline](src/app/trips/timeline/timeline.ts) (the day timeline).
+- `/trips/:id` → [TripPage](src/app/trips/trip-page/trip-page.ts) — the trip shell:
+  a fixed left **side panel** (back button, trip name + compact details, section
+  nav, trip-actions menu) plus a `<router-outlet>` for the active section. It has
+  four child routes (deep-linkable), defaulting to `timeline`:
+  - `timeline` → [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid.
+  - `overview` → [OverviewView](src/app/trips/views/overview-view.ts) — trip facts
+    (dates, length, zones, description) + the departure/return flight cards.
+  - `accommodations` → [AccommodationsView](src/app/trips/views/accommodations-view.ts)
+    — all stays, ordered by check-in, as detail cards.
+  - `transport` → [TransportView](src/app/trips/views/transport-view.ts) — all
+    transport, ordered by departure, with dual-tz times.
+  Child views receive the parent `:id` param via `withComponentInputBinding()` +
+  `paramsInheritanceStrategy: 'always'` (set in [app.config.ts](src/app/app.config.ts));
+  each derives its trip with `computed(() => trips().find(...))`.
 
 Services (signal-backed, `providedIn: 'root'`):
 - [TripStoreService](src/app/services/trip-store.service.ts) — Dexie wrapper. Holds the
@@ -58,22 +71,28 @@ Services (signal-backed, `providedIn: 'root'`):
   `dayKeyInDestination` (buckets entries into days), `deviceZone`, `supportedZones`.
 - [ImportExportService](src/app/services/import-export.service.ts) — JSON download +
   validated import (assigns a fresh id, checks `schemaVersion`).
+- [TripActionsService](src/app/services/trip-actions.service.ts) — all dialog-driven
+  trip mutations (edit trip, add/edit/delete + open-details for accommodation/
+  activity/transport, the `confirm` helper, JSON export). Shared by every view so
+  there's one implementation; each method takes the current trip explicitly.
 
 Timeline composition:
-- [Timeline](src/app/trips/timeline/timeline.ts) — page; computes `dayViews`, flights,
-  accommodation segments; owns all dialog orchestration + drag-drop confirmation.
+- [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid; computes
+  `dayViews`, accommodation hotel cells/labels, straddles; owns drag-drop
+  confirmation. Dialog actions are delegated to `TripActionsService`.
 - [DaySection](src/app/trips/timeline/day-section.ts) — one day. Uses
   `display: contents` so its day-marker (col 1) and CDK drop-list content (last col)
   become direct children of the timeline grid, sharing rows with span blocks.
 - [HotelCell](src/app/trips/timeline/hotel-cell.ts) — one day's accommodation cell
-  (top = morning hotel, bottom = night hotel); computed in `Timeline.hotelCells`.
+  (top = morning hotel, bottom = night hotel); computed in `TimelineView.hotelCells`.
 - [EntryCard](src/app/trips/timeline/entry-card.ts) — one single-day activity/transport.
 - [StraddleCard](src/app/trips/timeline/straddle-card.ts) — a day-crossing entry,
-  anchored on the separator line (`grid-row` from `Timeline.layout`, then
+  anchored on the separator line (`grid-row` from `TimelineView.layout`, then
   `translateY(-50%)`); adjacent days get padding so the card has clear space.
   The grid columns ([marker][hotel][content]) are built in
-  `Timeline.gridTemplateColumns`.
-- [FlightCard](src/app/trips/timeline/flight-card.ts) — prominent dual-tz flight.
+  `TimelineView.gridTemplateColumns`.
+- [FlightCard](src/app/trips/timeline/flight-card.ts) — prominent dual-tz flight,
+  shown in the Overview section.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, activity, transport,

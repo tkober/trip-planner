@@ -1,0 +1,121 @@
+:host {
+  display: block;
+}
+
+.trip-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 4rem;
+}
+
+.side-panel {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--mat-sys-surface-container-low);
+  border-radius: 16px;
+  padding: 0.75rem 1rem 1rem;
+
+  .panel-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .trip-meta {
+    h1 {
+      margin: 0;
+      font-size: 1.3rem;
+      line-height: 1.25;
+    }
+
+    p {
+      margin: 0.15rem 0 0;
+      font-size: 0.85rem;
+      color: var(--mat-sys-on-surface-variant);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .dates {
+      margin-top: 0.4rem;
+      font-weight: 500;
+      color: var(--mat-sys-on-surface);
+    }
+  }
+}
+
+.section-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--mat-sys-on-surface);
+    font-weight: 500;
+    transition: background 0.15s ease;
+
+    mat-icon {
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    &:hover {
+      background: var(--mat-sys-surface-container-high);
+    }
+
+    &.active {
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
+
+      mat-icon {
+        color: var(--mat-sys-on-secondary-container);
+      }
+    }
+  }
+}
+
+.trip-content {
+  min-width: 0;
+}
+
+.not-found {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .trip-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .side-panel {
+    position: static;
+  }
+
+  .section-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    .nav-item span {
+      display: none;
+    }
+  }
+}

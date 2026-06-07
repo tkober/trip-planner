@@ -1,0 +1,43 @@
+@use './views.scss';
+
+.description {
+  margin: 0 0 1.25rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+
+  .fact {
+    background: var(--mat-sys-surface-container-low);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .label {
+      font-size: 0.8rem;
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    .value {
+      font-size: 1.05rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+.section-title {
+  margin: 1.75rem 0 0.75rem;
+  font-size: 1.2rem;
+}
+
+.flights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.75rem;
+}

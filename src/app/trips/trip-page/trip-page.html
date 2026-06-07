@@ -1,0 +1,61 @@
+@if (trip(); as t) {
+  <div class="trip-layout">
+    <aside class="side-panel">
+      <div class="panel-top">
+        <button matIconButton (click)="back()" aria-label="Back to trips">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <button
+          matIconButton
+          [matMenuTriggerFor]="tripMenu"
+          aria-label="Trip actions"
+        >
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #tripMenu="matMenu">
+          <button mat-menu-item (click)="editTrip()">
+            <mat-icon>edit</mat-icon><span>Edit trip</span>
+          </button>
+          <button mat-menu-item (click)="addAccommodation()">
+            <mat-icon>hotel</mat-icon><span>Add accommodation</span>
+          </button>
+          <button mat-menu-item (click)="exportTrip()">
+            <mat-icon>download</mat-icon><span>Export JSON</span>
+          </button>
+        </mat-menu>
+      </div>
+
+      <div class="trip-meta">
+        <h1>{{ t.title }}</h1>
+        <p class="dates">{{ t.startDate }} → {{ t.endDate }}</p>
+        <p class="length">{{ lengthLabel() }}</p>
+        <p class="zone">{{ t.destinationTimeZone }}</p>
+      </div>
+
+      <nav class="section-nav">
+        @for (item of nav; track item.path) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="active"
+            class="nav-item"
+          >
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+    </aside>
+
+    <main class="trip-content">
+      <router-outlet />
+    </main>
+  </div>
+} @else if (loaded()) {
+  <div class="not-found">
+    <mat-icon>error_outline</mat-icon>
+    <h2>Trip not found</h2>
+    <button matButton="filled" color="primary" (click)="back()">
+      Back to trips
+    </button>
+  </div>
+}

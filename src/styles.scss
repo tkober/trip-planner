@@ -20,6 +20,12 @@ body {
   height: 100%;
 }
 
+// Always reserve room for the vertical scrollbar so switching between a tall
+// view (Timeline) and a short one doesn't shift the centered layout sideways.
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;

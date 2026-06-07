@@ -1,0 +1,67 @@
+@if (trip(); as t) {
+  <section class="view">
+    <header class="view-header">
+      <h2>Overview</h2>
+      <button matButton (click)="editTrip()">
+        <mat-icon>edit</mat-icon> Edit trip
+      </button>
+    </header>
+
+    @if (t.description) {
+      <p class="description">{{ t.description }}</p>
+    }
+
+    <div class="facts">
+      <div class="fact">
+        <span class="label">Start</span>
+        <span class="value">{{ t.startDate }}</span>
+      </div>
+      <div class="fact">
+        <span class="label">End</span>
+        <span class="value">{{ t.endDate }}</span>
+      </div>
+      <div class="fact">
+        <span class="label">Length</span>
+        <span class="value">{{ dayCount() }} days · {{ nightCount() }} nights</span>
+      </div>
+      <div class="fact">
+        <span class="label">Destination time zone</span>
+        <span class="value">{{ t.destinationTimeZone }}</span>
+      </div>
+      <div class="fact">
+        <span class="label">Home time zone</span>
+        <span class="value">{{ t.homeTimeZone }}</span>
+      </div>
+      <div class="fact">
+        <span class="label">Accommodations</span>
+        <span class="value">{{ t.accommodations.length }}</span>
+      </div>
+    </div>
+
+    @if (departureFlight() || returnFlight()) {
+      <h3 class="section-title">Flights</h3>
+      <div class="flights">
+        @if (departureFlight(); as dep) {
+          <app-flight-card
+            [flight]="dep"
+            role="Departure"
+            [homeZone]="t.homeTimeZone"
+            [destZone]="t.destinationTimeZone"
+            (open)="openFlight($event)"
+          />
+        }
+        @if (returnFlight(); as ret) {
+          <app-flight-card
+            [flight]="ret"
+            role="Return"
+            [homeZone]="t.homeTimeZone"
+            [destZone]="t.destinationTimeZone"
+            (open)="openFlight($event)"
+          />
+        }
+      </div>
+    } @else {
+      <p class="empty">No flights added yet. Add transport with mode “flight”.</p>
+    }
+  </section>
+}
