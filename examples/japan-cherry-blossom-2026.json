@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "title": "Japan — Cherry Blossom Tour 2026",
+  "startDate": "2026-04-03",
+  "endDate": "2026-04-18",
+  "homeTimeZone": "Europe/Berlin",
+  "destinationTimeZone": "Asia/Tokyo",
+  "description": "Two-week spring loop: Tokyo → Hakone → Kyoto → Osaka, then an overnight bus back to Tokyo for the flight home. Built to show off hotel hand-offs, day-crossing flights and overnight legs.",
+  "createdAt": "2026-01-12T09:00:00.000Z",
+  "updatedAt": "2026-01-12T09:00:00.000Z",
+  "accommodations": [
+    {
+      "id": "acc-tokyo-1",
+      "name": "Shinjuku Granbell",
+      "fullName": "Shinjuku Granbell Hotel",
+      "address": "2-14-5 Kabukicho, Shinjuku City, Tokyo 160-0021",
+      "googleMapsUrl": "https://maps.google.com/?q=Shinjuku+Granbell+Hotel",
+      "bookingUrl": "https://www.booking.com/hotel/jp/shinjuku-granbell.html",
+      "remarks": "Rooftop bar on the 13th floor. Request a high room away from the street.",
+      "checkInDate": "2026-04-03",
+      "checkOutDate": "2026-04-08"
+    },
+    {
+      "id": "acc-hakone",
+      "name": "Hakone Ginyu",
+      "fullName": "Hakone Ginyu Ryokan",
+      "address": "100-1 Miyanoshita, Hakone, Ashigarashimo District, Kanagawa 250-0404",
+      "googleMapsUrl": "https://maps.google.com/?q=Hakone+Ginyu+Ryokan",
+      "bookingUrl": "https://www.hakoneginyu.co.jp/en/",
+      "remarks": "Private open-air onsen on the balcony. Kaiseki dinner + breakfast included — confirm 18:30 dinner slot.",
+      "checkInDate": "2026-04-08",
+      "checkOutDate": "2026-04-09"
+    },
+    {
+      "id": "acc-kyoto",
+      "name": "Hotel Kanra",
+      "fullName": "Hotel Kanra Kyoto",
+      "address": "190 Kitamachi, Shimogyo Ward, Kyoto 600-8176",
+      "googleMapsUrl": "https://maps.google.com/?q=Hotel+Kanra+Kyoto",
+      "bookingUrl": "https://www.booking.com/hotel/jp/kanra-kyoto.html",
+      "remarks": "Machiya-style rooms with cypress bathtubs. 7 min walk from Kyoto Station.",
+      "checkInDate": "2026-04-09",
+      "checkOutDate": "2026-04-13"
+    },
+    {
+      "id": "acc-osaka",
+      "name": "Cross Hotel",
+      "fullName": "Cross Hotel Osaka",
+      "address": "2-5-15 Shinsaibashisuji, Chuo Ward, Osaka 542-0085",
+      "googleMapsUrl": "https://maps.google.com/?q=Cross+Hotel+Osaka",
+      "bookingUrl": "https://www.booking.com/hotel/jp/cross-osaka.html",
+      "remarks": "Right on Dotonbori — expect some night-time noise. Checkout before the Koyasan car day.",
+      "checkInDate": "2026-04-13",
+      "checkOutDate": "2026-04-15"
+    },
+    {
+      "id": "acc-tokyo-2",
+      "name": "Mitsui Garden Ginza",
+      "fullName": "Mitsui Garden Hotel Ginza Premier",
+      "address": "8-13-1 Ginza, Chuo City, Tokyo 104-0061",
+      "googleMapsUrl": "https://maps.google.com/?q=Mitsui+Garden+Hotel+Ginza+Premier",
+      "bookingUrl": "https://www.booking.com/hotel/jp/mitsui-garden-ginza-premier.html",
+      "remarks": "16th-floor sky lobby. Easy NEX/Keisei access to Narita for the flight home.",
+      "checkInDate": "2026-04-16",
+      "checkOutDate": "2026-04-18"
+    }
+  ],
+  "transport": [
+    {
+      "id": "trn-dep",
+      "mode": "flight",
+      "title": "Frankfurt → Tokyo",
+      "start": { "dateTime": "2026-04-02T13:30", "zone": "Europe/Berlin" },
+      "end": { "dateTime": "2026-04-03T08:55", "zone": "Asia/Tokyo" },
+      "fromLocation": "FRA (Frankfurt)",
+      "toLocation": "HND (Haneda)",
+      "airline": "Japan Airlines",
+      "flightNumber": "JL408",
+      "bookingUrl": "https://www.jal.co.jp/",
+      "notes": "Seats 34A/34C reserved. ~14h45 flight. Lands +1 day — pick up Suica + pocket Wi-Fi at arrivals."
+    },
+    {
+      "id": "trn-romancecar",
+      "mode": "train",
+      "title": "Romancecar to Hakone",
+      "start": { "dateTime": "2026-04-08T09:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-08T10:25", "zone": "Asia/Tokyo" },
+      "fromLocation": "Shinjuku",
+      "toLocation": "Hakone-Yumoto",
+      "bookingUrl": "https://www.odakyu.jp/english/romancecar/",
+      "notes": "Odakyu Romancecar GSE. Sit on the right for Mt. Fuji glimpses. Bags forwarded to ryokan."
+    },
+    {
+      "id": "trn-shinkansen-kyoto",
+      "mode": "train",
+      "title": "Shinkansen to Kyoto",
+      "start": { "dateTime": "2026-04-09T11:12", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-09T13:33", "zone": "Asia/Tokyo" },
+      "fromLocation": "Odawara",
+      "toLocation": "Kyoto",
+      "notes": "Local bus Hakone → Odawara first (~35 min). Hikari 463, reserved car 7, seats D/E for Fuji."
+    },
+    {
+      "id": "trn-kyoto-osaka",
+      "mode": "train",
+      "title": "Special Rapid to Osaka",
+      "start": { "dateTime": "2026-04-13T10:30", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-13T11:00", "zone": "Asia/Tokyo" },
+      "fromLocation": "Kyoto",
+      "toLocation": "Osaka",
+      "notes": "JR Kyoto Line, no reservation needed. Suica works."
+    },
+    {
+      "id": "trn-koyasan-car",
+      "mode": "car",
+      "title": "Rental car: Koyasan day trip",
+      "start": { "dateTime": "2026-04-14T08:30", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-14T18:00", "zone": "Asia/Tokyo" },
+      "fromLocation": "Osaka (Namba Times Car)",
+      "toLocation": "Mt. Koya (Koyasan)",
+      "bookingUrl": "https://rental.timescar.jp/en/",
+      "notes": "~2h each way via the Hanwa Expressway. International Driving Permit required. Tolls ~¥3,000."
+    },
+    {
+      "id": "trn-night-bus",
+      "mode": "bus",
+      "title": "Overnight bus to Tokyo",
+      "start": { "dateTime": "2026-04-15T22:30", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-16T06:50", "zone": "Asia/Tokyo" },
+      "fromLocation": "Osaka (Umeda)",
+      "toLocation": "Tokyo (Shinjuku)",
+      "bookingUrl": "https://willerexpress.com/en/",
+      "notes": "Willer Express 'Cocoon' reclining seats. Saves a hotel night — no accommodation booked for the 15th."
+    },
+    {
+      "id": "trn-ret",
+      "mode": "flight",
+      "title": "Tokyo → Frankfurt",
+      "start": { "dateTime": "2026-04-18T11:25", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-18T16:05", "zone": "Europe/Berlin" },
+      "fromLocation": "HND (Haneda)",
+      "toLocation": "FRA (Frankfurt)",
+      "airline": "Japan Airlines",
+      "flightNumber": "JL407",
+      "bookingUrl": "https://www.jal.co.jp/",
+      "notes": "Be at Haneda by 08:30. ~14h30 flight but lands the same calendar day in Frankfurt."
+    }
+  ],
+  "activities": [
+    {
+      "id": "act-arrival",
+      "title": "Arrival & Shinjuku stroll",
+      "start": { "dateTime": "2026-04-03T15:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-03T17:30", "zone": "Asia/Tokyo" },
+      "location": "Shinjuku, Tokyo",
+      "notes": "Drop bags, fight jet lag with a walk to the Tokyo Metropolitan Government observation deck (free)."
+    },
+    {
+      "id": "act-tsukiji",
+      "title": "Tsukiji Outer Market breakfast",
+      "start": { "dateTime": "2026-04-04T08:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-04T10:00", "zone": "Asia/Tokyo" },
+      "location": "Tsukiji, Tokyo",
+      "googleMapsUrl": "https://maps.google.com/?q=Tsukiji+Outer+Market",
+      "notes": "Tamagoyaki, grilled scallops, fresh uni. Go early before the crowds."
+    },
+    {
+      "id": "act-teamlab",
+      "title": "teamLab Planets",
+      "start": { "dateTime": "2026-04-04T13:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-04T15:30", "zone": "Asia/Tokyo" },
+      "location": "Toyosu, Tokyo",
+      "googleMapsUrl": "https://maps.google.com/?q=teamLab+Planets+Tokyo",
+      "bookingUrl": "https://planets.teamlab.art/tokyo/",
+      "notes": "Timed entry 13:00. Wear shorts or roll up trousers — you wade through water."
+    },
+    {
+      "id": "act-asakusa",
+      "title": "Asakusa & Senso-ji",
+      "start": { "dateTime": "2026-04-04T16:30", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-04T18:30", "zone": "Asia/Tokyo" },
+      "location": "Asakusa, Tokyo",
+      "googleMapsUrl": "https://maps.google.com/?q=Senso-ji+Temple"
+    },
+    {
+      "id": "act-nikko",
+      "title": "Day trip: Nikko Toshogu",
+      "start": { "dateTime": "2026-04-05T08:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-05T18:00", "zone": "Asia/Tokyo" },
+      "location": "Nikko, Tochigi",
+      "googleMapsUrl": "https://maps.google.com/?q=Nikko+Toshogu",
+      "notes": "Tobu Limited Express from Asakusa (~2h). UNESCO shrines and the Kegon Falls."
+    },
+    {
+      "id": "act-goldengai",
+      "title": "Golden Gai bar crawl",
+      "start": { "dateTime": "2026-04-05T21:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-06T01:00", "zone": "Asia/Tokyo" },
+      "location": "Golden Gai, Shinjuku",
+      "notes": "Crosses midnight. Tiny themed bars, many charge a ¥500–1000 seating fee — carry cash."
+    },
+    {
+      "id": "act-meiji",
+      "title": "Meiji Shrine & Harajuku",
+      "start": { "dateTime": "2026-04-06T11:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-06T14:00", "zone": "Asia/Tokyo" },
+      "location": "Harajuku, Tokyo",
+      "googleMapsUrl": "https://maps.google.com/?q=Meiji+Jingu"
+    },
+    {
+      "id": "act-shibuyasky",
+      "title": "Shibuya Sky at sunset",
+      "start": { "dateTime": "2026-04-06T17:30", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-06T18:45", "zone": "Asia/Tokyo" },
+      "location": "Shibuya, Tokyo",
+      "bookingUrl": "https://www.shibuya-scramble-square.com/sky/",
+      "notes": "Book the ~17:40 slot for golden hour over the Scramble Crossing."
+    },
+    {
+      "id": "act-ueno",
+      "title": "Ueno Park hanami",
+      "start": { "dateTime": "2026-04-07T10:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-07T12:30", "zone": "Asia/Tokyo" },
+      "location": "Ueno Park, Tokyo",
+      "notes": "Peak bloom expected this week. Grab a bento and join the picnic crowds."
+    },
+    {
+      "id": "act-akihabara",
+      "title": "Akihabara electronics & arcades",
+      "start": { "dateTime": "2026-04-07T14:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-07T16:30", "zone": "Asia/Tokyo" },
+      "location": "Akihabara, Tokyo"
+    },
+    {
+      "id": "act-hakone-museum",
+      "title": "Hakone Open-Air Museum",
+      "start": { "dateTime": "2026-04-08T13:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-08T15:30", "zone": "Asia/Tokyo" },
+      "location": "Hakone, Kanagawa",
+      "googleMapsUrl": "https://maps.google.com/?q=Hakone+Open-Air+Museum",
+      "notes": "Picasso pavilion + a foot onsen on site."
+    },
+    {
+      "id": "act-fushimi",
+      "title": "Fushimi Inari evening walk",
+      "start": { "dateTime": "2026-04-09T16:30", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-09T18:30", "zone": "Asia/Tokyo" },
+      "location": "Fushimi, Kyoto",
+      "googleMapsUrl": "https://maps.google.com/?q=Fushimi+Inari+Taisha",
+      "notes": "Open 24h — go late to dodge the crowds on the torii path."
+    },
+    {
+      "id": "act-arashiyama",
+      "title": "Arashiyama Bamboo Grove",
+      "start": { "dateTime": "2026-04-10T08:30", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-10T10:30", "zone": "Asia/Tokyo" },
+      "location": "Arashiyama, Kyoto",
+      "googleMapsUrl": "https://maps.google.com/?q=Arashiyama+Bamboo+Grove",
+      "notes": "Be there by 08:30 for an empty grove."
+    },
+    {
+      "id": "act-tenryuji",
+      "title": "Tenryu-ji & Okochi Sanso garden",
+      "start": { "dateTime": "2026-04-10T10:30", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-10T12:00", "zone": "Asia/Tokyo" },
+      "location": "Arashiyama, Kyoto"
+    },
+    {
+      "id": "act-kinkakuji",
+      "title": "Kinkaku-ji (Golden Pavilion)",
+      "start": { "dateTime": "2026-04-10T14:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-10T15:30", "zone": "Asia/Tokyo" },
+      "location": "Kita Ward, Kyoto",
+      "googleMapsUrl": "https://maps.google.com/?q=Kinkaku-ji"
+    },
+    {
+      "id": "act-kiyomizu",
+      "title": "Kiyomizu-dera & Higashiyama",
+      "start": { "dateTime": "2026-04-11T09:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-11T12:00", "zone": "Asia/Tokyo" },
+      "location": "Higashiyama, Kyoto",
+      "googleMapsUrl": "https://maps.google.com/?q=Kiyomizu-dera",
+      "notes": "Wind down through Sannenzaka & Ninenzaka for matcha and souvenirs."
+    },
+    {
+      "id": "act-gion",
+      "title": "Gion geisha district walk",
+      "start": { "dateTime": "2026-04-11T17:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-11T19:00", "zone": "Asia/Tokyo" },
+      "location": "Gion, Kyoto",
+      "notes": "Hanamikoji at dusk — be respectful, no photos of geiko/maiko in the private alleys."
+    },
+    {
+      "id": "act-nara",
+      "title": "Nara day trip — Todai-ji & deer park",
+      "start": { "dateTime": "2026-04-12T09:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-12T16:00", "zone": "Asia/Tokyo" },
+      "location": "Nara",
+      "googleMapsUrl": "https://maps.google.com/?q=Todai-ji",
+      "notes": "Kintetsu Limited Express from Kyoto (~45 min). Buy shika senbei to feed the deer."
+    },
+    {
+      "id": "act-dotonbori",
+      "title": "Dotonbori street food crawl",
+      "start": { "dateTime": "2026-04-13T19:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-13T21:30", "zone": "Asia/Tokyo" },
+      "location": "Dotonbori, Osaka",
+      "googleMapsUrl": "https://maps.google.com/?q=Dotonbori",
+      "notes": "Takoyaki, okonomiyaki, kushikatsu (no double-dipping the sauce!) and the Glico sign."
+    },
+    {
+      "id": "act-okunoin",
+      "title": "Okunoin cemetery walk",
+      "start": { "dateTime": "2026-04-14T11:30", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-14T13:30", "zone": "Asia/Tokyo" },
+      "location": "Koyasan, Wakayama",
+      "googleMapsUrl": "https://maps.google.com/?q=Okunoin+Koyasan",
+      "notes": "Japan's largest cemetery among towering cedars. Vegetarian shojin-ryori lunch at a temple."
+    },
+    {
+      "id": "act-osaka-castle",
+      "title": "Osaka Castle",
+      "start": { "dateTime": "2026-04-15T10:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-15T12:00", "zone": "Asia/Tokyo" },
+      "location": "Chuo Ward, Osaka",
+      "googleMapsUrl": "https://maps.google.com/?q=Osaka+Castle"
+    },
+    {
+      "id": "act-kuromon",
+      "title": "Kuromon Ichiba Market",
+      "start": { "dateTime": "2026-04-15T13:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-15T14:30", "zone": "Asia/Tokyo" },
+      "location": "Nipponbashi, Osaka",
+      "notes": "Last big meal before the night bus. Lockers at the hotel hold bags until 22:00."
+    },
+    {
+      "id": "act-ginza",
+      "title": "Ginza shopping & coffee",
+      "start": { "dateTime": "2026-04-16T14:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-16T17:00", "zone": "Asia/Tokyo" },
+      "location": "Ginza, Tokyo",
+      "notes": "Arrive groggy off the bus — slow afternoon. Itoya stationery, Ginza Six rooftop garden."
+    },
+    {
+      "id": "act-odaiba",
+      "title": "Odaiba & teamLab-free relax day",
+      "start": { "dateTime": "2026-04-17T11:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-17T15:00", "zone": "Asia/Tokyo" },
+      "location": "Odaiba, Tokyo",
+      "googleMapsUrl": "https://maps.google.com/?q=Odaiba"
+    },
+    {
+      "id": "act-omakase",
+      "title": "Farewell omakase dinner",
+      "start": { "dateTime": "2026-04-17T19:00", "zone": "Asia/Tokyo" },
+      "end": { "dateTime": "2026-04-17T21:00", "zone": "Asia/Tokyo" },
+      "location": "Ginza, Tokyo",
+      "bookingUrl": "https://tabelog.com/en/",
+      "notes": "Reservation confirmed for 2 at 19:00. Counter seats."
+    }
+  ]
+}
