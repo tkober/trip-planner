@@ -1,0 +1,101 @@
+.day-section {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+
+  @media (max-width: 640px) {
+    grid-template-columns: 110px 1fr;
+    gap: 0.5rem;
+  }
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+
+  // The vertical timeline spine.
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: -0.75rem;
+    width: 2px;
+    background: var(--mat-sys-outline-variant);
+  }
+}
+
+.day-marker {
+  padding-left: 0.75rem;
+
+  .day-index {
+    font-weight: 600;
+    color: var(--mat-sys-primary);
+  }
+
+  .day-date {
+    font-size: 0.8rem;
+    color: var(--mat-sys-on-surface-variant);
+    text-transform: uppercase;
+  }
+
+  .day-date-num {
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.accommodations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-left: 0.75rem;
+  flex: 1;
+  min-height: 2.5rem;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 1rem;
+
+  &.cdk-drop-list-dragging app-entry-card:not(.cdk-drag-placeholder) {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.no-entries {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0.25rem 0;
+}
+
+.add-btn {
+  align-self: flex-start;
+}
+
+// CDK drag visuals
+.cdk-drag-preview {
+  box-shadow: var(--mat-sys-level3);
+  border-radius: 12px;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

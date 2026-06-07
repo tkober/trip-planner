@@ -1,0 +1,44 @@
+.entity-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: min(480px, 82vw);
+  padding-top: 0.5rem;
+}
+
+.row {
+  display: flex;
+  gap: 1rem;
+
+  mat-form-field {
+    flex: 1;
+  }
+
+  @media (max-width: 520px) {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.error {
+  color: var(--mat-sys-error);
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+.section-label {
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0.5rem 0 0.25rem;
+}
+
+.mode-group {
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+
+  mat-icon {
+    margin-right: 0.25rem;
+    vertical-align: middle;
+  }
+}
+

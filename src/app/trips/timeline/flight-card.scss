@@ -1,0 +1,101 @@
+.flight-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  color: var(--mat-sys-on-primary-container);
+  background: linear-gradient(
+    135deg,
+    var(--mat-sys-primary-container),
+    var(--mat-sys-tertiary-container)
+  );
+  box-shadow: var(--mat-sys-level1);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    box-shadow: var(--mat-sys-level3);
+    transform: translateY(-2px);
+  }
+}
+
+.role {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+
+  mat-icon {
+    font-size: 1.05rem;
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 0.15rem;
+}
+
+.airline {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.legs {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.leg {
+  flex: 1;
+
+  &.muted {
+    opacity: 0.6;
+  }
+}
+
+.endpoint-label {
+  font-size: 0.78rem;
+  opacity: 0.8;
+}
+
+.time {
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  .zone {
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.8;
+    margin-left: 0.2rem;
+  }
+}
+
+.alt {
+  font-size: 0.85rem;
+  opacity: 0.75;
+
+  .zone {
+    font-size: 0.68rem;
+  }
+}
+
+.date {
+  font-size: 0.78rem;
+  opacity: 0.8;
+  margin-top: 0.1rem;
+}
+
+.arrow {
+  opacity: 0.7;
+}

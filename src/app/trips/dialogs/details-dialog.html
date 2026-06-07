@@ -1,0 +1,99 @@
+<h2 mat-dialog-title class="details-title">
+  <mat-icon>{{ icon() }}</mat-icon>
+  {{ heading() }}
+</h2>
+
+<mat-dialog-content>
+  <dl class="details">
+    @if (timeRows().length) {
+      @for (row of timeRows(); track row.label) {
+        <dt>{{ row.label }}</dt>
+        <dd>
+          <span class="primary-time">{{ row.primary }}</span>
+          <span class="zone-tag">{{ row.primaryZone }}</span>
+          @if (!row.sameZone) {
+            <span class="secondary-time">
+              ({{ row.secondary }} <span class="zone-tag">{{ row.secondaryZone }}</span>)
+            </span>
+          }
+        </dd>
+      }
+    }
+
+    @if (accommodation; as a) {
+      <dt>Check-in</dt>
+      <dd>{{ a.checkInDate }}</dd>
+      <dt>Check-out</dt>
+      <dd>{{ a.checkOutDate }}</dd>
+      @if (a.fullName) {
+        <dt>Full name</dt>
+        <dd>{{ a.fullName }}</dd>
+      }
+      @if (a.address) {
+        <dt>Address</dt>
+        <dd>{{ a.address }}</dd>
+      }
+      @if (a.remarks) {
+        <dt>Remarks</dt>
+        <dd class="multiline">{{ a.remarks }}</dd>
+      }
+    }
+
+    @if (activity; as a) {
+      @if (a.location) {
+        <dt>Location</dt>
+        <dd>{{ a.location }}</dd>
+      }
+      @if (a.notes) {
+        <dt>Notes</dt>
+        <dd class="multiline">{{ a.notes }}</dd>
+      }
+    }
+
+    @if (transport; as t) {
+      <dt>Mode</dt>
+      <dd class="capitalize">{{ t.mode }}</dd>
+      @if (t.fromLocation || t.toLocation) {
+        <dt>Route</dt>
+        <dd>{{ t.fromLocation || '?' }} → {{ t.toLocation || '?' }}</dd>
+      }
+      @if (t.airline) {
+        <dt>Airline</dt>
+        <dd>{{ t.airline }}</dd>
+      }
+      @if (t.flightNumber) {
+        <dt>Flight no.</dt>
+        <dd>{{ t.flightNumber }}</dd>
+      }
+      @if (t.notes) {
+        <dt>Notes</dt>
+        <dd class="multiline">{{ t.notes }}</dd>
+      }
+    }
+  </dl>
+
+  <div class="links">
+    @if (accommodation?.googleMapsUrl || activity?.googleMapsUrl; as maps) {
+      <a matButton href="{{ maps }}" target="_blank" rel="noopener">
+        <mat-icon>map</mat-icon> Google Maps
+      </a>
+    }
+    @if (
+      accommodation?.bookingUrl || activity?.bookingUrl || transport?.bookingUrl;
+      as booking
+    ) {
+      <a matButton href="{{ booking }}" target="_blank" rel="noopener">
+        <mat-icon>open_in_new</mat-icon> Booking
+      </a>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton color="warn" (click)="close('delete')">
+    <mat-icon>delete</mat-icon> Delete
+  </button>
+  <button matButton="filled" color="primary" (click)="close('edit')">
+    <mat-icon>edit</mat-icon> Edit
+  </button>
+</mat-dialog-actions>

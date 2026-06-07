@@ -1,0 +1,79 @@
+<header class="page-header">
+  <div class="brand">
+    <mat-icon>flight_takeoff</mat-icon>
+    <h1>Trip Planner</h1>
+  </div>
+  <div class="actions">
+    <button matButton (click)="triggerImport()">
+      <mat-icon>upload</mat-icon>
+      Import
+    </button>
+    <button matButton="filled" color="primary" (click)="createTrip()">
+      <mat-icon>add</mat-icon>
+      New trip
+    </button>
+  </div>
+</header>
+
+<input
+  #fileInput
+  type="file"
+  accept="application/json,.json"
+  hidden
+  (change)="onFileSelected($event)"
+/>
+
+@if (loaded() && trips().length === 0) {
+  <div class="empty">
+    <mat-icon>luggage</mat-icon>
+    <h2>No trips yet</h2>
+    <p>Create your first trip or import a plan to get started.</p>
+    <button matButton="filled" color="primary" (click)="createTrip()">
+      <mat-icon>add</mat-icon>
+      New trip
+    </button>
+  </div>
+} @else {
+  <div class="grid">
+    @for (trip of trips(); track trip.id) {
+      <mat-card class="trip-card" appearance="outlined">
+        <button
+          class="card-menu"
+          matIconButton
+          [matMenuTriggerFor]="menu"
+          (click)="$event.stopPropagation()"
+          aria-label="Trip actions"
+        >
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="export(trip)">
+            <mat-icon>download</mat-icon>
+            <span>Export JSON</span>
+          </button>
+          <button mat-menu-item (click)="confirmDelete(trip)">
+            <mat-icon>delete</mat-icon>
+            <span>Delete</span>
+          </button>
+        </mat-menu>
+
+        <div class="card-body" (click)="open(trip)">
+          <h3>{{ trip.title }}</h3>
+          <p class="dates">{{ dateRange(trip) }}</p>
+          <p class="meta">
+            <span class="chip">{{ nights(trip) }} nights</span>
+            <span class="chip">{{ trip.destinationTimeZone }}</span>
+          </p>
+          @if (trip.description) {
+            <p class="desc">{{ trip.description }}</p>
+          }
+          <div class="counts">
+            <span><mat-icon>hotel</mat-icon>{{ trip.accommodations.length }}</span>
+            <span><mat-icon>local_activity</mat-icon>{{ trip.activities.length }}</span>
+            <span><mat-icon>commute</mat-icon>{{ trip.transport.length }}</span>
+          </div>
+        </div>
+      </mat-card>
+    }
+  </div>
+}

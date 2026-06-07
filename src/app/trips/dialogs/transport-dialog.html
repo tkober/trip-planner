@@ -1,0 +1,79 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit transport' : 'Add transport' }}</h2>
+
+<mat-dialog-content>
+  <form class="entity-form" (ngSubmit)="save()">
+    <mat-button-toggle-group
+      [value]="mode()"
+      (change)="setMode($event.value)"
+      aria-label="Transport mode"
+      class="mode-group"
+    >
+      @for (m of modes; track m.value) {
+        <mat-button-toggle [value]="m.value">
+          <mat-icon>{{ m.icon }}</mat-icon>
+          {{ m.label }}
+        </mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+
+    <mat-form-field class="full-width">
+      <mat-label>Title</mat-label>
+      <input matInput [ngModel]="title()" (ngModelChange)="title.set($event)" name="title" placeholder="e.g. Shinkansen to Kyoto" required />
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field>
+        <mat-label>From (optional)</mat-label>
+        <input matInput [ngModel]="fromLocation()" (ngModelChange)="fromLocation.set($event)" name="from" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>To (optional)</mat-label>
+        <input matInput [ngModel]="toLocation()" (ngModelChange)="toLocation.set($event)" name="to" />
+      </mat-form-field>
+    </div>
+
+    <p class="section-label">Departure</p>
+    <app-zoned-time-field label="Departure" [(value)]="start" />
+
+    <mat-checkbox [ngModel]="hasEnd()" (ngModelChange)="hasEnd.set($event)" name="hasEnd">
+      Has arrival time
+    </mat-checkbox>
+    @if (hasEnd()) {
+      <app-zoned-time-field label="Arrival" [(value)]="end" />
+    }
+
+    @if (isFlight()) {
+      <div class="row">
+        <mat-form-field>
+          <mat-label>Airline (optional)</mat-label>
+          <input matInput [ngModel]="airline()" (ngModelChange)="airline.set($event)" name="airline" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Flight number (optional)</mat-label>
+          <input matInput [ngModel]="flightNumber()" (ngModelChange)="flightNumber.set($event)" name="flightNumber" />
+        </mat-form-field>
+      </div>
+    }
+
+    <mat-form-field class="full-width">
+      <mat-label>Booking link (optional)</mat-label>
+      <input matInput type="url" [ngModel]="bookingUrl()" (ngModelChange)="bookingUrl.set($event)" name="booking" />
+    </mat-form-field>
+
+    <mat-form-field class="full-width">
+      <mat-label>Notes (optional)</mat-label>
+      <textarea matInput rows="2" [ngModel]="notes()" (ngModelChange)="notes.set($event)" name="notes"></textarea>
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton mat-dialog-close>Cancel</button>
+  <button matButton="filled" color="primary" (click)="save()">
+    {{ isEdit ? 'Save' : 'Add' }}
+  </button>
+</mat-dialog-actions>

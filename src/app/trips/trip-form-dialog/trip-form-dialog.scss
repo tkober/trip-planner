@@ -1,0 +1,22 @@
+.trip-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: min(460px, 80vw);
+  padding-top: 0.5rem;
+}
+
+.row {
+  display: flex;
+  gap: 1rem;
+
+  mat-form-field {
+    flex: 1;
+  }
+}
+
+.error {
+  color: var(--mat-sys-error);
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}

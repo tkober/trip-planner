@@ -1,0 +1,54 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment, cancelling in-progress runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # base-href must match the repo name so assets resolve under
+      # https://<user>.github.io/<repo>/. Derived from the repo automatically.
+      - name: Build
+        run: |
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          npx ng build --base-href "/${REPO_NAME}/"
+
+      # SPA fallback: GitHub Pages serves 404.html for unknown deep links.
+      - name: Add SPA 404 fallback
+        run: cp dist/japan-trip-planner/browser/index.html dist/japan-trip-planner/browser/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/japan-trip-planner/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit trip' : 'New trip' }}</h2>
+
+<mat-dialog-content>
+  <form class="trip-form" (ngSubmit)="save()">
+    <mat-form-field class="full-width">
+      <mat-label>Title</mat-label>
+      <input
+        matInput
+        [ngModel]="title()"
+        (ngModelChange)="title.set($event)"
+        name="title"
+        placeholder="e.g. Japan Spring 2026"
+        required
+      />
+    </mat-form-field>
+
+    <div class="row">
+      <app-date-field label="Start date" [required]="true" [(value)]="startDate" />
+      <app-date-field label="End date" [required]="true" [(value)]="endDate" />
+    </div>
+
+    <app-timezone-select
+      label="Home time zone (departure)"
+      [(value)]="homeTimeZone"
+    />
+    <app-timezone-select
+      label="Destination time zone"
+      [(value)]="destinationTimeZone"
+    />
+
+    <mat-form-field class="full-width">
+      <mat-label>Description (optional)</mat-label>
+      <textarea
+        matInput
+        [ngModel]="description()"
+        (ngModelChange)="description.set($event)"
+        name="description"
+        rows="2"
+      ></textarea>
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton mat-dialog-close>Cancel</button>
+  <button matButton="filled" color="primary" (click)="save()">
+    {{ isEdit ? 'Save' : 'Create' }}
+  </button>
+</mat-dialog-actions>

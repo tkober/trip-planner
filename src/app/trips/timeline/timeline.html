@@ -1,0 +1,88 @@
+@if (trip(); as t) {
+  <header class="timeline-header">
+    <div class="top-row">
+      <button matIconButton (click)="back()" aria-label="Back to trips">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="heading">
+        <h1>{{ t.title }}</h1>
+        <p class="sub">
+          {{ t.startDate }} → {{ t.endDate }} · {{ t.destinationTimeZone }}
+        </p>
+      </div>
+      <button matIconButton [matMenuTriggerFor]="tripMenu" aria-label="Trip actions">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #tripMenu="matMenu">
+        <button mat-menu-item (click)="editTrip()">
+          <mat-icon>edit</mat-icon><span>Edit trip</span>
+        </button>
+        <button mat-menu-item (click)="addAccommodation()">
+          <mat-icon>hotel</mat-icon><span>Add accommodation</span>
+        </button>
+        <button mat-menu-item (click)="exportTrip()">
+          <mat-icon>download</mat-icon><span>Export JSON</span>
+        </button>
+      </mat-menu>
+    </div>
+
+    @if (t.description) {
+      <p class="description">{{ t.description }}</p>
+    }
+
+    @if (departureFlight() || returnFlight()) {
+      <div class="flights">
+        @if (departureFlight(); as dep) {
+          <app-flight-card
+            [flight]="dep"
+            role="Departure"
+            [homeZone]="t.homeTimeZone"
+            [destZone]="t.destinationTimeZone"
+            (open)="openFlight($event)"
+          />
+        }
+        @if (returnFlight(); as ret) {
+          <app-flight-card
+            [flight]="ret"
+            role="Return"
+            [homeZone]="t.homeTimeZone"
+            [destZone]="t.destinationTimeZone"
+            (open)="openFlight($event)"
+          />
+        }
+      </div>
+    }
+
+    <div class="quick-actions">
+      <button matButton (click)="addAccommodation()">
+        <mat-icon>hotel</mat-icon> Accommodation
+      </button>
+    </div>
+  </header>
+
+  <div class="days" cdkDropListGroup>
+    @for (dv of dayViews(); track dv.day.date) {
+      <app-day-section
+        [view]="dv"
+        [destZone]="t.destinationTimeZone"
+        (addActivity)="addActivity($event)"
+        (addTransport)="addTransport($event)"
+        (openEntry)="openEntry($event)"
+        (editEntry)="editEntry($event)"
+        (deleteEntry)="deleteEntry($event)"
+        (openAccommodation)="openAccommodation($event)"
+        (editAccommodation)="editAccommodation($event)"
+        (deleteAccommodation)="deleteAccommodation($event)"
+        (dropped)="onEntryDropped($event)"
+      />
+    }
+  </div>
+} @else if (loaded()) {
+  <div class="not-found">
+    <mat-icon>error_outline</mat-icon>
+    <h2>Trip not found</h2>
+    <button matButton="filled" color="primary" (click)="back()">
+      Back to trips
+    </button>
+  </div>
+}
