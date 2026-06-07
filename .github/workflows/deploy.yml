@@ -28,6 +28,15 @@ jobs:
 
       - run: npm ci
 
+      # Generate src/environments/environment.ts from env vars. Set these as
+      # repository Variables (Settings → Secrets and variables → Actions) to
+      # change the defaults seeded into a new trip's timezones.
+      - name: Generate environment
+        env:
+          DEFAULT_DEPARTURE_TZ: ${{ vars.DEFAULT_DEPARTURE_TZ }}
+          DEFAULT_TRIP_TZ: ${{ vars.DEFAULT_TRIP_TZ }}
+        run: npm run generate-env
+
       # base-href must match the repo name so assets resolve under
       # https://<user>.github.io/<repo>/. Derived from the repo automatically.
       - name: Build

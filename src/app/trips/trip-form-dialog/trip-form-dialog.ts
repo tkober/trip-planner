@@ -12,6 +12,7 @@ import { TripDto } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TimezoneSelect } from '../../shared/timezone-select/timezone-select';
 import { DateField } from '../../shared/date-field/date-field';
+import { environment } from '../../../environments/environment';
 
 export interface TripFormData {
   /** Existing trip when editing; undefined when creating. */
@@ -52,10 +53,11 @@ export class TripFormDialog {
   readonly startDate = signal(this.data.trip?.startDate ?? '');
   readonly endDate = signal(this.data.trip?.endDate ?? '');
   readonly homeTimeZone = signal(
-    this.data.trip?.homeTimeZone ?? this.tz.deviceZone(),
+    this.data.trip?.homeTimeZone ??
+      (environment.defaultDepartureTimeZone || this.tz.deviceZone()),
   );
   readonly destinationTimeZone = signal(
-    this.data.trip?.destinationTimeZone ?? 'Asia/Tokyo',
+    this.data.trip?.destinationTimeZone ?? environment.defaultTripTimeZone,
   );
   readonly description = signal(this.data.trip?.description ?? '');
 

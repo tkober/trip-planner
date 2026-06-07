@@ -1,5 +1,5 @@
 /**
- * Data model for the Japan Trip Planner.
+ * Data model for the Trip Planner.
  *
  * All types are plain JSON-serializable DTOs: they are persisted as-is in
  * IndexedDB and are the exact shape used for JSON export / import.

@@ -110,6 +110,23 @@ npm run build      # production build → dist/japan-trip-planner/browser
 npm test           # unit tests
 ```
 
+### Configuration (env vars)
+
+New-trip timezone defaults are build-time configurable.
+[scripts/generate-env.mjs](scripts/generate-env.mjs) — run automatically by the
+`prestart` / `prebuild` npm hooks — regenerates
+[src/environments/environment.ts](src/environments/environment.ts) from env vars:
+
+- `DEFAULT_DEPARTURE_TZ` — IANA zone seeded as a new trip's departure (home) zone.
+  Empty (default) falls back to the device zone via `TimeZoneService.deviceZone()`.
+- `DEFAULT_TRIP_TZ` — IANA zone seeded as a new trip's destination zone
+  (default `Asia/Tokyo`).
+
+`environment.ts` is generated; edit the env vars (or the script's fallbacks), not
+the file. Consumed in [TripFormDialog](src/app/trips/trip-form-dialog/trip-form-dialog.ts).
+The deploy workflow reads these from GitHub Actions repo **Variables** of the same
+name. Anything other than these defaults still lives in the per-trip form.
+
 ## Deploy (GitHub Pages)
 
 [.github/workflows/deploy.yml](.github/workflows/deploy.yml) builds on push to `main`
