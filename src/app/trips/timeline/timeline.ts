@@ -12,6 +12,7 @@ import {
   ActivityDto,
   TimelineEntry,
   TransportDto,
+  TransportMode,
   TripDto,
 } from '../../models/trip.model';
 import { TripStoreService } from '../../services/trip-store.service';
@@ -39,8 +40,25 @@ import {
   DetailsDialog,
   DetailsDialogData,
 } from '../dialogs/details-dialog';
-import { DaySection, DayView, AccommodationSegment } from './day-section';
+import { DaySection, DayView } from './day-section';
 import { FlightCard } from './flight-card';
+import { SpanBar, SpanBlock } from './span-bar';
+
+/** Icons per transport mode (shared with the entry cards). */
+const MODE_ICON: Record<TransportMode, string> = {
+  flight: 'flight',
+  train: 'train',
+  bus: 'directions_bus',
+  car: 'directions_car',
+};
+
+/** Layout result: span blocks plus how many lanes they pack into. */
+interface SpanLayout {
+  blocks: SpanBlock[];
+  laneCount: number;
+  /** Transport ids rendered as span blocks (excluded from per-day entries). */
+  crossingIds: Set<string>;
+}
 
 @Component({
   selector: 'app-timeline',
@@ -51,6 +69,7 @@ import { FlightCard } from './flight-card';
     MatMenuModule,
     DaySection,
     FlightCard,
+    SpanBar,
   ],
   templateUrl: './timeline.html',
   styleUrl: './timeline.scss',
@@ -94,7 +113,82 @@ export class Timeline {
     return f.length > 1 ? f[f.length - 1] : undefined;
   });
 
-  /** One view-model per day: its entries (sorted) and accommodation segments. */
+  /** Map of destination-tz date → 0-based day position. */
+  private readonly dayIndexByDate = computed(() => {
+    const m = new Map<string, number>();
+    this.days().forEach((d, i) => m.set(d.date, i));
+    return m;
+  });
+
+  /**
+   * Spanning blocks: accommodation stays and any transport whose departure and
+   * arrival fall on different destination-tz days. Packed into lanes so
+   * overlapping spans (e.g. a hotel switch) sit side by side.
+   */
+  readonly spans = computed<SpanLayout>(() => {
+    const trip = this.trip();
+    const days = this.days();
+    if (!trip || !days.length) {
+      return { blocks: [], laneCount: 0, crossingIds: new Set() };
+    }
+    const destZone = trip.destinationTimeZone;
+    const blocks: SpanBlock[] = [];
+    const crossingIds = new Set<string>();
+
+    for (const a of trip.accommodations) {
+      const s = this.clampIndex(a.checkInDate);
+      const e = this.clampIndex(a.checkOutDate);
+      blocks.push({
+        id: a.id,
+        kind: 'accommodation',
+        startRow: Math.min(s, e),
+        endRow: Math.max(s, e),
+        lane: 0,
+        title: a.name,
+        icon: 'hotel',
+        accommodation: a,
+      });
+    }
+
+    for (const t of trip.transport) {
+      if (!t.end) continue;
+      const startKey = this.tz.dayKeyInDestination(t.start, destZone);
+      const endKey = this.tz.dayKeyInDestination(t.end, destZone);
+      if (startKey === endKey) continue; // single-day → normal entry card
+      crossingIds.add(t.id);
+      const s = this.clampIndex(startKey);
+      const e = this.clampIndex(endKey);
+      blocks.push({
+        id: t.id,
+        kind: 'transport',
+        startRow: Math.min(s, e),
+        endRow: Math.max(s, e),
+        lane: 0,
+        title: t.title,
+        icon: MODE_ICON[t.mode],
+        mode: t.mode,
+        transport: t,
+      });
+    }
+
+    // Greedy lane packing by start row, then end row.
+    blocks.sort((a, b) => a.startRow - b.startRow || a.endRow - b.endRow);
+    const laneEnds: number[] = [];
+    for (const b of blocks) {
+      let lane = laneEnds.findIndex((end) => end < b.startRow);
+      if (lane === -1) {
+        lane = laneEnds.length;
+        laneEnds.push(b.endRow);
+      } else {
+        laneEnds[lane] = b.endRow;
+      }
+      b.lane = lane;
+    }
+
+    return { blocks, laneCount: laneEnds.length, crossingIds };
+  });
+
+  /** One view-model per day: its entries, sorted, excluding spanning transport. */
   readonly dayViews = computed<DayView[]>(() => {
     const trip = this.trip();
     const days = this.days();
@@ -102,8 +196,8 @@ export class Timeline {
     const destZone = trip.destinationTimeZone;
     const firstDate = days[0].date;
     const lastDate = days[days.length - 1].date;
+    const crossingIds = this.spans().crossingIds;
 
-    // Bucket activities + transport into destination-tz days (clamped to range).
     const buckets = new Map<string, TimelineEntry[]>();
     for (const day of days) buckets.set(day.date, []);
 
@@ -117,44 +211,39 @@ export class Timeline {
       place({ kind: 'activity', activity, start: activity.start });
     }
     for (const transport of trip.transport) {
+      if (crossingIds.has(transport.id)) continue; // rendered as a span block
       place({ kind: 'transport', transport, start: transport.start });
     }
 
-    return days.map((day) => {
-      const entries = (buckets.get(day.date) ?? []).sort(
+    return days.map((day) => ({
+      day,
+      entries: (buckets.get(day.date) ?? []).sort(
         (a, b) => this.tz.toMillis(a.start) - this.tz.toMillis(b.start),
-      );
-      return {
-        day,
-        entries,
-        accommodations: this.accommodationSegments(trip, day.date),
-        dropListId: 'day-' + day.date,
-      };
-    });
+      ),
+      dropListId: 'day-' + day.date,
+    }));
   });
 
-  // --- Accommodation segment computation -----------------------------------
+  /** Resolve a date to its 0-based day position, clamped to the trip range. */
+  private clampIndex(date: string): number {
+    const days = this.days();
+    if (!days.length) return 0;
+    if (date <= days[0].date) return 0;
+    if (date >= days[days.length - 1].date) return days.length - 1;
+    return this.dayIndexByDate().get(date) ?? 0;
+  }
 
-  private accommodationSegments(
-    trip: TripDto,
-    date: string,
-  ): AccommodationSegment[] {
-    const segments: AccommodationSegment[] = [];
-    for (const a of trip.accommodations) {
-      if (date < a.checkInDate || date > a.checkOutDate) continue;
-      if (a.checkInDate === a.checkOutDate) {
-        segments.push({ accommodation: a, segment: 'full' });
-      } else if (date === a.checkInDate) {
-        segments.push({ accommodation: a, segment: 'checkin' });
-      } else if (date === a.checkOutDate) {
-        segments.push({ accommodation: a, segment: 'checkout' });
-      } else {
-        segments.push({ accommodation: a, segment: 'full' });
-      }
+  /** Open the details dialog for a span block (accommodation or transport). */
+  openSpan(block: SpanBlock): void {
+    if (block.accommodation) {
+      this.openAccommodation(block.accommodation);
+    } else if (block.transport) {
+      this.openEntry({
+        kind: 'transport',
+        transport: block.transport,
+        start: block.transport.start,
+      });
     }
-    // Render check-outs above check-ins so a switch day reads top→bottom.
-    const order = { checkout: 0, full: 1, checkin: 2 };
-    return segments.sort((x, y) => order[x.segment] - order[y.segment]);
   }
 
   // --- Navigation / trip-level actions -------------------------------------

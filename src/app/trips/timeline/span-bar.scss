@@ -1,0 +1,64 @@
+:host {
+  // grid-column / grid-row are set via host bindings.
+  display: block;
+  padding: 4px 2px;
+  min-width: 0;
+}
+
+.span-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  height: 100%;
+  min-height: 3rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 0.5rem 0.15rem;
+  color: var(--mat-sys-on-secondary-container);
+  background: var(--mat-sys-secondary-container);
+  transition: filter 0.12s ease;
+
+  &:hover {
+    filter: brightness(0.96);
+  }
+}
+
+.span-icon {
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.span-name {
+  flex: 1;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-height: 100%;
+}
+
+.span-more {
+  flex-shrink: 0;
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.55;
+}
+
+// Transport spans coloured per mode (matches entry-card).
+:host([data-kind='transport']) .span-block {
+  color: #fff;
+}
+:host([data-mode='flight']) .span-block { background: #1565c0; }
+:host([data-mode='train']) .span-block { background: #2e7d32; }
+:host([data-mode='bus']) .span-block { background: #ef6c00; }
+:host([data-mode='car']) .span-block { background: #6a1b9a; }

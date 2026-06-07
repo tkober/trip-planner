@@ -8,11 +8,15 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
 
 **Implemented (v1):**
 - Multi-trip dashboard: create, open, import, export, delete trips.
-- Trip timeline: one section per day, "Day N" + date in the destination tz.
-- Accommodations as rail markers (check-in fills the lower half of a day, check-out
-  the upper half → a hotel switch shows two bars on one day). Click → details.
+- Trip timeline rendered as a **CSS grid** (one row per day, "Day N" + date in the
+  destination tz).
+- Accommodations render as **solid blocks spanning all affected day-rows**
+  (check-in → check-out). Overlapping stays (a hotel switch) are auto-packed into
+  side-by-side lanes. Transport whose departure and arrival fall on different
+  destination-tz days spans the same way. Click a block → details.
 - Activities and **Transport as separate entities** (flight/train/bus/car), rendered
   interleaved per day, sorted by start time, colour/icon-differentiated by mode.
+  Single-day transport is a normal card; day-crossing transport becomes a span block.
 - Prominent **departure & return flight cards** with dual-timezone times.
 - Create/edit/delete for every entity via Material dialogs; all destructive actions
   and trip-duration changes are gated by a confirmation modal.
@@ -53,11 +57,14 @@ Services (signal-backed, `providedIn: 'root'`):
 Timeline composition:
 - [Timeline](src/app/trips/timeline/timeline.ts) — page; computes `dayViews`, flights,
   accommodation segments; owns all dialog orchestration + drag-drop confirmation.
-- [DaySection](src/app/trips/timeline/day-section.ts) — one day: rail (date +
-  `AccommodationBar`s) + CDK drop-list of `EntryCard`s + an "Add" menu.
+- [DaySection](src/app/trips/timeline/day-section.ts) — one day. Uses
+  `display: contents` so its day-marker (col 1) and CDK drop-list content (last col)
+  become direct children of the timeline grid, sharing rows with span blocks.
+- [SpanBar](src/app/trips/timeline/span-bar.ts) — a block spanning day-rows
+  (accommodation stay or day-crossing transport); placed via `grid-row`/`grid-column`
+  from a `SpanBlock` (lane-packed in `Timeline.spans`).
 - [EntryCard](src/app/trips/timeline/entry-card.ts) — one activity/transport.
 - [FlightCard](src/app/trips/timeline/flight-card.ts) — prominent dual-tz flight.
-- [AccommodationBar](src/app/trips/timeline/accommodation-bar.ts) — rail stay marker.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, activity, transport,

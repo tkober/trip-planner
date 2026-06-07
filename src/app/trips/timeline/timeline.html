@@ -60,21 +60,22 @@
     </div>
   </header>
 
-  <div class="days" cdkDropListGroup>
-    @for (dv of dayViews(); track dv.day.date) {
+  <div class="days-grid" cdkDropListGroup [style.--lanes]="spans().laneCount">
+    @for (dv of dayViews(); track dv.day.date; let i = $index) {
       <app-day-section
         [view]="dv"
         [destZone]="t.destinationTimeZone"
+        [rowIndex]="i + 1"
         (addActivity)="addActivity($event)"
         (addTransport)="addTransport($event)"
         (openEntry)="openEntry($event)"
         (editEntry)="editEntry($event)"
         (deleteEntry)="deleteEntry($event)"
-        (openAccommodation)="openAccommodation($event)"
-        (editAccommodation)="editAccommodation($event)"
-        (deleteAccommodation)="deleteAccommodation($event)"
         (dropped)="onEntryDropped($event)"
       />
+    }
+    @for (block of spans().blocks; track block.kind + '-' + block.id) {
+      <app-span-bar [block]="block" (open)="openSpan($event)" />
     }
   </div>
 } @else if (loaded()) {

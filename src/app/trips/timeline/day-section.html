@@ -1,55 +1,40 @@
-<section class="day-section">
-  <div class="rail">
-    <div class="day-marker">
-      <div class="day-index">Day {{ view().day.index }}</div>
-      <div class="day-date">{{ view().day.startOfDay.toFormat('ccc') }}</div>
-      <div class="day-date-num">{{ view().day.startOfDay.toFormat('d LLL') }}</div>
-    </div>
-    <div class="accommodations">
-      @for (seg of view().accommodations; track seg.accommodation.id) {
-        <app-accommodation-bar
-          [segment]="seg"
-          (open)="openAccommodation.emit($event)"
-          (edit)="editAccommodation.emit($event)"
-          (delete)="deleteAccommodation.emit($event)"
-        />
-      }
-    </div>
-  </div>
+<div class="day-marker" [style.grid-row]="rowIndex()">
+  <div class="day-index">Day {{ view().day.index }}</div>
+  <div class="day-date">{{ view().day.startOfDay.toFormat('ccc') }}</div>
+  <div class="day-date-num">{{ view().day.startOfDay.toFormat('d LLL') }}</div>
+</div>
 
-  <div class="content">
-    <div
-      class="entries"
-      cdkDropList
-      [cdkDropListData]="view()"
-      (cdkDropListDropped)="dropped.emit($event)"
-    >
-      @for (entry of view().entries; track entry.activity?.id ?? entry.transport?.id) {
-        <app-entry-card
-          cdkDrag
-          [cdkDragData]="entry"
-          [entry]="entry"
-          [destZone]="destZone()"
-          (open)="openEntry.emit($event)"
-          (edit)="editEntry.emit($event)"
-          (delete)="deleteEntry.emit($event)"
-        />
-      } @empty {
-        <p class="no-entries">No activities or transport yet.</p>
-      }
-    </div>
+<div
+  class="day-content"
+  [style.grid-row]="rowIndex()"
+  cdkDropList
+  [cdkDropListData]="view()"
+  (cdkDropListDropped)="dropped.emit($event)"
+>
+  @for (entry of view().entries; track entry.activity?.id ?? entry.transport?.id) {
+    <app-entry-card
+      cdkDrag
+      [cdkDragData]="entry"
+      [entry]="entry"
+      [destZone]="destZone()"
+      (open)="openEntry.emit($event)"
+      (edit)="editEntry.emit($event)"
+      (delete)="deleteEntry.emit($event)"
+    />
+  } @empty {
+    <p class="no-entries">No activities or transport yet.</p>
+  }
 
-    <button matButton class="add-btn" [matMenuTriggerFor]="addMenu">
-      <mat-icon>add</mat-icon>
-      Add
+  <button matButton class="add-btn" [matMenuTriggerFor]="addMenu">
+    <mat-icon>add</mat-icon>
+    Add
+  </button>
+  <mat-menu #addMenu="matMenu">
+    <button mat-menu-item (click)="addActivity.emit(view().day.date)">
+      <mat-icon>local_activity</mat-icon><span>Activity</span>
     </button>
-    <mat-menu #addMenu="matMenu">
-      <button mat-menu-item (click)="addActivity.emit(view().day.date)">
-        <mat-icon>local_activity</mat-icon><span>Activity</span>
-      </button>
-      <button mat-menu-item (click)="addTransport.emit(view().day.date)">
-        <mat-icon>commute</mat-icon><span>Transport</span>
-      </button>
-    </mat-menu>
-  </div>
-</section>
+    <button mat-menu-item (click)="addTransport.emit(view().day.date)">
+      <mat-icon>commute</mat-icon><span>Transport</span>
+    </button>
+  </mat-menu>
+</div>

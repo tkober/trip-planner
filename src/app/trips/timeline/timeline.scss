@@ -58,9 +58,18 @@
   gap: 0.5rem;
 }
 
-.days {
-  display: flex;
-  flex-direction: column;
+.days-grid {
+  display: grid;
+  // [day marker] [N span lanes] [content]. Lanes collapse to nothing at 0.
+  grid-template-columns: 96px repeat(var(--lanes, 0), 46px) minmax(0, 1fr);
+  column-gap: 0.75rem;
+  row-gap: 0;
+  align-items: stretch;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 76px repeat(var(--lanes, 0), 40px) minmax(0, 1fr);
+    column-gap: 0.4rem;
+  }
 }
 
 .not-found {
