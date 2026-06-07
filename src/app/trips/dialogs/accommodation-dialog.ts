@@ -10,11 +10,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AccommodationDto } from '../../models/trip.model';
 import { DateField } from '../../shared/date-field/date-field';
+import { ColorField } from '../../shared/color/color-field';
 
 export interface AccommodationDialogData {
   accommodation?: AccommodationDto;
   defaultCheckIn: string;
   defaultCheckOut: string;
+  /** Default tint for this stay (its position-based colour). */
+  defaultColor: string;
   newId: () => string;
 }
 
@@ -27,6 +30,7 @@ export interface AccommodationDialogData {
     MatFormFieldModule,
     MatInputModule,
     DateField,
+    ColorField,
   ],
   templateUrl: './accommodation-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -50,6 +54,8 @@ export class AccommodationDialog {
   readonly checkOutDate = signal(
     this.data.accommodation?.checkOutDate ?? this.data.defaultCheckOut,
   );
+  readonly color = signal<string | undefined>(this.data.accommodation?.color);
+  readonly defaultColor = this.data.defaultColor;
   readonly error = signal('');
 
   /** When check-in changes, seed an empty/earlier check-out with the same day. */
@@ -82,6 +88,7 @@ export class AccommodationDialog {
       googleMapsUrl: this.googleMapsUrl().trim() || undefined,
       bookingUrl: this.bookingUrl().trim() || undefined,
       remarks: this.remarks().trim() || undefined,
+      color: this.color() || undefined,
       checkInDate: this.checkInDate(),
       checkOutDate: this.checkOutDate(),
     };

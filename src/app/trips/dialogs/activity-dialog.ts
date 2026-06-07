@@ -11,6 +11,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ActivityDto, ZonedTime } from '../../models/trip.model';
 import { ZonedTimeField } from '../../shared/zoned-time-field/zoned-time-field';
+import { ColorField } from '../../shared/color/color-field';
+import { ACTIVITY_COLOR } from '../../shared/color/color';
 
 export interface ActivityDialogData {
   activity?: ActivityDto;
@@ -30,6 +32,7 @@ export interface ActivityDialogData {
     MatInputModule,
     MatCheckboxModule,
     ZonedTimeField,
+    ColorField,
   ],
   templateUrl: './activity-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -59,6 +62,8 @@ export class ActivityDialog {
   readonly googleMapsUrl = signal(this.data.activity?.googleMapsUrl ?? '');
   readonly bookingUrl = signal(this.data.activity?.bookingUrl ?? '');
   readonly notes = signal(this.data.activity?.notes ?? '');
+  readonly color = signal<string | undefined>(this.data.activity?.color);
+  readonly defaultColor = ACTIVITY_COLOR;
   readonly error = signal('');
 
   save(): void {
@@ -80,6 +85,7 @@ export class ActivityDialog {
       googleMapsUrl: this.googleMapsUrl().trim() || undefined,
       bookingUrl: this.bookingUrl().trim() || undefined,
       notes: this.notes().trim() || undefined,
+      color: this.color() || undefined,
     };
     this.dialogRef.close(result);
   }

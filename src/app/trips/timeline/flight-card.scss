@@ -1,16 +1,18 @@
 .flight-card {
+  --accent: var(--mat-sys-primary);
   display: block;
   width: 100%;
   text-align: left;
   border: none;
+  border-left: 6px solid var(--accent);
   cursor: pointer;
   border-radius: 16px;
   padding: 1rem 1.25rem;
-  color: var(--mat-sys-on-primary-container);
+  color: var(--mat-sys-on-surface);
   background: linear-gradient(
     135deg,
-    var(--mat-sys-primary-container),
-    var(--mat-sys-tertiary-container)
+    color-mix(in srgb, var(--accent) 24%, var(--mat-sys-surface-container)),
+    color-mix(in srgb, var(--accent) 8%, var(--mat-sys-surface-container))
   );
   box-shadow: var(--mat-sys-level1);
   transition: box-shadow 0.15s ease, transform 0.15s ease;

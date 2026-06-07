@@ -45,13 +45,11 @@
   }
 }
 
-// Soft per-hotel tints so consecutive stays are easy to tell apart.
-.half.filled[data-color='0'] { background: #cfe0fb; }
-.half.filled[data-color='1'] { background: #d6e8d2; }
-.half.filled[data-color='2'] { background: #fbe3c9; }
-.half.filled[data-color='3'] { background: #e7d6f3; }
-.half.filled[data-color='4'] { background: #f9d4d9; }
-.half.filled[data-color='5'] { background: #cdeaf0; }
+// Soft per-hotel tint (light mix of the stay's accent colour) so consecutive
+// stays are easy to tell apart.
+.half.filled {
+  background: color-mix(in srgb, var(--hotel, var(--mat-sys-primary)) 22%, white);
+}
 
 .half.filled:hover {
   filter: brightness(0.97);

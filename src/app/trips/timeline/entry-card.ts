@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { TimelineEntry, TransportMode } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
+import { activityColor, transportColor } from '../../shared/color/color';
 
 const MODE_ICON: Record<TransportMode, string> = {
   flight: 'flight',
@@ -19,8 +20,7 @@ const MODE_ICON: Record<TransportMode, string> = {
   template: `
     <div
       class="entry"
-      [class.is-transport]="entry().kind === 'transport'"
-      [attr.data-mode]="entry().transport?.mode"
+      [style.--accent]="accent()"
       (click)="open.emit(entry())"
     >
       <div class="bullet">
@@ -70,6 +70,14 @@ export class EntryCard {
     const e = this.entry();
     if (e.kind === 'activity') return 'local_activity';
     return MODE_ICON[e.transport!.mode];
+  });
+
+  /** Effective accent colour: explicit colour or the entity-type default. */
+  readonly accent = computed(() => {
+    const e = this.entry();
+    return e.kind === 'activity'
+      ? activityColor(e.activity!)
+      : transportColor(e.transport!);
   });
 
   readonly title = computed(

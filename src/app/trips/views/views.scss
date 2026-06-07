@@ -40,8 +40,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--mat-sys-secondary-container);
-    color: var(--mat-sys-on-secondary-container);
+    // Tinted with the entity's accent colour when provided, else the theme.
+    background: var(--accent, var(--mat-sys-secondary-container));
+    color: #fff;
   }
 
   .card-body {

@@ -47,6 +47,13 @@
       <textarea matInput rows="2" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)" name="remarks"></textarea>
     </mat-form-field>
 
+    <app-color-field
+      label="Colour"
+      [defaultColor]="defaultColor"
+      [value]="color()"
+      (valueChange)="color.set($event)"
+    />
+
     @if (error()) {
       <p class="error">{{ error() }}</p>
     }

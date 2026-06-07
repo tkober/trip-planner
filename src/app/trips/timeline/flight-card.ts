@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TransportDto } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
+import { transportColor } from '../../shared/color/color';
 
 interface FlightEndpoint {
   dateLabel: string;
@@ -21,7 +22,12 @@ interface FlightEndpoint {
   selector: 'app-flight-card',
   imports: [MatIconModule],
   template: `
-    <button class="flight-card" (click)="open.emit(flight())" type="button">
+    <button
+      class="flight-card"
+      [style.--accent]="accent()"
+      (click)="open.emit(flight())"
+      type="button"
+    >
       <div class="role">
         <mat-icon>flight_takeoff</mat-icon>
         <span>{{ role() }}</span>
@@ -90,6 +96,9 @@ export class FlightCard {
   readonly homeZone = input.required<string>();
   readonly destZone = input.required<string>();
   readonly open = output<TransportDto>();
+
+  /** Effective accent colour: explicit colour or the flight default. */
+  readonly accent = computed(() => transportColor(this.flight()));
 
   readonly departure = computed(() =>
     this.endpoint(this.flight().start),

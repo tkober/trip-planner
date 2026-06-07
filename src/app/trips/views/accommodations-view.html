@@ -9,7 +9,7 @@
 
     @if (rows().length) {
       @for (row of rows(); track row.accommodation.id) {
-        <article class="detail-card">
+        <article class="detail-card" [style.--accent]="row.color">
           <div class="card-icon"><mat-icon>hotel</mat-icon></div>
           <div class="card-body">
             <button class="card-title link-button" (click)="open(row.accommodation)">

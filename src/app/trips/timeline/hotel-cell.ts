@@ -9,8 +9,8 @@ export interface HotelHalf {
   rounded: boolean;
   /** This half begins a stay (check-in) → show the hotel name here. */
   isStart: boolean;
-  /** Stable colour index so different hotels are visually distinct. */
-  colorIndex: number;
+  /** Resolved accent colour (explicit colour or default tint). */
+  color: string;
 }
 
 /** One day's hotel cell: morning (top) and night (bottom) halves. */
@@ -40,14 +40,14 @@ export interface HotelDayCell {
         class="half top"
         [class.filled]="!!top()"
         [class.round-bottom]="top()?.rounded"
-        [attr.data-color]="top()?.colorIndex ?? null"
+        [style.--hotel]="top()?.color ?? null"
         (click)="openHalf(top())"
       ></div>
       <div
         class="half bottom"
         [class.filled]="!!bottom()"
         [class.round-top]="bottom()?.rounded"
-        [attr.data-color]="bottom()?.colorIndex ?? null"
+        [style.--hotel]="bottom()?.color ?? null"
         (click)="openHalf(bottom())"
       >
         @if (bottom()?.isStart) {

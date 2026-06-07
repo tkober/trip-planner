@@ -17,6 +17,8 @@ import {
   ZonedTime,
 } from '../../models/trip.model';
 import { ZonedTimeField } from '../../shared/zoned-time-field/zoned-time-field';
+import { ColorField } from '../../shared/color/color-field';
+import { TRANSPORT_MODE_COLOR } from '../../shared/color/color';
 
 export interface TransportDialogData {
   transport?: TransportDto;
@@ -46,6 +48,7 @@ const MODES: { value: TransportMode; label: string; icon: string }[] = [
     MatCheckboxModule,
     MatIconModule,
     ZonedTimeField,
+    ColorField,
   ],
   templateUrl: './transport-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -81,6 +84,9 @@ export class TransportDialog {
   readonly flightNumber = signal(this.data.transport?.flightNumber ?? '');
   readonly bookingUrl = signal(this.data.transport?.bookingUrl ?? '');
   readonly notes = signal(this.data.transport?.notes ?? '');
+  readonly color = signal<string | undefined>(this.data.transport?.color);
+  /** Default swatch follows the selected mode's colour. */
+  readonly defaultColor = computed(() => TRANSPORT_MODE_COLOR[this.mode()]);
   readonly error = signal('');
 
   setMode(mode: TransportMode): void {
@@ -119,6 +125,7 @@ export class TransportDialog {
         : undefined,
       bookingUrl: this.bookingUrl().trim() || undefined,
       notes: this.notes().trim() || undefined,
+      color: this.color() || undefined,
     };
     this.dialogRef.close(result);
   }

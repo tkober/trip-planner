@@ -111,11 +111,21 @@ TripDto { id, schemaVersion, title, startDate, endDate, homeTimeZone,
           transport[], createdAt, updatedAt }
 ZonedTime { dateTime: "YYYY-MM-DDTHH:mm", zone: "Asia/Tokyo" }
 AccommodationDto { id, name, fullName?, address?, googleMapsUrl?, bookingUrl?,
-                   remarks?, checkInDate, checkOutDate }
-ActivityDto { id, title, start, end?, location?, googleMapsUrl?, bookingUrl?, notes? }
+                   remarks?, color?, checkInDate, checkOutDate }
+ActivityDto { id, title, start, end?, location?, googleMapsUrl?, bookingUrl?, notes?, color? }
 TransportDto { id, mode: flight|train|bus|car, title, start, end?, fromLocation?,
-               toLocation?, airline?, flightNumber?, bookingUrl?, notes? }
+               toLocation?, airline?, flightNumber?, bookingUrl?, notes?, color? }
 ```
+
+Every entity may carry an optional `color` (a hex accent). When unset, a default
+applies: accommodations cycle distinct tints by storage order; each transport
+mode has its own colour; activities use their own accent (kept distinct from the
+flight blue). Colour logic + the quick-pick palette live in
+[src/app/shared/color/color.ts](src/app/shared/color/color.ts); the reusable
+picker (palette swatches + native colour input) is
+[ColorField](src/app/shared/color/color-field.ts), embedded in each entity
+dialog. Cards bind the resolved colour to a `--accent` CSS var; the hotel lane
+tints it light via `color-mix`.
 
 Entries are bucketed into a day by their `start` converted to the **destination tz**
 date; entries outside the trip range are clamped to the first/last day.

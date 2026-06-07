@@ -6,7 +6,7 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /**
  * A wall-clock time anchored to an IANA time zone. No offset is stored — Luxon
@@ -29,6 +29,8 @@ export interface AccommodationDto {
   googleMapsUrl?: string;
   bookingUrl?: string;
   remarks?: string;
+  /** Explicit accent colour (hex). When unset a default tint applies. */
+  color?: string;
   /** Check-in calendar date in the destination tz: "YYYY-MM-DD". */
   checkInDate: string;
   /** Check-out calendar date in the destination tz: "YYYY-MM-DD". */
@@ -45,6 +47,8 @@ export interface ActivityDto {
   googleMapsUrl?: string;
   bookingUrl?: string;
   notes?: string;
+  /** Explicit accent colour (hex). When unset the activity default applies. */
+  color?: string;
 }
 
 export type TransportMode = 'flight' | 'train' | 'bus' | 'car';
@@ -67,6 +71,8 @@ export interface TransportDto {
   flightNumber?: string;
   bookingUrl?: string;
   notes?: string;
+  /** Explicit accent colour (hex). When unset the mode's default applies. */
+  color?: string;
 }
 
 export interface TripDto {

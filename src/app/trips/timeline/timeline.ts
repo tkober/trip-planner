@@ -16,6 +16,7 @@ import { TripActionsService } from '../../services/trip-actions.service';
 import { DaySection, DayView } from './day-section';
 import { HotelCell, HotelDayCell } from './hotel-cell';
 import { StraddleCard } from './straddle-card';
+import { accommodationColors } from '../../shared/color/color';
 
 /** An entry that crosses a day boundary, anchored on the separator line. */
 interface StraddleItem {
@@ -78,8 +79,7 @@ export class TimelineView {
     const days = this.days();
     if (!trip || !days.length || !trip.accommodations.length) return [];
 
-    const colorIndexById = new Map<string, number>();
-    trip.accommodations.forEach((a, i) => colorIndexById.set(a.id, i % 6));
+    const colorById = accommodationColors(trip.accommodations);
 
     // The accommodation you sleep in on each day's night, if any.
     const nightOf = days.map((d) =>
@@ -101,7 +101,7 @@ export class TimelineView {
               accommodation: morning,
               rounded: !sameRun,
               isStart: false,
-              colorIndex: colorIndexById.get(morning.id) ?? 0,
+              color: colorById.get(morning.id) ?? '',
             }
           : undefined,
         bottom: night
@@ -109,7 +109,7 @@ export class TimelineView {
               accommodation: night,
               rounded: !sameRun,
               isStart: !sameRun,
-              colorIndex: colorIndexById.get(night.id) ?? 0,
+              color: colorById.get(night.id) ?? '',
             }
           : undefined,
       });

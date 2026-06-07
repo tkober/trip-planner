@@ -11,6 +11,7 @@ import {
 import { TripStoreService } from '../../services/trip-store.service';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
+import { transportColor } from '../../shared/color/color';
 
 const MODE_ICON: Record<TransportMode, string> = {
   flight: 'flight',
@@ -41,6 +42,7 @@ interface TransportRow {
   modeLabel: string;
   departure: TimeLabel;
   arrival?: TimeLabel;
+  color: string;
 }
 
 /** All transport as a list, ordered by departure time, with details. */
@@ -74,6 +76,7 @@ export class TransportView {
         modeLabel: MODE_LABEL[x.mode],
         departure: this.timeLabel(x.start, t),
         arrival: x.end ? this.timeLabel(x.end, t) : undefined,
+        color: transportColor(x),
       }));
   });
 

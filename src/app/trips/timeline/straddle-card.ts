@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { TimelineEntry, TransportMode } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
+import { activityColor, transportColor } from '../../shared/color/color';
 
 const MODE_ICON: Record<TransportMode, string> = {
   flight: 'flight',
@@ -24,8 +25,7 @@ const MODE_ICON: Record<TransportMode, string> = {
   host: {
     '[style.grid-column]': "'-2 / -1'",
     '[style.grid-row]': 'gridRow()',
-    '[attr.data-mode]': 'entry().transport?.mode ?? null',
-    '[class.is-transport]': "entry().kind === 'transport'",
+    '[style.--accent]': 'accent()',
   },
   templateUrl: './straddle-card.html',
   styleUrl: './straddle-card.scss',
@@ -46,6 +46,14 @@ export class StraddleCard {
   readonly icon = computed(() => {
     const e = this.entry();
     return e.kind === 'activity' ? 'local_activity' : MODE_ICON[e.transport!.mode];
+  });
+
+  /** Effective accent colour: explicit colour or the entity-type default. */
+  readonly accent = computed(() => {
+    const e = this.entry();
+    return e.kind === 'activity'
+      ? activityColor(e.activity!)
+      : transportColor(e.transport!);
   });
 
   readonly title = computed(

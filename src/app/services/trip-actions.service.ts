@@ -36,6 +36,7 @@ import {
   DetailsDialog,
   DetailsDialogData,
 } from '../trips/dialogs/details-dialog';
+import { accommodationDefaultColor } from '../shared/color/color';
 
 /**
  * All dialog-driven trip mutations (edit trip, add/edit/delete + open-details for
@@ -102,6 +103,7 @@ export class TripActionsService {
     const data: AccommodationDialogData = {
       defaultCheckIn: trip.startDate,
       defaultCheckOut: trip.endDate,
+      defaultColor: accommodationDefaultColor(trip.accommodations.length),
       newId: () => this.store.newId(),
     };
     this.dialog
@@ -130,10 +132,12 @@ export class TripActionsService {
   }
 
   editAccommodation(trip: TripDto, accommodation: AccommodationDto): void {
+    const index = trip.accommodations.findIndex((a) => a.id === accommodation.id);
     const data: AccommodationDialogData = {
       accommodation,
       defaultCheckIn: trip.startDate,
       defaultCheckOut: trip.endDate,
+      defaultColor: accommodationDefaultColor(index < 0 ? 0 : index),
       newId: () => this.store.newId(),
     };
     this.dialog

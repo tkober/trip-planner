@@ -7,12 +7,14 @@ import { AccommodationDto, TripDto } from '../../models/trip.model';
 import { TripStoreService } from '../../services/trip-store.service';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
+import { accommodationColors } from '../../shared/color/color';
 
 interface AccommodationRow {
   accommodation: AccommodationDto;
   checkIn: string;
   checkOut: string;
   nights: number;
+  color: string;
 }
 
 /** All accommodations as a list, ordered by check-in date, with details. */
@@ -37,6 +39,8 @@ export class AccommodationsView {
   readonly rows = computed<AccommodationRow[]>(() => {
     const t = this.trip();
     if (!t) return [];
+    // Colour is keyed off storage order so it matches the timeline.
+    const colorById = accommodationColors(t.accommodations);
     return t.accommodations
       .slice()
       .sort((a, b) => a.checkInDate.localeCompare(b.checkInDate))
@@ -45,6 +49,7 @@ export class AccommodationsView {
         checkIn: this.formatDate(a.checkInDate),
         checkOut: this.formatDate(a.checkOutDate),
         nights: this.tz.nightsBetween(a.checkInDate, a.checkOutDate),
+        color: colorById.get(a.id) ?? '',
       }));
   });
 
