@@ -34,7 +34,6 @@ export class StraddleCard {
   private readonly tz = inject(TimeZoneService);
 
   readonly entry = input.required<TimelineEntry>();
-  readonly destZone = input.required<string>();
   /** Grid line to anchor on (the separator between the two days). */
   readonly rowLine = input.required<number>();
 
@@ -56,7 +55,7 @@ export class StraddleCard {
   readonly startLabel = computed(() => this.label(this.entry().start));
   readonly endLabel = computed(() => {
     const end = this.entry().activity?.end ?? this.entry().transport?.end;
-    return end ? this.label(end) : '';
+    return end ? this.label(end) : undefined;
   });
 
   readonly subtitle = computed<string | undefined>(() => {
@@ -67,7 +66,22 @@ export class StraddleCard {
     return this.entry().activity?.location ?? undefined;
   });
 
-  private label(zt: { dateTime: string; zone: string }): string {
-    return this.tz.inZone(zt, this.destZone()).toFormat("ccc, d LLL '·' HH:mm");
+  /** Whether the two endpoints sit in different zones (show the zone tag). */
+  readonly showZones = computed(() => {
+    const e = this.entry();
+    const end = e.activity?.end ?? e.transport?.end;
+    return !!end && end.zone !== e.start.zone;
+  });
+
+  /** Each endpoint in ITS OWN zone, so the two calendar days read correctly. */
+  private label(zt: { dateTime: string; zone: string }): {
+    when: string;
+    zone: string;
+  } {
+    const dt = this.tz.toDateTime(zt);
+    return {
+      when: dt.toFormat("ccc, d LLL '·' HH:mm"),
+      zone: dt.toFormat('ZZZZ'),
+    };
   }
 }

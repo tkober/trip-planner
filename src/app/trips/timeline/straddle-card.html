@@ -3,7 +3,12 @@
     <div class="bullet"><mat-icon>{{ icon() }}</mat-icon></div>
     <div class="info">
       <div class="title">{{ title() }}</div>
-      <div class="time">{{ startLabel() }}</div>
+      <div class="time">
+        {{ startLabel().when }}
+        @if (showZones()) {
+          <span class="zone">{{ startLabel().zone }}</span>
+        }
+      </div>
     </div>
     <button
       matIconButton
@@ -29,10 +34,15 @@
 
   <div class="half bottom">
     <div class="info">
-      <div class="time arrival">
-        <mat-icon class="arr-icon">south_east</mat-icon>
-        {{ endLabel() }}
-      </div>
+      @if (endLabel(); as end) {
+        <div class="time arrival">
+          <mat-icon class="arr-icon">south_east</mat-icon>
+          {{ end.when }}
+          @if (showZones()) {
+            <span class="zone">{{ end.zone }}</span>
+          }
+        </div>
+      }
       @if (subtitle(); as sub) {
         <div class="subtitle">{{ sub }}</div>
       }

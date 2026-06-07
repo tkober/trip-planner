@@ -120,6 +120,15 @@ export class TimeZoneService {
     return this.inZone(zt, destZone).toISODate() ?? '';
   }
 
+  /**
+   * The calendar date a moment falls on **in its own zone**: "YYYY-MM-DD".
+   * Used to detect day-crossing entries from the traveller's point of view
+   * (e.g. a flight departing Berlin on the 15th and arriving Tokyo on the 16th).
+   */
+  dayKeyLocal(zt: ZonedTime): string {
+    return this.toDateTime(zt).toISODate() ?? '';
+  }
+
   /** Inclusive number of nights between two "YYYY-MM-DD" dates. */
   nightsBetween(checkInDate: string, checkOutDate: string): number {
     const a = DateTime.fromISO(checkInDate);

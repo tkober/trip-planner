@@ -205,7 +205,6 @@ export class Timeline {
     if (!trip || !days.length) {
       return { dayViews: [] as DayView[], straddles: [] as StraddleItem[] };
     }
-    const destZone = trip.destinationTimeZone;
     const buckets = new Map<string, TimelineEntry[]>();
     for (const day of days) buckets.set(day.date, []);
     const straddles: StraddleItem[] = [];
@@ -213,13 +212,11 @@ export class Timeline {
     const padTop = new Set<number>();
 
     const handle = (entry: TimelineEntry, end?: ZonedTime) => {
-      const startIdx = this.clampIndex(
-        this.tz.dayKeyInDestination(entry.start, destZone),
-      );
+      // Day is judged in each endpoint's OWN zone, so a flight that departs
+      // Berlin on the 15th and lands in Tokyo on the 16th counts as crossing.
+      const startIdx = this.clampIndex(this.tz.dayKeyLocal(entry.start));
       if (end) {
-        const endIdx = this.clampIndex(
-          this.tz.dayKeyInDestination(end, destZone),
-        );
+        const endIdx = this.clampIndex(this.tz.dayKeyLocal(end));
         if (endIdx > startIdx) {
           // Anchor on the separator just below the start day.
           straddles.push({ entry, rowLine: startIdx + 2 });
@@ -297,9 +294,8 @@ export class Timeline {
   }
 
   private countOrphans(trip: TripDto, start: string, end: string): number {
-    const destZone = trip.destinationTimeZone;
     const inRange = (zt: { dateTime: string; zone: string }) => {
-      const key = this.tz.dayKeyInDestination(zt, destZone);
+      const key = this.tz.dayKeyLocal(zt);
       return key >= start && key <= end;
     };
     let n = 0;
@@ -521,10 +517,7 @@ export class Timeline {
     const trip = this.trip();
     if (!trip) return;
 
-    const currentKey = this.tz.dayKeyInDestination(
-      entry.start,
-      trip.destinationTimeZone,
-    );
+    const currentKey = this.tz.dayKeyLocal(entry.start);
     const deltaDays = Math.round(
       DateTime.fromISO(targetDate).diff(DateTime.fromISO(currentKey), 'days')
         .days,

@@ -92,7 +92,6 @@
     @for (s of straddles(); track s.entry.activity?.id ?? s.entry.transport?.id) {
       <app-straddle-card
         [entry]="s.entry"
-        [destZone]="t.destinationTimeZone"
         [rowLine]="s.rowLine"
         (open)="openEntry($event)"
         (edit)="editEntry($event)"
