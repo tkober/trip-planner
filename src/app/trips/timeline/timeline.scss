@@ -24,6 +24,66 @@
   align-items: stretch;
 }
 
+// Grayed pseudo-days for the international flights (home-tz departure/arrival
+// day). They mirror the day-section marker/content but sit directly in the grid.
+.day-marker.virtual {
+  grid-column: 1 / 2;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0.75rem 0.75rem 0;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  border-right: 2px solid var(--mat-sys-outline-variant);
+  opacity: 0.5;
+
+  .day-date {
+    font-size: 0.8rem;
+    color: var(--mat-sys-on-surface-variant);
+    text-transform: uppercase;
+  }
+
+  .day-date-num {
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .day-zone {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-top: 0.15rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--mat-sys-on-surface-variant);
+
+    .zone-icon {
+      font-size: 0.85rem;
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+  }
+
+  .virtual-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--mat-sys-primary);
+  }
+}
+
+.day-content.virtual {
+  grid-column: -2 / -1;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  min-height: 1rem;
+
+  &.pad-top {
+    padding-top: 3.75rem;
+  }
+  &.pad-bottom {
+    padding-bottom: 3.75rem;
+  }
+}
+
 // Vertical hotel name centered over its stay, in the hotel lane. Click-through
 // so the colored half-cells beneath handle taps (details dialog).
 .stay-label {

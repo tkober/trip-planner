@@ -2,6 +2,9 @@
   <div class="day-index">Day {{ view().day.index }}</div>
   <div class="day-date">{{ view().day.startOfDay.toFormat('ccc') }}</div>
   <div class="day-date-num">{{ view().day.startOfDay.toFormat('d LLL') }}</div>
+  <div class="day-zone">
+    <mat-icon class="zone-icon">schedule</mat-icon>{{ zoneLabel() }}
+  </div>
 </div>
 
 <div

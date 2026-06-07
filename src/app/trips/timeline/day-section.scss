@@ -26,6 +26,24 @@
     font-size: 0.95rem;
     font-variant-numeric: tabular-nums;
   }
+
+  .day-zone {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-top: 0.15rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--mat-sys-on-surface-variant);
+
+    .zone-icon {
+      font-size: 0.85rem;
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+  }
 }
 
 .day-content {

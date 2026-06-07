@@ -9,7 +9,11 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
 **Implemented (v1):**
 - Multi-trip dashboard: create, open, import, export, delete trips.
 - Trip timeline rendered as a **CSS grid** (one row per day, "Day N" + date in the
-  destination tz).
+  destination tz). Each day marker also shows the **reference city** (the tz the day
+  is expressed in, e.g. "Tokyo"). The international flights at the trip's edges get a
+  grayed **virtual "Departure Day" / "Return Day"** row carrying the **home** city
+  label, so a flight that leaves home the day before (or lands home) reads as a
+  `StraddleCard` between that virtual day and the adjacent real day.
 - Accommodations render in a single **hotel lane** as continuous blocks, using a
   **half-day handoff**: each day's top half is the hotel you wake up in, the bottom
   half the hotel you sleep in. A continuous stay reads as one solid block; a hotel
@@ -79,7 +83,13 @@ Services (signal-backed, `providedIn: 'root'`):
 Timeline composition:
 - [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid; computes
   `dayViews`, accommodation hotel cells/labels, straddles; owns drag-drop
-  confirmation. Dialog actions are delegated to `TripActionsService`.
+  confirmation. Dialog actions are delegated to `TripActionsService`. `layout()` also
+  detects the boundary international legs (inbound flight arriving from another zone
+  at/before day 1; outbound leaving to another zone at/after the last day), emits a
+  leading/trailing `VirtualDay`, and exposes `rowOffset` — the number of prepended
+  virtual rows (0 or 1) that shifts every real-day grid row. Virtual rows are rendered
+  inline in `timeline.html` (grayed marker + empty padded content); the boundary flight
+  itself is pushed as a `StraddleCard` anchored on the virtual-day separator.
 - [DaySection](src/app/trips/timeline/day-section.ts) — one day. Uses
   `display: contents` so its day-marker (col 1) and CDK drop-list content (last col)
   become direct children of the timeline grid, sharing rows with span blocks.

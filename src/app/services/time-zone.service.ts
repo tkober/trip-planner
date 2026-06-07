@@ -31,6 +31,11 @@ export class TimeZoneService {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   }
 
+  /** Friendly city name from an IANA id: "Asia/Tokyo" → "Tokyo". */
+  zoneCity(zone: string): string {
+    return (zone.split('/').pop() ?? zone).replace(/_/g, ' ');
+  }
+
   /** All IANA zone ids supported by the runtime (for autocompletes). */
   supportedZones(): string[] {
     const intl = Intl as unknown as {

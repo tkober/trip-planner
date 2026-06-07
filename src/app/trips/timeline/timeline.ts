@@ -25,6 +25,23 @@ interface StraddleItem {
   rowLine: number;
 }
 
+/**
+ * A grayed pseudo-day prepended/appended for an international flight whose home
+ * endpoint sits outside the destination-tz trip range (the home-tz departure day
+ * before the trip, or the home-tz arrival day at its end).
+ */
+interface VirtualDay {
+  /** "Departure Day" or "Return Day". */
+  label: string;
+  /** Weekday / date in the endpoint's OWN (home) zone. */
+  weekday: string;
+  dayNum: string;
+  /** Home city label. */
+  city: string;
+  padTop: boolean;
+  padBottom: boolean;
+}
+
 /** The day-by-day timeline grid (one of the trip-page views). */
 @Component({
   selector: 'app-timeline-view',
@@ -80,6 +97,7 @@ export class TimelineView {
     if (!trip || !days.length || !trip.accommodations.length) return [];
 
     const colorById = accommodationColors(trip.accommodations);
+    const offset = this.rowOffset();
 
     // The accommodation you sleep in on each day's night, if any.
     const nightOf = days.map((d) =>
@@ -95,7 +113,7 @@ export class TimelineView {
       if (!night && !morning) return;
       const sameRun = !!morning && !!night && morning.id === night.id;
       cells.push({
-        rowIndex: i + 1,
+        rowIndex: i + 1 + offset,
         top: morning
           ? {
               accommodation: morning,
@@ -125,13 +143,14 @@ export class TimelineView {
     const trip = this.trip();
     const days = this.days();
     if (!trip || !days.length) return [];
+    const offset = this.rowOffset();
     return trip.accommodations.map((a) => {
       const s = this.clampIndex(a.checkInDate);
       const e = this.clampIndex(a.checkOutDate);
       return {
         id: a.id,
         name: a.name,
-        gridRow: `${Math.min(s, e) + 1} / ${Math.max(s, e) + 2}`,
+        gridRow: `${Math.min(s, e) + 1 + offset} / ${Math.max(s, e) + 2 + offset}`,
       };
     });
   });
@@ -145,9 +164,43 @@ export class TimelineView {
   private readonly layout = computed(() => {
     const trip = this.trip();
     const days = this.days();
-    if (!trip || !days.length) {
-      return { dayViews: [] as DayView[], straddles: [] as StraddleItem[] };
-    }
+    const empty = {
+      dayViews: [] as DayView[],
+      straddles: [] as StraddleItem[],
+      leading: undefined as VirtualDay | undefined,
+      trailing: undefined as VirtualDay | undefined,
+      offset: 0,
+    };
+    if (!trip || !days.length) return empty;
+
+    const destZone = trip.destinationTimeZone;
+    const firstDate = days[0].date;
+    const lastDate = days[days.length - 1].date;
+
+    // Boundary international legs: the inbound flight that arrives INTO the
+    // destination from another zone at/before the first day, and the outbound
+    // flight that leaves the destination to another zone at/after the last day.
+    const leadingLeg = trip.transport
+      .filter(
+        (t) =>
+          t.end &&
+          t.start.zone !== destZone &&
+          t.end.zone === destZone &&
+          this.tz.dayKeyInDestination(t.start, destZone) <= firstDate,
+      )
+      .sort((a, b) => this.tz.toMillis(a.start) - this.tz.toMillis(b.start))[0];
+    const trailingLeg = trip.transport
+      .filter(
+        (t) =>
+          t.end &&
+          t.end.zone !== destZone &&
+          t.start.zone === destZone &&
+          this.tz.dayKeyInDestination(t.end, destZone) >= lastDate,
+      )
+      .sort((a, b) => this.tz.toMillis(b.end!) - this.tz.toMillis(a.end!))[0];
+
+    const offset = leadingLeg ? 1 : 0;
+
     const buckets = new Map<string, TimelineEntry[]>();
     for (const day of days) buckets.set(day.date, []);
     const straddles: StraddleItem[] = [];
@@ -162,7 +215,7 @@ export class TimelineView {
         const endIdx = this.clampIndex(this.tz.dayKeyLocal(end));
         if (endIdx > startIdx) {
           // Anchor on the separator just below the start day.
-          straddles.push({ entry, rowLine: startIdx + 2 });
+          straddles.push({ entry, rowLine: offset + startIdx + 2 });
           padBottom.add(startIdx);
           padTop.add(startIdx + 1);
           return;
@@ -175,7 +228,45 @@ export class TimelineView {
       handle({ kind: 'activity', activity: a, start: a.start }, a.end);
     }
     for (const t of trip.transport) {
+      if (t === leadingLeg || t === trailingLeg) continue; // rendered as boundary straddles
       handle({ kind: 'transport', transport: t, start: t.start }, t.end);
+    }
+
+    // Boundary flights become straddles anchored on the virtual-day separators.
+    let leading: VirtualDay | undefined;
+    if (leadingLeg) {
+      straddles.push({
+        entry: { kind: 'transport', transport: leadingLeg, start: leadingLeg.start },
+        rowLine: offset + 1, // separator between the virtual day (row 1) and day 1
+      });
+      padTop.add(0); // real day 1 makes room below the card
+      const dt = this.tz.toDateTime(leadingLeg.start);
+      leading = {
+        label: 'Departure Day',
+        weekday: dt.toFormat('ccc'),
+        dayNum: dt.toFormat('d LLL'),
+        city: this.tz.zoneCity(leadingLeg.start.zone),
+        padTop: false,
+        padBottom: true,
+      };
+    }
+
+    let trailing: VirtualDay | undefined;
+    if (trailingLeg) {
+      straddles.push({
+        entry: { kind: 'transport', transport: trailingLeg, start: trailingLeg.start },
+        rowLine: offset + days.length + 1, // separator between last day and virtual day
+      });
+      padBottom.add(days.length - 1); // last real day makes room above the card
+      const dt = this.tz.toDateTime(trailingLeg.end!);
+      trailing = {
+        label: 'Return Day',
+        weekday: dt.toFormat('ccc'),
+        dayNum: dt.toFormat('d LLL'),
+        city: this.tz.zoneCity(trailingLeg.end!.zone),
+        padTop: true,
+        padBottom: false,
+      };
     }
 
     const dayViews: DayView[] = days.map((day, i) => ({
@@ -188,11 +279,20 @@ export class TimelineView {
       padBottom: padBottom.has(i),
     }));
 
-    return { dayViews, straddles };
+    return { dayViews, straddles, leading, trailing, offset };
   });
 
   readonly dayViews = computed(() => this.layout().dayViews);
   readonly straddles = computed(() => this.layout().straddles);
+  /** Number of virtual rows prepended (0 or 1) — shifts every real-day grid row. */
+  readonly rowOffset = computed(() => this.layout().offset);
+  readonly leadingDay = computed(() => this.layout().leading);
+  readonly trailingDay = computed(() => this.layout().trailing);
+  /** Destination city label shown on every real day. */
+  readonly destCity = computed(() => {
+    const t = this.trip();
+    return t ? this.tz.zoneCity(t.destinationTimeZone) : '';
+  });
 
   /** Resolve a date to its 0-based day position, clamped to the trip range. */
   private clampIndex(date: string): number {

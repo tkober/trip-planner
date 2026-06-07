@@ -7,11 +7,47 @@
     cdkDropListGroup
     [style.grid-template-columns]="gridTemplateColumns()"
   >
+    @if (leadingDay(); as v) {
+      <div class="day-marker virtual" [style.grid-row]="1">
+        <div class="day-index virtual-label">{{ v.label }}</div>
+        <div class="day-date">{{ v.weekday }}</div>
+        <div class="day-date-num">{{ v.dayNum }}</div>
+        <div class="day-zone">
+          <mat-icon class="zone-icon">schedule</mat-icon>{{ v.city }}
+        </div>
+      </div>
+      <div
+        class="day-content virtual"
+        [class.pad-top]="v.padTop"
+        [class.pad-bottom]="v.padBottom"
+        [style.grid-row]="1"
+      ></div>
+    }
+    @if (trailingDay(); as v) {
+      <div
+        class="day-marker virtual"
+        [style.grid-row]="rowOffset() + dayViews().length + 1"
+      >
+        <div class="day-index virtual-label">{{ v.label }}</div>
+        <div class="day-date">{{ v.weekday }}</div>
+        <div class="day-date-num">{{ v.dayNum }}</div>
+        <div class="day-zone">
+          <mat-icon class="zone-icon">schedule</mat-icon>{{ v.city }}
+        </div>
+      </div>
+      <div
+        class="day-content virtual"
+        [class.pad-top]="v.padTop"
+        [class.pad-bottom]="v.padBottom"
+        [style.grid-row]="rowOffset() + dayViews().length + 1"
+      ></div>
+    }
     @for (dv of dayViews(); track dv.day.date; let i = $index) {
       <app-day-section
         [view]="dv"
         [destZone]="t.destinationTimeZone"
-        [rowIndex]="i + 1"
+        [zoneLabel]="destCity()"
+        [rowIndex]="i + 1 + rowOffset()"
         (addActivity)="addActivity($event)"
         (addTransport)="addTransport($event)"
         (openEntry)="openEntry($event)"

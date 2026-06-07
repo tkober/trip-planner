@@ -36,6 +36,8 @@ export interface DayView {
 export class DaySection {
   readonly view = input.required<DayView>();
   readonly destZone = input.required<string>();
+  /** Short city label for the day's reference zone (e.g. "Tokyo"). */
+  readonly zoneLabel = input.required<string>();
   /** 1-based grid row line for this day. */
   readonly rowIndex = input.required<number>();
 
