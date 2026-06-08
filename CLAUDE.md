@@ -218,6 +218,37 @@ and publishes via GitHub Pages. It sets `--base-href "/<repo-name>/"` automatica
 copies `index.html` → `404.html` for SPA deep-link fallback. **One-time setup:** in the
 GitHub repo, Settings → Pages → Source = "GitHub Actions".
 
+## Deploy (Docker / GHCR)
+
+For self-hosting (e.g. on an app cluster with the shared Postgres), both pieces ship
+as container images published to GHCR:
+
+- **Backend** — [server/Dockerfile](server/Dockerfile) (uv-based, `uv sync --frozen`,
+  runs `uvicorn app.main:app`). All config (`DB_URL`, `DB_USER`, `DB_PASSWORD`,
+  `DB_OWNER_USER`, `DB_OWNER_PASSWORD`, `CORS_ORIGINS`) is read at runtime, so pass it
+  via `docker run --env-file` / `-e` — nothing is baked. Bind `HOST`/`PORT` default to
+  `0.0.0.0`/`8000` but are env-overridable (shell-form CMD). Image
+  `ghcr.io/tkober/trip-planner-server`.
+- **Frontend** — root [Dockerfile](Dockerfile): multi-stage (Node build → nginx).
+  Env vars are injected **at runtime, not build time**: the Angular bundle is built
+  once, and [docker-entrypoint.sh](docker-entrypoint.sh) writes `/config.js` from
+  `STORAGE_BACKEND` / `API_BASE_URL` / `DEFAULT_TRIP_TZ` / `DEFAULT_DEPARTURE_TZ` on
+  container start. [index.html](src/index.html) loads `config.js` (a classic script,
+  before the deferred app bundle) into `window.__TRIP_PLANNER_ENV__`, and the generated
+  [environment.ts](src/environments/environment.ts) reads that global, falling back to
+  the build-time baked values when absent (so `npm start` and GitHub Pages are
+  unaffected — their `public/config.js` is an empty default). One image is thus
+  reconfigurable per deployment without a rebuild. nginx config (SPA fallback,
+  no-cache `config.js`) is [nginx.conf](nginx.conf), shipped as a
+  `*.template` so nginx's envsubst renders `listen ${PORT}` (default `80`,
+  env-overridable). Image `ghcr.io/tkober/trip-planner-web`.
+
+Two workflows ([publish-server.yml](.github/workflows/publish-server.yml),
+[publish-frontend.yml](.github/workflows/publish-frontend.yml)) build/push on push to
+`main` (each path-filtered to its own files) and on `v*.*.*` tags (a release tag builds
+both). Tags: `latest` (default branch), semver, and `sha`; build layers cached via gha.
+No compose file — images are deployed by the cluster.
+
 ## Conventions
 
 - Standalone components only (no NgModules); prefer `signal`/`computed`/`input`/`output`.
