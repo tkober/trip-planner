@@ -12,7 +12,7 @@ export const environment = {
   /** Default destination zone for a new trip. */
   defaultTripTimeZone: "Asia/Tokyo",
   /** Persistence backend: "indexeddb" (browser-local) or "http" (FastAPI). */
-  storageBackend: "indexeddb",
+  storageBackend: "http",
   /** Base URL of the backend API when storageBackend === "http". */
-  apiBaseUrl: "http://localhost:8000",
+  apiBaseUrl: "http://127.0.0.1:8000",
 };
