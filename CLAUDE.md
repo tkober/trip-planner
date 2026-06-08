@@ -41,7 +41,9 @@ attachments, trip duplication, dark-mode toggle, undo.
 
 - **Angular 22**, standalone components, **signals**, **zoneless** change detection.
 - **Angular Material + CDK** (dialogs, menus, drag-drop, form fields).
-- **Dexie** (IndexedDB) for persistence.
+- **Dexie** (IndexedDB) for default browser-local persistence; an optional
+  **FastAPI + PostgreSQL (JSONB)** backend ([server/](server/)) can be selected at
+  build time. See "Storage backend" below.
 - **Luxon** for IANA timezone math.
 - Native `type="date"` / `type="datetime-local"` inputs (their string values map
   directly to our stored `"YYYY-MM-DD"` / `"YYYY-MM-DDTHH:mm"` formats).
@@ -65,16 +67,25 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
   `paramsInheritanceStrategy: 'always'` (set in [app.config.ts](src/app/app.config.ts));
   each derives its trip with `computed(() => trips().find(...))`.
 
-Services (signal-backed, `providedIn: 'root'`):
-- [TripStoreService](src/app/services/trip-store.service.ts) — Dexie wrapper. Holds the
-  `trips` signal; all CRUD (trip + nested accommodation/activity/transport) re-saves the
-  whole trip and `refresh()`es the signal. The Timeline derives its trip via
-  `computed(() => trips().find(...))`, so any mutation reactively updates the view.
+Services (signal-backed, `providedIn: 'root'` unless noted):
+- [TripStore](src/app/services/trip-store.ts) — **abstract** persistence interface
+  (also the DI token). Holds the `trips` signal; all CRUD (trip + nested
+  accommodation/activity/transport) re-saves the whole trip and `refresh()`es the
+  signal. The Timeline derives its trip via `computed(() => trips().find(...))`, so
+  any mutation reactively updates the view. Two implementations, selected in
+  [app.config.ts](src/app/app.config.ts) by `environment.storageBackend`:
+  - [IndexedDbTripStore](src/app/services/indexeddb-trip-store.ts) — **default**,
+    browser-local Dexie/IndexedDB wrapper.
+  - [HttpTripStore](src/app/services/http-trip-store.ts) — `HttpClient` client of the
+    FastAPI backend (`environment.apiBaseUrl`). Because every nested mutation funnels
+    through `saveTrip()`, the backend only needs whole-trip endpoints.
+  Both run loaded/fetched trips through `migrateTrip()` (shared `uuid`/`upsertById`
+  helpers live in [trip-store-util.ts](src/app/services/trip-store-util.ts)).
 - [TimeZoneService](src/app/services/time-zone.service.ts) — Luxon helpers:
   `toDateTime`, `inZone`, `dualLabel` (highlights the entry's own zone), `enumerateDays`,
   `dayKeyInDestination` (buckets entries into days), `deviceZone`, `supportedZones`.
 - [ImportExportService](src/app/services/import-export.service.ts) — JSON download +
-  validated import (assigns a fresh id, checks `schemaVersion`).
+  validated import (validates required fields, runs `migrateTrip()`, assigns a fresh id).
 - [TripActionsService](src/app/services/trip-actions.service.ts) — all dialog-driven
   trip mutations (edit trip, add/edit/delete + open-details for accommodation/
   activity/transport, the `confirm` helper, JSON export). Shared by every view so
@@ -149,6 +160,9 @@ npm run build      # production build → dist/japan-trip-planner/browser
 npm test           # unit tests
 ```
 
+The optional backend lives in [server/](server/) (FastAPI, managed with `uv`); see
+[server/README.md](server/README.md) to run it.
+
 ### Configuration (env vars)
 
 New-trip timezone defaults are build-time configurable.
@@ -160,11 +174,42 @@ New-trip timezone defaults are build-time configurable.
   Empty (default) falls back to the device zone via `TimeZoneService.deviceZone()`.
 - `DEFAULT_TRIP_TZ` — IANA zone seeded as a new trip's destination zone
   (default `Asia/Tokyo`).
+- `STORAGE_BACKEND` — `indexeddb` (default, browser-local) or `http` (FastAPI
+  backend). See "Storage backend" below.
+- `API_BASE_URL` — backend base URL when `STORAGE_BACKEND=http`
+  (default `http://localhost:8000`).
+
+These can be set on the command line (`STORAGE_BACKEND=http npm start`) or placed in
+a `.env` file at the repo root (see [.env.example](.env.example)); `generate-env.mjs`
+loads `.env` but lets already-set shell/CLI vars win. `.env` is git-ignored.
 
 `environment.ts` is generated; edit the env vars (or the script's fallbacks), not
-the file. Consumed in [TripFormDialog](src/app/trips/trip-form-dialog/trip-form-dialog.ts).
+the file. Consumed in [TripFormDialog](src/app/trips/trip-form-dialog/trip-form-dialog.ts)
+(timezones) and [app.config.ts](src/app/app.config.ts) (storage backend).
 The deploy workflow reads these from GitHub Actions repo **Variables** of the same
 name. Anything other than these defaults still lives in the per-trip form.
+
+### Storage backend
+
+The data layer is abstracted behind the [TripStore](src/app/services/trip-store.ts)
+abstract class. By default trips live in the browser (IndexedDB). Set
+`STORAGE_BACKEND=http` (+ `API_BASE_URL`) to persist to the FastAPI + PostgreSQL
+service in [server/](server/) instead — useful for sharing trips across devices.
+The browser cannot reach Postgres directly, hence the HTTP layer. The backend is
+dumb whole-trip storage (one `JSONB` row per trip). It connects with **two Postgres
+roles** (configured in `server/.env`): an *owner* role used only at startup to
+**auto-create the `trips` table**, and an *app* role used for all runtime CRUD (no
+DDL). The app role's access to the owner-created table comes from server-side
+`ALTER DEFAULT PRIVILEGES` (no `GRANT` in app code). See
+[server/README.md](server/README.md) to run it (managed with `uv`). GitHub Pages deploys leave `STORAGE_BACKEND` unset, so they
+stay browser-local.
+
+### Schema migrations
+
+[src/app/models/migrations.ts](src/app/models/migrations.ts) holds `migrateTrip()`,
+which every trip entering the app (read from a store or imported) passes through:
+it detects `schemaVersion` and applies the ordered `MIGRATIONS` steps up to the
+current `SCHEMA_VERSION` (rejecting documents from a newer app version).
 
 ## Deploy (GitHub Pages)
 
@@ -176,7 +221,8 @@ GitHub repo, Settings → Pages → Source = "GitHub Actions".
 ## Conventions
 
 - Standalone components only (no NgModules); prefer `signal`/`computed`/`input`/`output`.
-- Keep DTOs JSON-serializable and bump `SCHEMA_VERSION` on shape changes (add import
-  migration in `ImportExportService.normalize`).
+- Keep DTOs JSON-serializable. On any shape change, bump `SCHEMA_VERSION` **and** add
+  a matching `MIGRATIONS[<new version>]` step in
+  [migrations.ts](src/app/models/migrations.ts) (applied everywhere a trip loads).
 - Every delete or trip-duration change must go through the confirm dialog.
 - **Keep this file updated** as features land or the architecture shifts.
