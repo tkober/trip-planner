@@ -1,5 +1,8 @@
-import { Injectable, signal } from '@angular/core';
-import Dexie, { Table } from 'dexie';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { migrateTrip } from '../models/migrations';
 import {
   AccommodationDto,
   ActivityDto,
@@ -7,53 +10,43 @@ import {
   TransportDto,
   TripDto,
 } from '../models/trip.model';
+import { TripStore } from './trip-store';
+import { upsertById, uuid } from './trip-store-util';
 
-class TripPlannerDB extends Dexie {
-  trips!: Table<TripDto, string>;
+/**
+ * Server-backed persistence via the FastAPI/Postgres backend.
+ *
+ * Selected when `environment.storageBackend === 'http'`. The backend is dumb
+ * whole-trip storage; migration stays a frontend concern, so every fetched trip
+ * is passed through {@link migrateTrip}.
+ */
+@Injectable()
+export class HttpTripStore extends TripStore {
+  private readonly http = inject(HttpClient);
+  private readonly base = environment.apiBaseUrl.replace(/\/+$/, '');
 
-  constructor() {
-    super('TripPlannerDB');
-    this.version(1).stores({
-      // Primary key `id`; index updatedAt for sorting the list.
-      trips: 'id, updatedAt, startDate',
-    });
-  }
-}
-
-/** Generate a uuid, with a fallback for older runtimes. */
-function uuid(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-@Injectable({ providedIn: 'root' })
-export class TripStoreService {
-  private readonly db = new TripPlannerDB();
-
-  /** Reactive list of all trips (most recently updated first). */
   readonly trips = signal<TripDto[]>([]);
   readonly loaded = signal(false);
 
   constructor() {
+    super();
     void this.refresh();
   }
 
-  /** Reload all trips from IndexedDB into the signal. */
   async refresh(): Promise<void> {
-    const all = await this.db.trips.toArray();
+    const all = (
+      await firstValueFrom(this.http.get<TripDto[]>(`${this.base}/trips`))
+    ).map(migrateTrip);
     all.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     this.trips.set(all);
     this.loaded.set(true);
   }
 
   async getTrip(id: string): Promise<TripDto | undefined> {
-    return this.db.trips.get(id);
+    const trip = await firstValueFrom(
+      this.http.get<TripDto>(`${this.base}/trips/${id}`),
+    );
+    return trip ? migrateTrip(trip) : undefined;
   }
 
   // --- Trip-level CRUD -----------------------------------------------------
@@ -85,21 +78,25 @@ export class TripStoreService {
       createdAt: now,
       updatedAt: now,
     };
-    await this.db.trips.put(trip);
+    const saved = await firstValueFrom(
+      this.http.post<TripDto>(`${this.base}/trips`, trip),
+    );
     await this.refresh();
-    return trip;
+    return saved ?? trip;
   }
 
   /** Persist a full trip object (used by import and by nested mutations). */
   async saveTrip(trip: TripDto): Promise<TripDto> {
     const next = { ...trip, updatedAt: new Date().toISOString() };
-    await this.db.trips.put(next);
+    await firstValueFrom(
+      this.http.put<TripDto>(`${this.base}/trips/${next.id}`, next),
+    );
     await this.refresh();
     return next;
   }
 
   async deleteTrip(id: string): Promise<void> {
-    await this.db.trips.delete(id);
+    await firstValueFrom(this.http.delete<void>(`${this.base}/trips/${id}`));
     await this.refresh();
   }
 
@@ -109,8 +106,10 @@ export class TripStoreService {
     trip: TripDto,
     accommodation: AccommodationDto,
   ): Promise<TripDto> {
-    const list = upsertById(trip.accommodations, accommodation);
-    return this.saveTrip({ ...trip, accommodations: list });
+    return this.saveTrip({
+      ...trip,
+      accommodations: upsertById(trip.accommodations, accommodation),
+    });
   }
 
   async removeAccommodation(trip: TripDto, id: string): Promise<TripDto> {
@@ -155,19 +154,7 @@ export class TripStoreService {
     });
   }
 
-  /** Generate a new id for nested entities created in the UI. */
   newId(): string {
     return uuid();
   }
-}
-
-/** Replace an item with the same id, or append it if new. Returns a new array. */
-function upsertById<T extends { id: string }>(list: T[], item: T): T[] {
-  const idx = list.findIndex((x) => x.id === item.id);
-  if (idx === -1) {
-    return [...list, item];
-  }
-  const next = list.slice();
-  next[idx] = item;
-  return next;
 }

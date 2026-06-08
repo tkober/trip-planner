@@ -8,7 +8,7 @@ import {
   TransportDto,
   TripDto,
 } from '../models/trip.model';
-import { TripStoreService } from './trip-store.service';
+import { TripStore } from './trip-store';
 import { TimeZoneService } from './time-zone.service';
 import { ImportExportService } from './import-export.service';
 import {
@@ -49,7 +49,7 @@ import { accommodationDefaultColor } from '../shared/color/color';
  */
 @Injectable({ providedIn: 'root' })
 export class TripActionsService {
-  private readonly store = inject(TripStoreService);
+  private readonly store = inject(TripStore);
   private readonly tz = inject(TimeZoneService);
   private readonly importExport = inject(ImportExportService);
   private readonly dialog = inject(MatDialog);

@@ -7,7 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TripDto } from '../../models/trip.model';
-import { TripStoreService } from '../../services/trip-store.service';
+import { TripStore } from '../../services/trip-store';
 import { ImportExportService } from '../../services/import-export.service';
 import { TimeZoneService } from '../../services/time-zone.service';
 import {
@@ -31,7 +31,7 @@ import {
   styleUrl: './trip-list.scss',
 })
 export class TripList {
-  private readonly store = inject(TripStoreService);
+  private readonly store = inject(TripStore);
   private readonly importExport = inject(ImportExportService);
   private readonly tz = inject(TimeZoneService);
   private readonly dialog = inject(MatDialog);

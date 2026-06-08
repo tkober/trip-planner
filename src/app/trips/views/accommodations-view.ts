@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { AccommodationDto, TripDto } from '../../models/trip.model';
-import { TripStoreService } from '../../services/trip-store.service';
+import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { accommodationColors } from '../../shared/color/color';
@@ -28,7 +28,7 @@ export class AccommodationsView {
   /** Parent route param, bound via withComponentInputBinding. */
   readonly id = input.required<string>();
 
-  private readonly store = inject(TripStoreService);
+  private readonly store = inject(TripStore);
   private readonly tz = inject(TimeZoneService);
   private readonly actions = inject(TripActionsService);
 

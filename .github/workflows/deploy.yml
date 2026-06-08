@@ -30,11 +30,14 @@ jobs:
 
       # Generate src/environments/environment.ts from env vars. Set these as
       # repository Variables (Settings → Secrets and variables → Actions) to
-      # change the defaults seeded into a new trip's timezones.
+      # change the timezone defaults or switch the storage backend. STORAGE_BACKEND
+      # is unset here, so Pages deploys keep the browser-local IndexedDB default.
       - name: Generate environment
         env:
           DEFAULT_DEPARTURE_TZ: ${{ vars.DEFAULT_DEPARTURE_TZ }}
           DEFAULT_TRIP_TZ: ${{ vars.DEFAULT_TRIP_TZ }}
+          STORAGE_BACKEND: ${{ vars.STORAGE_BACKEND }}
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
         run: npm run generate-env
 
       # base-href must match the repo name so assets resolve under

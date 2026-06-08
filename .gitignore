@@ -29,6 +29,9 @@ yarn-error.log
 !.vscode/mcp.json
 .history/*
 
+# Local environment config (frontend build-time vars)
+/.env
+
 # Miscellaneous
 /.angular/cache
 .sass-cache/

@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { TripDto } from '../../models/trip.model';
-import { TripStoreService } from '../../services/trip-store.service';
+import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 
@@ -36,7 +36,7 @@ export class TripPage {
   /** Route param, bound via withComponentInputBinding. */
   readonly id = input.required<string>();
 
-  private readonly store = inject(TripStoreService);
+  private readonly store = inject(TripStore);
   private readonly tz = inject(TimeZoneService);
   private readonly actions = inject(TripActionsService);
   private readonly router = inject(Router);
