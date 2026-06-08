@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
+import { migrateTrip } from '../models/migrations';
 import { SCHEMA_VERSION, TripDto } from '../models/trip.model';
+import { uuid } from './trip-store-util';
 
 @Injectable({ providedIn: 'root' })
 export class ImportExportService {
@@ -29,7 +31,7 @@ export class ImportExportService {
     return this.normalize(parsed);
   }
 
-  /** Validate the shape and coerce into a TripDto with a fresh id. */
+  /** Validate the shape, migrate to the current schema, and assign a fresh id. */
   normalize(input: unknown): TripDto {
     if (!input || typeof input !== 'object') {
       throw new Error('File does not contain a trip object.');
@@ -47,31 +49,24 @@ export class ImportExportService {
         throw new Error(`Trip is missing required field "${key}".`);
       }
     }
-    if (
-      typeof t.schemaVersion === 'number' &&
-      t.schemaVersion > SCHEMA_VERSION
-    ) {
-      throw new Error(
-        `This file was created with a newer version (schema ${t.schemaVersion}).`,
-      );
-    }
+    // Upgrade older documents (and reject newer ones) before coercing.
+    const migrated = migrateTrip(input);
     const now = new Date().toISOString();
     return {
-      id:
-        typeof crypto !== 'undefined' && 'randomUUID' in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}`,
+      ...migrated,
+      id: uuid(),
       schemaVersion: SCHEMA_VERSION,
-      title: t.title!,
-      startDate: t.startDate!,
-      endDate: t.endDate!,
-      homeTimeZone: t.homeTimeZone!,
-      destinationTimeZone: t.destinationTimeZone!,
-      description: typeof t.description === 'string' ? t.description : undefined,
-      accommodations: Array.isArray(t.accommodations) ? t.accommodations : [],
-      activities: Array.isArray(t.activities) ? t.activities : [],
-      transport: Array.isArray(t.transport) ? t.transport : [],
-      createdAt: typeof t.createdAt === 'string' ? t.createdAt : now,
+      description:
+        typeof migrated.description === 'string'
+          ? migrated.description
+          : undefined,
+      accommodations: Array.isArray(migrated.accommodations)
+        ? migrated.accommodations
+        : [],
+      activities: Array.isArray(migrated.activities) ? migrated.activities : [],
+      transport: Array.isArray(migrated.transport) ? migrated.transport : [],
+      createdAt:
+        typeof migrated.createdAt === 'string' ? migrated.createdAt : now,
       updatedAt: now,
     };
   }
