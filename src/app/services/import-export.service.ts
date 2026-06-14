@@ -63,6 +63,9 @@ export class ImportExportService {
       accommodations: Array.isArray(migrated.accommodations)
         ? migrated.accommodations
         : [],
+      carReservations: Array.isArray(migrated.carReservations)
+        ? migrated.carReservations
+        : [],
       activities: Array.isArray(migrated.activities) ? migrated.activities : [],
       transport: Array.isArray(migrated.transport) ? migrated.transport : [],
       createdAt:

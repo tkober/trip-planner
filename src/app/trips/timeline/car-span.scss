@@ -1,0 +1,43 @@
+:host {
+  // grid-row / grid-column set via host bindings.
+  display: block;
+  min-width: 0;
+  padding: 3px 0;
+}
+
+.car-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  min-height: 3rem;
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 4px 0 0.5rem;
+  // Soft per-reservation tint (light mix of the accent colour), matching the
+  // hotel lane so the two left lanes read as a consistent pair.
+  background: color-mix(in srgb, var(--car, var(--mat-sys-primary)) 22%, white);
+
+  &:hover {
+    filter: brightness(0.97);
+  }
+}
+
+.car-icon {
+  color: #1c2733;
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.car-name {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #1c2733;
+  white-space: nowrap;
+  overflow: hidden;
+}

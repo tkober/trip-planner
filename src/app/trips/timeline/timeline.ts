@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   AccommodationDto,
+  CarReservationDto,
   TimelineEntry,
   TripDto,
   ZonedTime,
@@ -15,8 +16,12 @@ import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { DaySection, DayView } from './day-section';
 import { HotelCell, HotelDayCell } from './hotel-cell';
+import { CarSpan } from './car-span';
 import { StraddleCard } from './straddle-card';
-import { accommodationColors } from '../../shared/color/color';
+import {
+  accommodationColors,
+  carReservationColors,
+} from '../../shared/color/color';
 
 /** An entry that crosses a day boundary, anchored on the separator line. */
 interface StraddleItem {
@@ -45,7 +50,7 @@ interface VirtualDay {
 /** The day-by-day timeline grid (one of the trip-page views). */
 @Component({
   selector: 'app-timeline-view',
-  imports: [DragDropModule, MatButtonModule, MatIconModule, DaySection, HotelCell, StraddleCard],
+  imports: [DragDropModule, MatButtonModule, MatIconModule, DaySection, HotelCell, CarSpan, StraddleCard],
   templateUrl: './timeline.html',
   styleUrl: './timeline.scss',
 })
@@ -78,11 +83,19 @@ export class TimelineView {
     () => (this.trip()?.accommodations.length ?? 0) > 0,
   );
 
-  /** The timeline grid columns: [day marker] [hotel lane] [content]. */
+  readonly hasCarReservations = computed(
+    () => (this.trip()?.carReservations.length ?? 0) > 0,
+  );
+
+  /**
+   * The timeline grid columns: [day marker] [hotel lane] [car lane] [content].
+   * The hotel and car lanes each collapse to 0px when their entity is absent.
+   */
   readonly gridTemplateColumns = computed(() => {
     const marker = 'clamp(72px, 16vw, 96px)';
     const hotel = this.hasAccommodations() ? 'clamp(40px, 9vw, 52px)' : '0px';
-    return `${marker} ${hotel} minmax(0, 1fr)`;
+    const car = this.hasCarReservations() ? 'clamp(40px, 9vw, 52px)' : '0px';
+    return `${marker} ${hotel} ${car} minmax(0, 1fr)`;
   });
 
   /**
@@ -150,6 +163,28 @@ export class TimelineView {
       return {
         id: a.id,
         name: a.name,
+        gridRow: `${Math.min(s, e) + 1 + offset} / ${Math.max(s, e) + 2 + offset}`,
+      };
+    });
+  });
+
+  /**
+   * One continuous block per car reservation, spanning its day-rows in the car
+   * lane (pickup → return, inclusive). Colour is keyed off storage order so it
+   * stays stable and matches the Car Rentals list.
+   */
+  readonly carSpans = computed(() => {
+    const trip = this.trip();
+    const days = this.days();
+    if (!trip || !days.length) return [];
+    const offset = this.rowOffset();
+    const colorById = carReservationColors(trip.carReservations);
+    return trip.carReservations.map((c) => {
+      const s = this.clampIndex(c.pickupDate);
+      const e = this.clampIndex(c.dropoffDate);
+      return {
+        car: c,
+        color: colorById.get(c.id) ?? '',
         gridRow: `${Math.min(s, e) + 1 + offset} / ${Math.max(s, e) + 2 + offset}`,
       };
     });
@@ -333,6 +368,11 @@ export class TimelineView {
   openAccommodation(accommodation: AccommodationDto): void {
     const trip = this.trip();
     if (trip) this.actions.openAccommodation(trip, accommodation);
+  }
+
+  openCarReservation(car: CarReservationDto): void {
+    const trip = this.trip();
+    if (trip) this.actions.openCarReservation(trip, car);
   }
 
   // --- Drag and drop between days ------------------------------------------

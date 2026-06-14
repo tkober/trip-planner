@@ -1,11 +1,11 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 4,
   "title": "Japan — Cherry Blossom Tour 2026",
   "startDate": "2026-04-03",
   "endDate": "2026-04-18",
   "homeTimeZone": "Europe/Berlin",
   "destinationTimeZone": "Asia/Tokyo",
-  "description": "Two-week spring loop: Tokyo → Hakone → Kyoto → Osaka, then an overnight bus back to Tokyo for the flight home. Built to show off hotel hand-offs, day-crossing flights and overnight legs.",
+  "description": "Two-week spring loop: Tokyo → Hakone → Kyoto → Osaka, then an overnight bus back to Tokyo for the flight home. Built to show off hotel hand-offs, day-crossing flights, overnight legs and a multi-day rental car (picked up and returned at different stations).",
   "createdAt": "2026-01-12T09:00:00.000Z",
   "updatedAt": "2026-01-12T09:00:00.000Z",
   "accommodations": [
@@ -49,7 +49,7 @@
       "address": "2-5-15 Shinsaibashisuji, Chuo Ward, Osaka 542-0085",
       "googleMapsUrl": "https://maps.google.com/?q=Cross+Hotel+Osaka",
       "bookingUrl": "https://www.booking.com/hotel/jp/cross-osaka.html",
-      "remarks": "Right on Dotonbori — expect some night-time noise. Checkout before the Koyasan car day.",
+      "remarks": "Right on Dotonbori — expect some night-time noise. Return the Kansai rental car here at Namba on the 15th before checkout.",
       "checkInDate": "2026-04-13",
       "checkOutDate": "2026-04-15"
     },
@@ -63,6 +63,24 @@
       "remarks": "16th-floor sky lobby. Easy NEX/Keisei access to Narita for the flight home.",
       "checkInDate": "2026-04-16",
       "checkOutDate": "2026-04-18"
+    }
+  ],
+  "carReservations": [
+    {
+      "id": "car-kansai",
+      "name": "Kansai self-drive",
+      "company": "Times Car Rental",
+      "carType": "Compact (Toyota Yaris)",
+      "pickupLocation": "Osaka — Shin-Osaka Station",
+      "dropoffLocation": "Osaka — Namba",
+      "pickupDate": "2026-04-14",
+      "pickupTime": "08:00",
+      "dropoffDate": "2026-04-15",
+      "dropoffTime": "12:00",
+      "pickupGoogleMapsUrl": "https://maps.google.com/?q=Times+Car+Shin-Osaka+Station",
+      "dropoffGoogleMapsUrl": "https://maps.google.com/?q=Times+Car+Namba",
+      "bookingUrl": "https://rental.timescar.jp/en/",
+      "remarks": "One-way rental for the Koyasan excursion: pick up at Shin-Osaka, drop at Namba near the hotel. International Driving Permit required; Hanwa Expressway tolls ~¥3,000 round trip. Drive down to Mt. Koya on the 14th, keep the car overnight, return before the afternoon in Osaka."
     }
   ],
   "transport": [
@@ -109,17 +127,6 @@
       "fromLocation": "Kyoto",
       "toLocation": "Osaka",
       "notes": "JR Kyoto Line, no reservation needed. Suica works."
-    },
-    {
-      "id": "trn-koyasan-car",
-      "mode": "car",
-      "title": "Rental car: Koyasan day trip",
-      "start": { "dateTime": "2026-04-14T08:30", "zone": "Asia/Tokyo" },
-      "end": { "dateTime": "2026-04-14T18:00", "zone": "Asia/Tokyo" },
-      "fromLocation": "Osaka (Namba Times Car)",
-      "toLocation": "Mt. Koya (Koyasan)",
-      "bookingUrl": "https://rental.timescar.jp/en/",
-      "notes": "~2h each way via the Hanwa Expressway. International Driving Permit required. Tolls ~¥3,000."
     },
     {
       "id": "trn-night-bus",

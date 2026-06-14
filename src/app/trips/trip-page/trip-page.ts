@@ -17,7 +17,7 @@ interface NavItem {
 /**
  * The trip page shell: a fixed left side panel (back button, trip name + compact
  * details, and the section nav) plus a `<router-outlet>` that hosts the active
- * section view (overview / timeline / accommodations / transport).
+ * section view (overview / timeline / accommodations / car rentals / transport).
  */
 @Component({
   selector: 'app-trip-page',
@@ -50,6 +50,7 @@ export class TripPage {
     { path: 'overview', label: 'Overview', icon: 'info' },
     { path: 'timeline', label: 'Timeline', icon: 'calendar_view_day' },
     { path: 'accommodations', label: 'Accommodations', icon: 'hotel' },
+    { path: 'car-reservations', label: 'Car Rentals', icon: 'directions_car' },
     { path: 'transport', label: 'Transport', icon: 'commute' },
   ];
 

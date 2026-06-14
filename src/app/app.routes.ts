@@ -31,6 +31,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'car-reservations',
+        loadComponent: () =>
+          import('./trips/views/car-reservations-view').then(
+            (m) => m.CarReservationsView,
+          ),
+      },
+      {
         path: 'transport',
         loadComponent: () =>
           import('./trips/views/transport-view').then((m) => m.TransportView),

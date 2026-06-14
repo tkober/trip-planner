@@ -6,6 +6,7 @@ import { migrateTrip } from '../models/migrations';
 import {
   AccommodationDto,
   ActivityDto,
+  CarReservationDto,
   SCHEMA_VERSION,
   TransportDto,
   TripDto,
@@ -73,6 +74,7 @@ export class HttpTripStore extends TripStore {
       destinationTimeZone: data.destinationTimeZone,
       description: data.description,
       accommodations: [],
+      carReservations: [],
       activities: [],
       transport: [],
       createdAt: now,
@@ -116,6 +118,25 @@ export class HttpTripStore extends TripStore {
     return this.saveTrip({
       ...trip,
       accommodations: trip.accommodations.filter((a) => a.id !== id),
+    });
+  }
+
+  // --- Car reservation CRUD ------------------------------------------------
+
+  async upsertCarReservation(
+    trip: TripDto,
+    car: CarReservationDto,
+  ): Promise<TripDto> {
+    return this.saveTrip({
+      ...trip,
+      carReservations: upsertById(trip.carReservations, car),
+    });
+  }
+
+  async removeCarReservation(trip: TripDto, id: string): Promise<TripDto> {
+    return this.saveTrip({
+      ...trip,
+      carReservations: trip.carReservations.filter((c) => c.id !== id),
     });
   }
 

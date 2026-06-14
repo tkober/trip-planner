@@ -39,6 +39,35 @@
       }
     }
 
+    @if (carReservation; as c) {
+      <dt>Pickup</dt>
+      <dd>
+        {{ c.pickupDate }}{{ c.pickupTime ? ' · ' + c.pickupTime : '' }}
+        @if (c.pickupLocation) {
+          <span class="secondary-time">— {{ c.pickupLocation }}</span>
+        }
+      </dd>
+      <dt>Return</dt>
+      <dd>
+        {{ c.dropoffDate }}{{ c.dropoffTime ? ' · ' + c.dropoffTime : '' }}
+        @if (c.dropoffLocation) {
+          <span class="secondary-time">— {{ c.dropoffLocation }}</span>
+        }
+      </dd>
+      @if (c.company) {
+        <dt>Company</dt>
+        <dd>{{ c.company }}</dd>
+      }
+      @if (c.carType) {
+        <dt>Car type</dt>
+        <dd>{{ c.carType }}</dd>
+      }
+      @if (c.remarks) {
+        <dt>Remarks</dt>
+        <dd class="multiline">{{ c.remarks }}</dd>
+      }
+    }
+
     @if (activity; as a) {
       @if (a.location) {
         <dt>Location</dt>
@@ -136,8 +165,21 @@
         <mat-icon>map</mat-icon> Google Maps
       </a>
     }
+    @if (carReservation?.pickupGoogleMapsUrl; as maps) {
+      <a matButton href="{{ maps }}" target="_blank" rel="noopener">
+        <mat-icon>map</mat-icon> Pickup map
+      </a>
+    }
+    @if (carReservation?.dropoffGoogleMapsUrl; as maps) {
+      <a matButton href="{{ maps }}" target="_blank" rel="noopener">
+        <mat-icon>map</mat-icon> Return map
+      </a>
+    }
     @if (
-      accommodation?.bookingUrl || activity?.bookingUrl || transport?.bookingUrl;
+      accommodation?.bookingUrl ||
+        carReservation?.bookingUrl ||
+        activity?.bookingUrl ||
+        transport?.bookingUrl;
       as booking
     ) {
       <a matButton href="{{ booking }}" target="_blank" rel="noopener">

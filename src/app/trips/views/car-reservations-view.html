@@ -1,0 +1,75 @@
+@if (trip()) {
+  <section class="view">
+    <header class="view-header">
+      <h2>Car Rentals</h2>
+      <button matButton="filled" (click)="add()">
+        <mat-icon>add</mat-icon> Add
+      </button>
+    </header>
+
+    @if (rows().length) {
+      @for (row of rows(); track row.car.id) {
+        <article class="detail-card" [style.--accent]="row.color">
+          <div class="card-icon"><mat-icon>directions_car</mat-icon></div>
+          <div class="card-body">
+            <button class="card-title link-button" (click)="open(row.car)">
+              {{ row.car.name }}
+            </button>
+            @if (row.car.company || row.car.carType) {
+              <p class="card-sub">
+                {{ row.car.company }}{{ row.car.company && row.car.carType ? ' · ' : '' }}{{ row.car.carType }}
+              </p>
+            }
+            <dl>
+              <dt>Pickup</dt>
+              <dd>
+                {{ row.pickup }}@if (row.car.pickupLocation) { — {{ row.car.pickupLocation }} }
+              </dd>
+              <dt>Return</dt>
+              <dd>
+                {{ row.dropoff }}@if (row.car.dropoffLocation) { — {{ row.car.dropoffLocation }} }
+              </dd>
+              <dt>Days</dt>
+              <dd>{{ row.days }}</dd>
+            </dl>
+            <div class="links">
+              @if (row.car.pickupGoogleMapsUrl) {
+                <a [href]="row.car.pickupGoogleMapsUrl" target="_blank" rel="noopener">
+                  <mat-icon>location_on</mat-icon> Pickup map
+                </a>
+              }
+              @if (row.car.dropoffGoogleMapsUrl) {
+                <a [href]="row.car.dropoffGoogleMapsUrl" target="_blank" rel="noopener">
+                  <mat-icon>location_on</mat-icon> Return map
+                </a>
+              }
+              @if (row.car.bookingUrl) {
+                <a [href]="row.car.bookingUrl" target="_blank" rel="noopener">
+                  <mat-icon>open_in_new</mat-icon> Booking
+                </a>
+              }
+            </div>
+            @if (row.car.remarks) {
+              <p class="notes">{{ row.car.remarks }}</p>
+            }
+          </div>
+          <div class="card-actions">
+            <button matIconButton [matMenuTriggerFor]="menu" aria-label="Actions">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="edit(row.car)">
+                <mat-icon>edit</mat-icon><span>Edit</span>
+              </button>
+              <button mat-menu-item (click)="remove(row.car)">
+                <mat-icon>delete</mat-icon><span>Delete</span>
+              </button>
+            </mat-menu>
+          </div>
+        </article>
+      }
+    } @else {
+      <p class="empty">No car rentals yet. Add your first reservation.</p>
+    }
+  </section>
+}
