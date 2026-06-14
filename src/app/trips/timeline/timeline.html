@@ -67,6 +67,14 @@
     @for (label of stayLabels(); track label.id) {
       <div class="stay-label" [style.grid-row]="label.gridRow">{{ label.name }}</div>
     }
+    @for (s of carSpans(); track s.car.id) {
+      <app-car-span
+        [reservation]="s.car"
+        [color]="s.color"
+        [gridRow]="s.gridRow"
+        (open)="openCarReservation($event)"
+      />
+    }
     @for (s of straddles(); track s.entry.activity?.id ?? s.entry.transport?.id) {
       <app-straddle-card
         [entry]="s.entry"

@@ -18,7 +18,7 @@
 .days-grid {
   display: grid;
   // grid-template-columns is bound from the component (see gridTemplateColumns):
-  // [day marker] [hotel lane] [N transport lanes] [content].
+  // [day marker] [hotel lane] [car lane] [content].
   column-gap: 0.75rem;
   row-gap: 0;
   align-items: stretch;
