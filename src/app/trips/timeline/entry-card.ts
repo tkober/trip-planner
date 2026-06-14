@@ -49,7 +49,10 @@ const MODE_ICON: Record<TransportMode, string> = {
             @if (r.duration) {
               <span class="duration">{{ r.duration }}</span>
             }
-            <mat-icon>arrow_forward</mat-icon>
+            <div class="track">
+              <span class="line"></span>
+              <mat-icon>arrow_forward</mat-icon>
+            </div>
           </div>
           <div class="leg to">
             <div class="time">{{ r.arrTime }}</div>

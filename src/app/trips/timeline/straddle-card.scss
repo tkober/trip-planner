@@ -89,6 +89,7 @@
     color: var(--mat-sys-on-surface-variant);
     font-variant-numeric: tabular-nums;
 
+    &.depart,
     &.arrival {
       display: flex;
       align-items: center;
@@ -101,7 +102,7 @@
       margin-left: 0.15rem;
     }
 
-    .arr-icon {
+    .leg-icon {
       font-size: 0.95rem;
       width: 0.95rem;
       height: 0.95rem;

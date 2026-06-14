@@ -7,7 +7,8 @@
       } @else {
         <div class="title">{{ title() }}</div>
       }
-      <div class="time">
+      <div class="time depart">
+        <mat-icon class="leg-icon">{{ departIcon() }}</mat-icon>
         {{ startLabel().when }}
         @if (showZones()) {
           <span class="zone">{{ startLabel().zone }}</span>
@@ -50,7 +51,7 @@
       }
       @if (endLabel(); as end) {
         <div class="time arrival">
-          <mat-icon class="arr-icon">south_east</mat-icon>
+          <mat-icon class="leg-icon">{{ arriveIcon() }}</mat-icon>
           {{ end.when }}
           @if (showZones()) {
             <span class="zone">{{ end.zone }}</span>

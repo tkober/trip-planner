@@ -54,6 +54,16 @@ export class StraddleCard {
     return e.kind === 'activity' ? 'local_activity' : MODE_ICON[e.transport!.mode];
   });
 
+  /** Departure-leg icon: takeoff for flights, a generic out-arrow otherwise. */
+  readonly departIcon = computed(() =>
+    this.entry().transport?.mode === 'flight' ? 'flight_takeoff' : 'north_east',
+  );
+
+  /** Arrival-leg icon: landing for flights, a generic in-arrow otherwise. */
+  readonly arriveIcon = computed(() =>
+    this.entry().transport?.mode === 'flight' ? 'flight_land' : 'south_east',
+  );
+
   /** Effective accent colour: explicit colour or the entity-type default. */
   readonly accent = computed(() => {
     const e = this.entry();
