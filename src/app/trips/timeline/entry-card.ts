@@ -5,6 +5,11 @@ import { MatMenuModule } from '@angular/material/menu';
 import { TimelineEntry, TransportMode } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { activityColor, transportColor } from '../../shared/color/color';
+import {
+  transportFrom,
+  transportSubtitle,
+  transportTo,
+} from '../../shared/transport-format';
 
 const MODE_ICON: Record<TransportMode, string> = {
   flight: 'flight',
@@ -32,7 +37,20 @@ const MODE_ICON: Record<TransportMode, string> = {
       </div>
       <div class="body">
         <div class="time">{{ timeLabel() }}</div>
-        <div class="title">{{ title() }}</div>
+        @if (route(); as r) {
+          <div class="route">
+            <span class="place">{{ r.from }}</span>
+            <span class="arrow">
+              @if (r.duration) {
+                <span class="duration">{{ r.duration }}</span>
+              }
+              <mat-icon>arrow_forward</mat-icon>
+            </span>
+            <span class="place">{{ r.to }}</span>
+          </div>
+        } @else {
+          <div class="title">{{ title() }}</div>
+        }
         @if (subtitle(); as sub) {
           <div class="subtitle">{{ sub }}</div>
         }
@@ -84,8 +102,20 @@ export class EntryCard {
       : transportColor(e.transport!);
   });
 
-  readonly title = computed(
-    () => this.entry().activity?.title ?? this.entry().transport?.title ?? '',
+  /** Activity title (transport uses the route headline instead). */
+  readonly title = computed(() => this.entry().activity?.title ?? '');
+
+  /** Transport route headline (from → to) + travel duration; null for activities. */
+  readonly route = computed<{ from: string; to: string; duration: string } | null>(
+    () => {
+      const t = this.entry().transport;
+      if (!t) return null;
+      return {
+        from: transportFrom(t),
+        to: transportTo(t),
+        duration: t.end ? this.tz.durationLabel(t.start, t.end) : '',
+      };
+    },
   );
 
   /** Start time in the destination tz (the timeline's primary reference). */
@@ -102,9 +132,7 @@ export class EntryCard {
 
   readonly subtitle = computed<string | undefined>(() => {
     const t = this.entry().transport;
-    if (t && (t.fromLocation || t.toLocation)) {
-      return `${t.fromLocation ?? '?'} → ${t.toLocation ?? '?'}`;
-    }
+    if (t) return transportSubtitle(t);
     return this.entry().activity?.location ?? undefined;
   });
 }

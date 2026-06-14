@@ -34,7 +34,25 @@
   // which is anchored on the grid separator line between the two days.
   &.top {
     border-bottom: 1px dashed var(--mat-sys-outline);
+    position: relative;
   }
+}
+
+// Travel time, centred on the day-boundary divider as emphasized neutral text.
+.duration {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0;
+  transform: translateY(50%);
+  padding: 0.05rem 0.35rem;
+  border-radius: 6px;
+  background: var(--mat-sys-surface-container-high);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--mat-sys-on-surface);
+  white-space: nowrap;
+  z-index: 1;
 }
 
 .bullet {

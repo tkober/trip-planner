@@ -60,6 +60,44 @@
     text-overflow: ellipsis;
   }
 
+  .route {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 500;
+    min-width: 0;
+
+    .place {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    // From → To arrow column, with the travel time stacked above the arrow.
+    .arrow {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      line-height: 1;
+
+      mat-icon {
+        font-size: 1.05rem;
+        width: 1.05rem;
+        height: 1.05rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+    }
+
+    .duration {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--mat-sys-on-surface);
+      white-space: nowrap;
+    }
+  }
+
   .subtitle {
     font-size: 0.82rem;
     color: var(--mat-sys-on-surface-variant);

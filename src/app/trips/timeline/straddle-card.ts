@@ -5,6 +5,11 @@ import { MatMenuModule } from '@angular/material/menu';
 import { TimelineEntry, TransportMode } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { activityColor, transportColor } from '../../shared/color/color';
+import {
+  transportFrom,
+  transportSubtitle,
+  transportTo,
+} from '../../shared/transport-format';
 
 const MODE_ICON: Record<TransportMode, string> = {
   flight: 'flight',
@@ -56,9 +61,26 @@ export class StraddleCard {
       : transportColor(e.transport!);
   });
 
-  readonly title = computed(
-    () => this.entry().activity?.title ?? this.entry().transport?.title ?? '',
-  );
+  /** Activity title (transport uses from/to places instead). */
+  readonly title = computed(() => this.entry().activity?.title ?? '');
+
+  /** Origin place (top half) for transport entries; undefined for activities. */
+  readonly fromPlace = computed(() => {
+    const t = this.entry().transport;
+    return t ? transportFrom(t) : undefined;
+  });
+
+  /** Destination place (bottom half) for transport entries. */
+  readonly toPlace = computed(() => {
+    const t = this.entry().transport;
+    return t ? transportTo(t) : undefined;
+  });
+
+  /** Travel time shown on the day-boundary divider; empty when unavailable. */
+  readonly duration = computed(() => {
+    const t = this.entry().transport;
+    return t?.end ? this.tz.durationLabel(t.start, t.end) : '';
+  });
 
   readonly startLabel = computed(() => this.label(this.entry().start));
   readonly endLabel = computed(() => {
@@ -68,9 +90,7 @@ export class StraddleCard {
 
   readonly subtitle = computed<string | undefined>(() => {
     const t = this.entry().transport;
-    if (t && (t.fromLocation || t.toLocation)) {
-      return `${t.fromLocation ?? '?'} → ${t.toLocation ?? '?'}`;
-    }
+    if (t) return transportSubtitle(t);
     return this.entry().activity?.location ?? undefined;
   });
 
