@@ -57,14 +57,72 @@
         <dt>Route</dt>
         <dd>{{ t.fromLocation || '?' }} → {{ t.toLocation || '?' }}</dd>
       }
-      @if (t.airline) {
-        <dt>Airline</dt>
-        <dd>{{ t.airline }}</dd>
+
+      @if (t.mode === 'flight') {
+        @if (t.fromAirport || t.toAirport) {
+          <dt>Airport</dt>
+          <dd>{{ t.fromAirport || '?' }} → {{ t.toAirport || '?' }}</dd>
+        }
+        @if (t.fromTerminal || t.toTerminal) {
+          <dt>Terminal</dt>
+          <dd>{{ t.fromTerminal || '?' }} → {{ t.toTerminal || '?' }}</dd>
+        }
+        @if (t.airline) {
+          <dt>Airline</dt>
+          <dd>{{ t.airline }}</dd>
+        }
+        @if (t.flightNumber) {
+          <dt>Flight no.</dt>
+          <dd>{{ t.flightNumber }}</dd>
+        }
       }
-      @if (t.flightNumber) {
-        <dt>Flight no.</dt>
-        <dd>{{ t.flightNumber }}</dd>
+
+      @if (t.mode === 'train') {
+        @if (t.fromStation || t.toStation) {
+          <dt>Station</dt>
+          <dd>{{ t.fromStation || '?' }} → {{ t.toStation || '?' }}</dd>
+        }
+        @if (t.fromPlatform || t.toPlatform) {
+          <dt>Platform</dt>
+          <dd>{{ t.fromPlatform || '?' }} → {{ t.toPlatform || '?' }}</dd>
+        }
+        @if (t.line) {
+          <dt>Line</dt>
+          <dd>{{ t.line }}</dd>
+        }
+        @if (t.trainName) {
+          <dt>Train name</dt>
+          <dd>{{ t.trainName }}</dd>
+        }
+        @if (t.operator) {
+          <dt>Operator</dt>
+          <dd>{{ t.operator }}</dd>
+        }
+        @if (t.trainKind) {
+          <dt>Kind</dt>
+          <dd>{{ t.trainKind }}</dd>
+        }
       }
+
+      @if (t.mode === 'bus') {
+        @if (t.fromStop || t.toStop) {
+          <dt>Stop</dt>
+          <dd>{{ t.fromStop || '?' }} → {{ t.toStop || '?' }}</dd>
+        }
+        @if (t.line) {
+          <dt>Line</dt>
+          <dd>{{ t.line }}</dd>
+        }
+        @if (t.operator) {
+          <dt>Operator</dt>
+          <dd>{{ t.operator }}</dd>
+        }
+        @if (t.busKind) {
+          <dt>Kind</dt>
+          <dd>{{ t.busKind }}</dd>
+        }
+      }
+
       @if (t.notes) {
         <dt>Notes</dt>
         <dd class="multiline">{{ t.notes }}</dd>

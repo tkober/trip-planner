@@ -21,13 +21,18 @@ export type TripMigration = (old: any) => any;
 /**
  * Versioned upgrade steps, keyed by the version they produce.
  *
- * Example for a future v3:
- *   [3]: (old) => ({ ...old, newField: defaultValue }),
+ * Example for a future v4:
+ *   [4]: (old) => ({ ...old, newField: defaultValue }),
  *
  * v2 is the first versioned shape, so there is no `[2]` step — documents at or
  * below v2 are treated as the v2 baseline.
  */
-const MIGRATIONS: Record<number, TripMigration> = {};
+const MIGRATIONS: Record<number, TripMigration> = {
+  // v3 adds optional mode-specific transport fields (airport/terminal, station/
+  // platform, stop, line, operator, train/bus kind). They are absent on older
+  // documents, so no data transform is needed — this is an identity upgrade.
+  [3]: (old) => old,
+};
 
 /**
  * Normalize a raw trip-shaped object to the current schema version.

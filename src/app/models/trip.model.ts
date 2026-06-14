@@ -6,7 +6,7 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /**
  * A wall-clock time anchored to an IANA time zone. No offset is stored — Luxon
@@ -64,11 +64,36 @@ export interface TransportDto {
   start: ZonedTime;
   /** Arrival time — may be in a different zone than `start` (e.g. flights). */
   end?: ZonedTime;
+  /** City / generic place of departure and arrival (e.g. "Tokyo"). */
   fromLocation?: string;
   toLocation?: string;
   // Flight-specific (only meaningful when mode === 'flight'):
   airline?: string;
   flightNumber?: string;
+  /** e.g. "Haneda" / "Narita". */
+  fromAirport?: string;
+  toAirport?: string;
+  fromTerminal?: string;
+  toTerminal?: string;
+  // Train-specific (only meaningful when mode === 'train'):
+  fromStation?: string;
+  toStation?: string;
+  fromPlatform?: string;
+  toPlatform?: string;
+  /** Specific service / run, e.g. "Tsubame 309". */
+  trainName?: string;
+  /** Configurable type, e.g. "Shinkansen". See environment.trainKinds. */
+  trainKind?: string;
+  // Bus-specific (only meaningful when mode === 'bus'):
+  fromStop?: string;
+  toStop?: string;
+  /** Configurable type, e.g. "Overnight". See environment.busKinds. */
+  busKind?: string;
+  // Shared by train + bus:
+  /** Line / route name, e.g. "Tokaido-Sanyo Shinkansen". */
+  line?: string;
+  /** Operator, e.g. "JR East", "Deutsche Bahn". */
+  operator?: string;
   bookingUrl?: string;
   notes?: string;
   /** Explicit accent colour (hex). When unset the mode's default applies. */

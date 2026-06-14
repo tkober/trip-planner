@@ -41,9 +41,65 @@
                   }
                 </dd>
               }
-              @if (row.transport.airline || row.transport.flightNumber) {
-                <dt>Flight</dt>
-                <dd>{{ row.transport.airline }} {{ row.transport.flightNumber }}</dd>
+              @if (row.transport.mode === 'flight') {
+                @if (row.transport.fromAirport || row.transport.toAirport) {
+                  <dt>Airport</dt>
+                  <dd>{{ row.transport.fromAirport || '?' }} → {{ row.transport.toAirport || '?' }}</dd>
+                }
+                @if (row.transport.fromTerminal || row.transport.toTerminal) {
+                  <dt>Terminal</dt>
+                  <dd>{{ row.transport.fromTerminal || '?' }} → {{ row.transport.toTerminal || '?' }}</dd>
+                }
+                @if (row.transport.airline || row.transport.flightNumber) {
+                  <dt>Flight</dt>
+                  <dd>{{ row.transport.airline }} {{ row.transport.flightNumber }}</dd>
+                }
+              }
+
+              @if (row.transport.mode === 'train') {
+                @if (row.transport.fromStation || row.transport.toStation) {
+                  <dt>Station</dt>
+                  <dd>{{ row.transport.fromStation || '?' }} → {{ row.transport.toStation || '?' }}</dd>
+                }
+                @if (row.transport.fromPlatform || row.transport.toPlatform) {
+                  <dt>Platform</dt>
+                  <dd>{{ row.transport.fromPlatform || '?' }} → {{ row.transport.toPlatform || '?' }}</dd>
+                }
+                @if (row.transport.line) {
+                  <dt>Line</dt>
+                  <dd>{{ row.transport.line }}</dd>
+                }
+                @if (row.transport.trainName) {
+                  <dt>Train name</dt>
+                  <dd>{{ row.transport.trainName }}</dd>
+                }
+                @if (row.transport.operator) {
+                  <dt>Operator</dt>
+                  <dd>{{ row.transport.operator }}</dd>
+                }
+                @if (row.transport.trainKind) {
+                  <dt>Kind</dt>
+                  <dd>{{ row.transport.trainKind }}</dd>
+                }
+              }
+
+              @if (row.transport.mode === 'bus') {
+                @if (row.transport.fromStop || row.transport.toStop) {
+                  <dt>Stop</dt>
+                  <dd>{{ row.transport.fromStop || '?' }} → {{ row.transport.toStop || '?' }}</dd>
+                }
+                @if (row.transport.line) {
+                  <dt>Line</dt>
+                  <dd>{{ row.transport.line }}</dd>
+                }
+                @if (row.transport.operator) {
+                  <dt>Operator</dt>
+                  <dd>{{ row.transport.operator }}</dd>
+                }
+                @if (row.transport.busKind) {
+                  <dt>Kind</dt>
+                  <dd>{{ row.transport.busKind }}</dd>
+                }
               }
             </dl>
 

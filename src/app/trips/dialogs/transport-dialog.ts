@@ -18,7 +18,9 @@ import {
 } from '../../models/trip.model';
 import { ZonedTimeField } from '../../shared/zoned-time-field/zoned-time-field';
 import { ColorField } from '../../shared/color/color-field';
+import { SuggestField } from '../../shared/suggest-field/suggest-field';
 import { TRANSPORT_MODE_COLOR } from '../../shared/color/color';
+import { environment } from '../../../environments/environment';
 
 export interface TransportDialogData {
   transport?: TransportDto;
@@ -49,6 +51,7 @@ const MODES: { value: TransportMode; label: string; icon: string }[] = [
     MatIconModule,
     ZonedTimeField,
     ColorField,
+    SuggestField,
   ],
   templateUrl: './transport-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -63,6 +66,12 @@ export class TransportDialog {
 
   readonly mode = signal<TransportMode>(this.data.transport?.mode ?? 'train');
   readonly isFlight = computed(() => this.mode() === 'flight');
+  readonly isTrain = computed(() => this.mode() === 'train');
+  readonly isBus = computed(() => this.mode() === 'bus');
+
+  /** Configurable "kind" options (env-driven). */
+  readonly trainKinds = environment.trainKinds;
+  readonly busKinds = environment.busKinds;
 
   readonly title = signal(this.data.transport?.title ?? '');
   readonly start = signal<ZonedTime>(
@@ -82,6 +91,25 @@ export class TransportDialog {
   readonly toLocation = signal(this.data.transport?.toLocation ?? '');
   readonly airline = signal(this.data.transport?.airline ?? '');
   readonly flightNumber = signal(this.data.transport?.flightNumber ?? '');
+  // Flight-specific
+  readonly fromAirport = signal(this.data.transport?.fromAirport ?? '');
+  readonly toAirport = signal(this.data.transport?.toAirport ?? '');
+  readonly fromTerminal = signal(this.data.transport?.fromTerminal ?? '');
+  readonly toTerminal = signal(this.data.transport?.toTerminal ?? '');
+  // Train-specific
+  readonly fromStation = signal(this.data.transport?.fromStation ?? '');
+  readonly toStation = signal(this.data.transport?.toStation ?? '');
+  readonly fromPlatform = signal(this.data.transport?.fromPlatform ?? '');
+  readonly toPlatform = signal(this.data.transport?.toPlatform ?? '');
+  readonly trainName = signal(this.data.transport?.trainName ?? '');
+  readonly trainKind = signal(this.data.transport?.trainKind ?? '');
+  // Bus-specific
+  readonly fromStop = signal(this.data.transport?.fromStop ?? '');
+  readonly toStop = signal(this.data.transport?.toStop ?? '');
+  readonly busKind = signal(this.data.transport?.busKind ?? '');
+  // Shared by train + bus
+  readonly line = signal(this.data.transport?.line ?? '');
+  readonly operator = signal(this.data.transport?.operator ?? '');
   readonly bookingUrl = signal(this.data.transport?.bookingUrl ?? '');
   readonly notes = signal(this.data.transport?.notes ?? '');
   readonly color = signal<string | undefined>(this.data.transport?.color);
@@ -111,6 +139,13 @@ export class TransportDialog {
       this.error.set('Please choose a departure time.');
       return;
     }
+    // Keep a field only when its mode is active; trim and coerce empties.
+    const flight = (v: string) => (this.isFlight() ? v.trim() || undefined : undefined);
+    const train = (v: string) => (this.isTrain() ? v.trim() || undefined : undefined);
+    const bus = (v: string) => (this.isBus() ? v.trim() || undefined : undefined);
+    const trainOrBus = (v: string) =>
+      this.isTrain() || this.isBus() ? v.trim() || undefined : undefined;
+
     const result: TransportDto = {
       id: this.id,
       mode: this.mode(),
@@ -119,10 +154,27 @@ export class TransportDialog {
       end: this.hasEnd() && this.end().dateTime ? this.end() : undefined,
       fromLocation: this.fromLocation().trim() || undefined,
       toLocation: this.toLocation().trim() || undefined,
-      airline: this.isFlight() ? this.airline().trim() || undefined : undefined,
-      flightNumber: this.isFlight()
-        ? this.flightNumber().trim() || undefined
-        : undefined,
+      // Flight
+      airline: flight(this.airline()),
+      flightNumber: flight(this.flightNumber()),
+      fromAirport: flight(this.fromAirport()),
+      toAirport: flight(this.toAirport()),
+      fromTerminal: flight(this.fromTerminal()),
+      toTerminal: flight(this.toTerminal()),
+      // Train
+      fromStation: train(this.fromStation()),
+      toStation: train(this.toStation()),
+      fromPlatform: train(this.fromPlatform()),
+      toPlatform: train(this.toPlatform()),
+      trainName: train(this.trainName()),
+      trainKind: train(this.trainKind()),
+      // Bus
+      fromStop: bus(this.fromStop()),
+      toStop: bus(this.toStop()),
+      busKind: bus(this.busKind()),
+      // Shared by train + bus
+      line: trainOrBus(this.line()),
+      operator: trainOrBus(this.operator()),
       bookingUrl: this.bookingUrl().trim() || undefined,
       notes: this.notes().trim() || undefined,
       color: this.color() || undefined,
