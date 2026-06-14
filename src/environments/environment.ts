@@ -23,6 +23,19 @@ const backend =
     ? runtime.storageBackend
     : "http";
 
+/** Normalize a runtime override (comma string or array) to a non-empty list. */
+const splitList = (value: unknown): string[] | undefined => {
+  const arr =
+    typeof value === 'string'
+      ? value.split(',')
+      : Array.isArray(value)
+        ? value.map(String)
+        : null;
+  if (!arr) return undefined;
+  const cleaned = arr.map((s) => s.trim()).filter(Boolean);
+  return cleaned.length ? cleaned : undefined;
+};
+
 export const environment = {
   /** Default departure (home) zone for a new trip. Empty = use device zone. */
   defaultDepartureTimeZone:
@@ -33,4 +46,8 @@ export const environment = {
   storageBackend: backend,
   /** Base URL of the backend API when storageBackend === "http". */
   apiBaseUrl: runtime.apiBaseUrl || "http://127.0.0.1:8000",
+  /** Selectable options for a train's "kind" field. */
+  trainKinds: splitList(runtime.trainKinds) ?? ["Local train","Rapid","Limited express","Shinkansen"],
+  /** Selectable options for a bus's "kind" field. */
+  busKinds: splitList(runtime.busKinds) ?? ["City bus","Long-distance coach","Overnight","Hop on/off"],
 };

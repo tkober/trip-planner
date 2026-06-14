@@ -10,6 +10,10 @@
  *                         browser-local) or "http" (FastAPI/Postgres backend).
  *   API_BASE_URL          Base URL of the backend when STORAGE_BACKEND="http".
  *                         Defaults to "http://localhost:8000".
+ *   TRAIN_KINDS           Comma-separated options for a train's "kind" field.
+ *                         When set, replaces the built-in defaults.
+ *   BUS_KINDS             Comma-separated options for a bus's "kind" field.
+ *                         When set, replaces the built-in defaults.
  *
  * These can be set on the command line (e.g. `STORAGE_BACKEND=http npm start`)
  * or placed in a `.env` file at the repo root (see `.env.example`). Variables
@@ -56,11 +60,35 @@ function loadDotEnv(path) {
 
 loadDotEnv(join(root, '.env'));
 
+const DEFAULT_TRAIN_KINDS = [
+  'Local train',
+  'Rapid',
+  'Limited express',
+  'Shinkansen',
+];
+const DEFAULT_BUS_KINDS = [
+  'City bus',
+  'Long-distance coach',
+  'Overnight',
+  'Hop on/off',
+];
+
+/** Parse a comma-separated env var into a trimmed list, or fall back. */
+function parseList(value, fallback) {
+  const list = (value ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return list.length ? list : fallback;
+}
+
 const departure = process.env.DEFAULT_DEPARTURE_TZ ?? '';
 const trip = process.env.DEFAULT_TRIP_TZ || 'Asia/Tokyo';
 const storageBackend =
   process.env.STORAGE_BACKEND === 'http' ? 'http' : 'indexeddb';
 const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
+const trainKinds = parseList(process.env.TRAIN_KINDS, DEFAULT_TRAIN_KINDS);
+const busKinds = parseList(process.env.BUS_KINDS, DEFAULT_BUS_KINDS);
 
 const literal = (value) => JSON.stringify(value);
 
@@ -89,6 +117,19 @@ const backend =
     ? runtime.storageBackend
     : ${literal(storageBackend)};
 
+/** Normalize a runtime override (comma string or array) to a non-empty list. */
+const splitList = (value: unknown): string[] | undefined => {
+  const arr =
+    typeof value === 'string'
+      ? value.split(',')
+      : Array.isArray(value)
+        ? value.map(String)
+        : null;
+  if (!arr) return undefined;
+  const cleaned = arr.map((s) => s.trim()).filter(Boolean);
+  return cleaned.length ? cleaned : undefined;
+};
+
 export const environment = {
   /** Default departure (home) zone for a new trip. Empty = use device zone. */
   defaultDepartureTimeZone:
@@ -99,6 +140,10 @@ export const environment = {
   storageBackend: backend,
   /** Base URL of the backend API when storageBackend === "http". */
   apiBaseUrl: runtime.apiBaseUrl || ${literal(apiBaseUrl)},
+  /** Selectable options for a train's "kind" field. */
+  trainKinds: splitList(runtime.trainKinds) ?? ${literal(trainKinds)},
+  /** Selectable options for a bus's "kind" field. */
+  busKinds: splitList(runtime.busKinds) ?? ${literal(busKinds)},
 };
 `;
 
@@ -107,5 +152,6 @@ writeFileSync(target, contents);
 
 console.log(
   `[generate-env] departure="${departure || '(device zone)'}" trip="${trip}" ` +
-    `backend="${storageBackend}"${storageBackend === 'http' ? ` api="${apiBaseUrl}"` : ''}`,
+    `backend="${storageBackend}"${storageBackend === 'http' ? ` api="${apiBaseUrl}"` : ''} ` +
+    `trainKinds=${trainKinds.length} busKinds=${busKinds.length}`,
 );

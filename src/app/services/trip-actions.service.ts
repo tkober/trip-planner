@@ -214,7 +214,7 @@ export class TripActionsService {
       newId: () => this.store.newId(),
     };
     this.dialog
-      .open(TransportDialog, { data })
+      .open(TransportDialog, { data, width: 'min(760px, 94vw)', maxWidth: '94vw' })
       .afterClosed()
       .subscribe(async (result?: TransportDto) => {
         if (result) await this.store.upsertTransport(trip, result);
@@ -230,7 +230,7 @@ export class TripActionsService {
       newId: () => this.store.newId(),
     };
     this.dialog
-      .open(TransportDialog, { data })
+      .open(TransportDialog, { data, width: 'min(760px, 94vw)', maxWidth: '94vw' })
       .afterClosed()
       .subscribe(async (result?: TransportDto) => {
         if (result) await this.store.upsertTransport(trip, result);

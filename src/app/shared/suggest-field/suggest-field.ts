@@ -1,25 +1,18 @@
-import {
-  Component,
-  computed,
-  inject,
-  input,
-  model,
-  signal,
-} from '@angular/core';
+import { Component, computed, input, model, signal } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
-import { TimeZoneService } from '../../services/time-zone.service';
 
 /**
- * IANA time-zone picker with autocomplete filtering over the runtime's
- * supported zones. Binds to a string zone id via two-way `value`.
+ * Free-text field with autocomplete suggestions: the user can pick one of the
+ * provided `options` or type a custom value. Binds to a string via two-way
+ * `value`. Used for the configurable train / bus "kind" fields.
  */
 @Component({
-  selector: 'app-timezone-select',
+  selector: 'app-suggest-field',
   imports: [MatFormFieldModule, MatInputModule, MatAutocompleteModule],
   template: `
     <mat-form-field class="full-width">
@@ -29,34 +22,27 @@ import { TimeZoneService } from '../../services/time-zone.service';
         [value]="value()"
         (input)="onInput($event)"
         [matAutocomplete]="auto"
-        [disabled]="disabled()"
-        placeholder="e.g. Asia/Tokyo"
         autocomplete="off"
       />
       <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelected($event)">
-        @for (zone of filtered(); track zone) {
-          <mat-option [value]="zone">{{ zone }}</mat-option>
+        @for (option of filtered(); track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
         }
       </mat-autocomplete>
     </mat-form-field>
   `,
 })
-export class TimezoneSelect {
-  private readonly tz = inject(TimeZoneService);
-
-  readonly label = input('Time zone');
-  readonly disabled = input(false);
+export class SuggestField {
+  readonly label = input('');
   readonly value = model<string>('');
+  readonly options = input<readonly string[]>([]);
 
   private readonly query = signal('');
-  private readonly allZones = this.tz.supportedZones();
 
   readonly filtered = computed(() => {
     const q = this.query().toLowerCase().trim();
-    const source = q
-      ? this.allZones.filter((z) => z.toLowerCase().includes(q))
-      : this.allZones;
-    return source.slice(0, 50);
+    if (!q) return this.options();
+    return this.options().filter((o) => o.toLowerCase().includes(q));
   });
 
   onInput(event: Event): void {

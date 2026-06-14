@@ -118,7 +118,8 @@ Timeline composition:
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, activity, transport,
 a shared read-only **details** dialog (Edit/Delete actions), and a generic
-**confirm** dialog. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`.
+**confirm** dialog. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`,
+`SuggestField` (free-text autocomplete used for the train/bus kind).
 
 ## Data Model
 
@@ -135,8 +136,21 @@ AccommodationDto { id, name, fullName?, address?, googleMapsUrl?, bookingUrl?,
                    remarks?, color?, checkInDate, checkOutDate }
 ActivityDto { id, title, start, end?, location?, googleMapsUrl?, bookingUrl?, notes?, color? }
 TransportDto { id, mode: flight|train|bus|car, title, start, end?, fromLocation?,
-               toLocation?, airline?, flightNumber?, bookingUrl?, notes?, color? }
+               toLocation?, bookingUrl?, notes?, color?,
+               // flight-only: airline?, flightNumber?, fromAirport?, toAirport?,
+               //              fromTerminal?, toTerminal?
+               // train-only:  fromStation?, toStation?, fromPlatform?,
+               //              toPlatform?, trainName?, trainKind?
+               // bus-only:    fromStop?, toStop?, busKind?
+               // train + bus: line?, operator? }
 ```
+
+`fromLocation`/`toLocation` hold the **city**; the per-mode fields add the
+airport/station/stop (and terminal/platform). Mode-specific fields are only
+written for their mode (the dialog clears the others on save), as `airline`/
+`flightNumber` already did. The selectable `trainKind` / `busKind` options are
+env-configurable (see "Configuration"). All new fields are optional, so adding
+them was an additive **schema v3** step (no data transform).
 
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations cycle distinct tints by storage order; each transport
@@ -178,6 +192,13 @@ New-trip timezone defaults are build-time configurable.
   backend). See "Storage backend" below.
 - `API_BASE_URL` — backend base URL when `STORAGE_BACKEND=http`
   (default `http://localhost:8000`).
+- `TRAIN_KINDS` / `BUS_KINDS` — comma-separated options for a train's / bus's
+  "kind" field, consumed by [TransportDialog](src/app/trips/dialogs/transport-dialog.ts)
+  (a free-text autocomplete via [SuggestField](src/app/shared/suggest-field/suggest-field.ts)).
+  When set they **replace** the built-in defaults (trains: `Local train, Rapid,
+  Limited express, Shinkansen`; buses: `City bus, Long-distance coach, Overnight,
+  Hop on/off`). Surface as `string[]` on `environment` (a runtime override may be
+  a comma string or array).
 
 These can be set on the command line (`STORAGE_BACKEND=http npm start`) or placed in
 a `.env` file at the repo root (see [.env.example](.env.example)); `generate-env.mjs`
