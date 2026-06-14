@@ -60,49 +60,74 @@
     text-overflow: ellipsis;
   }
 
-  .route {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-weight: 500;
-    min-width: 0;
-
-    .place {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    // From → To arrow column, with the travel time stacked above the arrow.
-    .arrow {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      flex-shrink: 0;
-      line-height: 1;
-
-      mat-icon {
-        font-size: 1.05rem;
-        width: 1.05rem;
-        height: 1.05rem;
-        color: var(--mat-sys-on-surface-variant);
-      }
-    }
-
-    .duration {
-      font-size: 0.62rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      color: var(--mat-sys-on-surface);
-      white-space: nowrap;
-    }
-  }
-
   .subtitle {
     font-size: 0.82rem;
     color: var(--mat-sys-on-surface-variant);
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+// Transport route: three blocks — [departure][duration/arrow][arrival] — with
+// time / place / detail stacked in each outer block.
+.body.route {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 0.6rem;
+
+  .leg {
+    min-width: 0;
+
+    &.to {
+      text-align: right;
+    }
+
+    .time {
+      font-size: 0.78rem;
+      color: var(--mat-sys-on-surface-variant);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .place {
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .detail {
+      font-size: 0.78rem;
+      color: var(--mat-sys-on-surface-variant);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  // Centre block: travel time stacked above the arrow.
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    line-height: 1;
+
+    .duration {
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--mat-sys-on-surface);
+      white-space: nowrap;
+    }
+
+    mat-icon {
+      font-size: 1.1rem;
+      width: 1.1rem;
+      height: 1.1rem;
+      color: var(--mat-sys-on-surface-variant);
+    }
   }
 }
 

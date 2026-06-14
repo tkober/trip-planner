@@ -7,8 +7,9 @@ import { TimeZoneService } from '../../services/time-zone.service';
 import { activityColor, transportColor } from '../../shared/color/color';
 import {
   transportFrom,
-  transportSubtitle,
+  transportFromDetail,
   transportTo,
+  transportToDetail,
 } from '../../shared/transport-format';
 
 const MODE_ICON: Record<TransportMode, string> = {
@@ -76,6 +77,18 @@ export class StraddleCard {
     return t ? transportTo(t) : undefined;
   });
 
+  /** Departure-leg detail (airport/terminal …) shown on the top half. */
+  readonly fromDetail = computed(() => {
+    const t = this.entry().transport;
+    return t ? transportFromDetail(t) : undefined;
+  });
+
+  /** Arrival-leg detail shown on the bottom half. */
+  readonly toDetail = computed(() => {
+    const t = this.entry().transport;
+    return t ? transportToDetail(t) : undefined;
+  });
+
   /** Travel time shown on the day-boundary divider; empty when unavailable. */
   readonly duration = computed(() => {
     const t = this.entry().transport;
@@ -88,11 +101,10 @@ export class StraddleCard {
     return end ? this.label(end) : undefined;
   });
 
-  readonly subtitle = computed<string | undefined>(() => {
-    const t = this.entry().transport;
-    if (t) return transportSubtitle(t);
-    return this.entry().activity?.location ?? undefined;
-  });
+  /** Activity location subtitle (transport renders per-leg detail instead). */
+  readonly subtitle = computed<string | undefined>(
+    () => this.entry().activity?.location ?? undefined,
+  );
 
   /** Whether the two endpoints sit in different zones (show the zone tag). */
   readonly showZones = computed(() => {

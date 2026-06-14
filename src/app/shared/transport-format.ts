@@ -58,28 +58,32 @@ function endpointDetail(place?: string, sub?: string): string | undefined {
 }
 
 /**
- * Mode-specific subtitle: airport (+ terminal) for flights, station (+ platform)
- * for trains, stop for buses — rendered as "FROM → TO". Undefined when nothing set.
+ * Mode-specific detail for the departure leg: airport (+ terminal) for flights,
+ * station (+ platform) for trains, stop for buses. Undefined when nothing is set.
  */
-export function transportSubtitle(t: TransportDto): string | undefined {
-  let from: string | undefined;
-  let to: string | undefined;
+export function transportFromDetail(t: TransportDto): string | undefined {
   switch (t.mode) {
     case 'flight':
-      from = endpointDetail(t.fromAirport, t.fromTerminal);
-      to = endpointDetail(t.toAirport, t.toTerminal);
-      break;
+      return endpointDetail(t.fromAirport, t.fromTerminal);
     case 'train':
-      from = endpointDetail(t.fromStation, t.fromPlatform);
-      to = endpointDetail(t.toStation, t.toPlatform);
-      break;
+      return endpointDetail(t.fromStation, t.fromPlatform);
     case 'bus':
-      from = endpointDetail(t.fromStop, undefined);
-      to = endpointDetail(t.toStop, undefined);
-      break;
+      return endpointDetail(t.fromStop, undefined);
     default:
       return undefined;
   }
-  if (!from && !to) return undefined;
-  return `${from ?? '?'} → ${to ?? '?'}`;
+}
+
+/** Mode-specific detail for the arrival leg (see {@link transportFromDetail}). */
+export function transportToDetail(t: TransportDto): string | undefined {
+  switch (t.mode) {
+    case 'flight':
+      return endpointDetail(t.toAirport, t.toTerminal);
+    case 'train':
+      return endpointDetail(t.toStation, t.toPlatform);
+    case 'bus':
+      return endpointDetail(t.toStop, undefined);
+    default:
+      return undefined;
+  }
 }

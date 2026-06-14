@@ -13,6 +13,9 @@
           <span class="zone">{{ startLabel().zone }}</span>
         }
       </div>
+      @if (fromDetail(); as detail) {
+        <div class="subtitle">{{ detail }}</div>
+      }
     </div>
     <button
       matIconButton
@@ -54,7 +57,7 @@
           }
         </div>
       }
-      @if (subtitle(); as sub) {
+      @if (toDetail() ?? subtitle(); as sub) {
         <div class="subtitle">{{ sub }}</div>
       }
     </div>
