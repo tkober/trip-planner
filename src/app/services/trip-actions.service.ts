@@ -4,6 +4,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   AccommodationDto,
   ActivityDto,
+  CarReservationDto,
   TimelineEntry,
   TransportDto,
   TripDto,
@@ -24,6 +25,10 @@ import {
   AccommodationDialogData,
 } from '../trips/dialogs/accommodation-dialog';
 import {
+  CarReservationDialog,
+  CarReservationDialogData,
+} from '../trips/dialogs/car-reservation-dialog';
+import {
   ActivityDialog,
   ActivityDialogData,
 } from '../trips/dialogs/activity-dialog';
@@ -36,7 +41,10 @@ import {
   DetailsDialog,
   DetailsDialogData,
 } from '../trips/dialogs/details-dialog';
-import { accommodationDefaultColor } from '../shared/color/color';
+import {
+  accommodationDefaultColor,
+  carReservationDefaultColor,
+} from '../shared/color/color';
 
 /**
  * All dialog-driven trip mutations (edit trip, add/edit/delete + open-details for
@@ -160,6 +168,72 @@ export class TripActionsService {
     });
     if (confirmed) {
       await this.store.removeAccommodation(trip, accommodation.id);
+    }
+  }
+
+  // --- Car reservation -----------------------------------------------------
+
+  addCarReservation(trip: TripDto): void {
+    const data: CarReservationDialogData = {
+      defaultPickup: trip.startDate,
+      defaultDropoff: trip.endDate,
+      defaultColor: carReservationDefaultColor(trip.carReservations.length),
+      newId: () => this.store.newId(),
+    };
+    this.dialog
+      .open(CarReservationDialog, { data })
+      .afterClosed()
+      .subscribe(async (result?: CarReservationDto) => {
+        if (result) await this.store.upsertCarReservation(trip, result);
+      });
+  }
+
+  openCarReservation(trip: TripDto, car: CarReservationDto): void {
+    const data: DetailsDialogData = {
+      kind: 'car-reservation',
+      homeZone: trip.homeTimeZone,
+      destinationZone: trip.destinationTimeZone,
+      carReservation: car,
+    };
+    this.dialog
+      .open(DetailsDialog, { data })
+      .afterClosed()
+      .subscribe((action?: DetailsAction) => {
+        if (action === 'edit') this.editCarReservation(trip, car);
+        else if (action === 'delete')
+          void this.deleteCarReservation(trip, car);
+      });
+  }
+
+  editCarReservation(trip: TripDto, car: CarReservationDto): void {
+    const index = trip.carReservations.findIndex((c) => c.id === car.id);
+    const data: CarReservationDialogData = {
+      car,
+      defaultPickup: trip.startDate,
+      defaultDropoff: trip.endDate,
+      defaultColor: carReservationDefaultColor(index < 0 ? 0 : index),
+      newId: () => this.store.newId(),
+    };
+    this.dialog
+      .open(CarReservationDialog, { data })
+      .afterClosed()
+      .subscribe(async (result?: CarReservationDto) => {
+        if (result) await this.store.upsertCarReservation(trip, result);
+      });
+  }
+
+  async deleteCarReservation(
+    trip: TripDto,
+    car: CarReservationDto,
+  ): Promise<void> {
+    const confirmed = await this.confirm({
+      title: 'Delete car rental?',
+      message: `"${car.name}" will be removed from this trip.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (confirmed) {
+      await this.store.removeCarReservation(trip, car.id);
     }
   }
 

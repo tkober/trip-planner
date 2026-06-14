@@ -14,6 +14,7 @@
 import {
   AccommodationDto,
   ActivityDto,
+  CarReservationDto,
   TransportDto,
   TransportMode,
 } from '../../models/trip.model';
@@ -64,6 +65,44 @@ export function accommodationDefaultColor(index: number): string {
     ((index % ACCOMMODATION_DEFAULTS.length) + ACCOMMODATION_DEFAULTS.length) %
       ACCOMMODATION_DEFAULTS.length
   ];
+}
+
+/**
+ * Distinct default tints car reservations cycle through (by storage order).
+ * Ordered to differ from the accommodation cycle so cars and hotels read as
+ * visually distinct lanes.
+ */
+const CAR_RESERVATION_DEFAULTS = [
+  '#6a1b9a',
+  '#00838f',
+  '#ad1457',
+  '#5d4037',
+  '#283593',
+  '#9e9d24',
+];
+
+/** Default colour for the nth car reservation (by its order in the trip). */
+export function carReservationDefaultColor(index: number): string {
+  return CAR_RESERVATION_DEFAULTS[
+    ((index % CAR_RESERVATION_DEFAULTS.length) +
+      CAR_RESERVATION_DEFAULTS.length) %
+      CAR_RESERVATION_DEFAULTS.length
+  ];
+}
+
+/**
+ * Resolve each car reservation's effective colour: its explicit `color`, else the
+ * default tint for its position in `cars` (storage order, so it stays stable
+ * regardless of how a given view sorts the list).
+ */
+export function carReservationColors(
+  cars: CarReservationDto[],
+): Map<string, string> {
+  const map = new Map<string, string>();
+  cars.forEach((c, i) =>
+    map.set(c.id, c.color ?? carReservationDefaultColor(i)),
+  );
+  return map;
 }
 
 export function activityColor(activity: ActivityDto): string {

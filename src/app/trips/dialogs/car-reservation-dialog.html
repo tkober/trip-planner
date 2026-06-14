@@ -1,0 +1,95 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit car rental' : 'Add car rental' }}</h2>
+
+<mat-dialog-content>
+  <form class="entity-form" (ngSubmit)="save()">
+    <mat-form-field class="full-width">
+      <mat-label>Name</mat-label>
+      <input matInput [ngModel]="name()" (ngModelChange)="name.set($event)" name="name" placeholder="e.g. Toyota Aqua" required />
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field class="full-width">
+        <mat-label>Rental company (optional)</mat-label>
+        <input matInput [ngModel]="company()" (ngModelChange)="company.set($event)" name="company" placeholder="e.g. Toyota Rent a Car" />
+      </mat-form-field>
+      <mat-form-field class="full-width">
+        <mat-label>Car type (optional)</mat-label>
+        <input matInput [ngModel]="carType()" (ngModelChange)="carType.set($event)" name="carType" placeholder="e.g. Compact" />
+      </mat-form-field>
+    </div>
+
+    <p class="section-label">Pickup</p>
+    <div class="row">
+      <app-date-field
+        label="Pickup date"
+        [required]="true"
+        [value]="pickupDate()"
+        (valueChange)="onPickupChange($event)"
+      />
+      <mat-form-field class="full-width">
+        <mat-label>Pickup time (optional)</mat-label>
+        <input matInput type="time" [ngModel]="pickupTime()" (ngModelChange)="pickupTime.set($event)" name="pickupTime" />
+      </mat-form-field>
+    </div>
+    <mat-form-field class="full-width">
+      <mat-label>Pickup station (optional)</mat-label>
+      <input matInput [ngModel]="pickupLocation()" (ngModelChange)="pickupLocation.set($event)" name="pickupLocation" />
+    </mat-form-field>
+    <mat-form-field class="full-width">
+      <mat-label>Pickup Google Maps link (optional)</mat-label>
+      <input matInput type="url" [ngModel]="pickupGoogleMapsUrl()" (ngModelChange)="pickupGoogleMapsUrl.set($event)" name="pickupMaps" />
+    </mat-form-field>
+
+    <p class="section-label">Return</p>
+    <div class="row">
+      <app-date-field
+        label="Return date"
+        [required]="true"
+        [min]="pickupDate()"
+        [(value)]="dropoffDate"
+      />
+      <mat-form-field class="full-width">
+        <mat-label>Return time (optional)</mat-label>
+        <input matInput type="time" [ngModel]="dropoffTime()" (ngModelChange)="dropoffTime.set($event)" name="dropoffTime" />
+      </mat-form-field>
+    </div>
+    <mat-form-field class="full-width">
+      <mat-label>Return station (optional)</mat-label>
+      <input matInput [ngModel]="dropoffLocation()" (ngModelChange)="dropoffLocation.set($event)" name="dropoffLocation" />
+    </mat-form-field>
+    <mat-form-field class="full-width">
+      <mat-label>Return Google Maps link (optional)</mat-label>
+      <input matInput type="url" [ngModel]="dropoffGoogleMapsUrl()" (ngModelChange)="dropoffGoogleMapsUrl.set($event)" name="dropoffMaps" />
+    </mat-form-field>
+
+    <hr class="divider" />
+
+    <mat-form-field class="full-width">
+      <mat-label>Booking link (optional)</mat-label>
+      <input matInput type="url" [ngModel]="bookingUrl()" (ngModelChange)="bookingUrl.set($event)" name="booking" />
+    </mat-form-field>
+
+    <mat-form-field class="full-width">
+      <mat-label>Remarks (optional)</mat-label>
+      <textarea matInput rows="2" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)" name="remarks"></textarea>
+    </mat-form-field>
+
+    <app-color-field
+      label="Colour"
+      [defaultColor]="defaultColor"
+      [value]="color()"
+      (valueChange)="color.set($event)"
+    />
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton mat-dialog-close>Cancel</button>
+  <button matButton="filled" color="primary" (click)="save()">
+    {{ isEdit ? 'Save' : 'Add' }}
+  </button>
+</mat-dialog-actions>

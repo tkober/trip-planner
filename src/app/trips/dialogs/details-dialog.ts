@@ -9,12 +9,17 @@ import { MatIconModule } from '@angular/material/icon';
 import {
   AccommodationDto,
   ActivityDto,
+  CarReservationDto,
   TransportDto,
   ZonedTime,
 } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
 
-export type DetailsKind = 'accommodation' | 'activity' | 'transport';
+export type DetailsKind =
+  | 'accommodation'
+  | 'car-reservation'
+  | 'activity'
+  | 'transport';
 export type DetailsAction = 'edit' | 'delete';
 
 export interface DetailsDialogData {
@@ -22,6 +27,7 @@ export interface DetailsDialogData {
   homeZone: string;
   destinationZone: string;
   accommodation?: AccommodationDto;
+  carReservation?: CarReservationDto;
   activity?: ActivityDto;
   transport?: TransportDto;
 }
@@ -47,6 +53,7 @@ export class DetailsDialog {
   readonly dialogRef = inject(MatDialogRef<DetailsDialog, DetailsAction>);
 
   readonly accommodation = this.data.accommodation;
+  readonly carReservation = this.data.carReservation;
   readonly activity = this.data.activity;
   readonly transport = this.data.transport;
 
@@ -54,6 +61,8 @@ export class DetailsDialog {
     switch (this.data.kind) {
       case 'accommodation':
         return this.accommodation?.name ?? 'Accommodation';
+      case 'car-reservation':
+        return this.carReservation?.name ?? 'Car rental';
       case 'activity':
         return this.activity?.title ?? 'Activity';
       case 'transport':
@@ -63,6 +72,7 @@ export class DetailsDialog {
 
   readonly icon = computed(() => {
     if (this.data.kind === 'accommodation') return 'hotel';
+    if (this.data.kind === 'car-reservation') return 'directions_car';
     if (this.data.kind === 'activity') return 'local_activity';
     const mode = this.transport?.mode;
     return mode === 'flight'
