@@ -71,17 +71,16 @@
 // Transport route: three blocks — [departure][duration/arrow][arrival] — with
 // time / place / detail stacked in each outer block.
 .body.route {
-  // Three content-sized blocks — [departure][arrow][arrival] — grouped together
-  // with decent spacing, rather than spread across the whole card width.
-  display: flex;
+  display: grid;
+  // Legs share the remaining width (departure left, arrival right); the centre
+  // connector is sized to its own content (a short fixed-length arrow).
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 1.1rem;
+  column-gap: 0.5rem;
 
   .leg {
     min-width: 0;
 
-    // Mirror the departure block: arrival lines hug their own right edge while
-    // the block stays grouped with the others (no stretch to the card edge).
     &.to {
       text-align: right;
     }
