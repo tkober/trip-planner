@@ -32,6 +32,9 @@ const MIGRATIONS: Record<number, TripMigration> = {
   // platform, stop, line, operator, train/bus kind). They are absent on older
   // documents, so no data transform is needed — this is an identity upgrade.
   [3]: (old) => old,
+  // v4 adds the `carReservations` array (rental cars). Older documents lack it,
+  // so seed an empty array.
+  [4]: (old) => ({ ...old, carReservations: old.carReservations ?? [] }),
 };
 
 /**

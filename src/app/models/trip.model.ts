@@ -6,7 +6,7 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /**
  * A wall-clock time anchored to an IANA time zone. No offset is stored — Luxon
@@ -35,6 +35,39 @@ export interface AccommodationDto {
   checkInDate: string;
   /** Check-out calendar date in the destination tz: "YYYY-MM-DD". */
   checkOutDate: string;
+}
+
+/**
+ * Car reservations: a rental car available across a span of days. Rendered as a
+ * lane on the left of the timeline (sibling of accommodations) so it's obvious
+ * when a car is at your disposal. Pickup and return may be at different stations.
+ */
+export interface CarReservationDto {
+  id: string;
+  /** Short label shown on the timeline lane / cards, e.g. "Toyota Aqua". */
+  name: string;
+  /** Rental company, e.g. "Toyota Rent a Car". */
+  company?: string;
+  /** Vehicle / car class, e.g. "Compact" or "Toyota Aqua". */
+  carType?: string;
+  /** Pickup station / branch (city or location name). */
+  pickupLocation?: string;
+  /** Return station / branch — may differ from pickup. */
+  dropoffLocation?: string;
+  /** Pickup calendar date in the destination tz: "YYYY-MM-DD" (lane start). */
+  pickupDate: string;
+  /** Return calendar date in the destination tz: "YYYY-MM-DD" (lane end, inclusive). */
+  dropoffDate: string;
+  /** Pickup time of day in the destination tz: "HH:mm". */
+  pickupTime?: string;
+  /** Return time of day in the destination tz: "HH:mm". */
+  dropoffTime?: string;
+  pickupGoogleMapsUrl?: string;
+  dropoffGoogleMapsUrl?: string;
+  bookingUrl?: string;
+  remarks?: string;
+  /** Explicit accent colour (hex). When unset a default tint applies. */
+  color?: string;
 }
 
 /** Activities: things you do at a place. */
@@ -114,6 +147,7 @@ export interface TripDto {
   destinationTimeZone: string;
   description?: string;
   accommodations: AccommodationDto[];
+  carReservations: CarReservationDto[];
   activities: ActivityDto[];
   transport: TransportDto[];
   /** ISO instant. */

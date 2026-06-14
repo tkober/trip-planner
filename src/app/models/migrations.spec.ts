@@ -11,6 +11,7 @@ function baseTrip(overrides: Record<string, unknown> = {}) {
     homeTimeZone: 'Europe/Berlin',
     destinationTimeZone: 'Asia/Tokyo',
     accommodations: [],
+    carReservations: [],
     activities: [],
     transport: [],
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -35,6 +36,12 @@ describe('migrateTrip', () => {
   it('upgrades a document older than the current version', () => {
     const result = migrateTrip(baseTrip({ schemaVersion: 1 }));
     expect(result.schemaVersion).toBe(SCHEMA_VERSION);
+  });
+
+  it('seeds an empty carReservations array on a pre-v4 document', () => {
+    const { carReservations, ...withoutCars } = baseTrip({ schemaVersion: 3 });
+    const result = migrateTrip(withoutCars);
+    expect(result.carReservations).toEqual([]);
   });
 
   it('rejects a document from a newer app version', () => {
