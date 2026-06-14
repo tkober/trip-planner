@@ -64,6 +64,22 @@ export class TimeZoneService {
   }
 
   /**
+   * Elapsed travel time between two moments, e.g. "11h 30min", "45min", "12h".
+   * Uses absolute instants, so it's correct even across zones (a flight whose
+   * departure and arrival are in different zones). Empty when non-positive.
+   */
+  durationLabel(start: ZonedTime, end: ZonedTime): string {
+    const ms = this.toMillis(end) - this.toMillis(start);
+    if (!(ms > 0)) return '';
+    const totalMin = Math.round(ms / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h && m) return `${h}h ${m}min`;
+    if (h) return `${h}h`;
+    return `${m}min`;
+  }
+
+  /**
    * Build a dual-zone label for a moment. `relevantZone` decides which side is
    * the primary (highlighted) one — typically the destination zone, except for
    * the departure flight where the home zone matters most.

@@ -35,6 +35,14 @@ const MIGRATIONS: Record<number, TripMigration> = {
   // v4 adds the `carReservations` array (rental cars). Older documents lack it,
   // so seed an empty array.
   [4]: (old) => ({ ...old, carReservations: old.carReservations ?? [] }),
+  // v5 drops the redundant `title` from each transport entry — the route is now
+  // derived from from/to (city) + mode-specific fields. Strip it on upgrade.
+  [5]: (old) => ({
+    ...old,
+    transport: Array.isArray(old.transport)
+      ? old.transport.map(({ title, ...rest }: any) => rest)
+      : old.transport,
+  }),
 };
 
 /**
