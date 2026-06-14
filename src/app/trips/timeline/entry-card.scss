@@ -80,6 +80,12 @@
   .leg {
     min-width: 0;
 
+    // Push the arrival block to the right edge of the card.
+    &.to {
+      margin-left: auto;
+      text-align: right;
+    }
+
     .time {
       font-size: 0.78rem;
       color: var(--mat-sys-on-surface-variant);
