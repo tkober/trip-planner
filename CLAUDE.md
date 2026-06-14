@@ -20,6 +20,11 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   switch splits that day top/bottom — always one lane, no overlap. Different hotels
   get distinct tints. Click → details. (Transport whose departure and arrival fall
   on different destination-tz days still spans via lane-packed `SpanBar` blocks.)
+- **Car reservations** render in a second left lane (right of the hotel lane) as one
+  continuous tinted block per rental spanning pickup→return days (inclusive), with a
+  car icon + vertical name; click → details. Pickup and return may be at different
+  stations and carry optional times. The lane collapses to 0px when empty, and car
+  reservations never appear in the right-hand activity/transport content column.
 - Activities and **Transport as separate entities** (flight/train/bus/car), always
   rendered as list cards interleaved per day, sorted by start time, colour/icon-
   differentiated by mode. An entry whose start and end fall on different
@@ -55,12 +60,14 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
 - `/trips/:id` → [TripPage](src/app/trips/trip-page/trip-page.ts) — the trip shell:
   a fixed left **side panel** (back button, trip name + compact details, section
   nav, trip-actions menu) plus a `<router-outlet>` for the active section. It has
-  four child routes (deep-linkable), defaulting to `timeline`:
+  five child routes (deep-linkable), defaulting to `timeline`:
   - `timeline` → [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid.
   - `overview` → [OverviewView](src/app/trips/views/overview-view.ts) — trip facts
     (dates, length, zones, description) + the departure/return flight cards.
   - `accommodations` → [AccommodationsView](src/app/trips/views/accommodations-view.ts)
     — all stays, ordered by check-in, as detail cards.
+  - `car-reservations` → [CarReservationsView](src/app/trips/views/car-reservations-view.ts)
+    — all rentals, ordered by pickup, as detail cards.
   - `transport` → [TransportView](src/app/trips/views/transport-view.ts) — all
     transport, ordered by departure, with dual-tz times.
   Child views receive the parent `:id` param via `withComponentInputBinding()` +
@@ -70,8 +77,8 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
 Services (signal-backed, `providedIn: 'root'` unless noted):
 - [TripStore](src/app/services/trip-store.ts) — **abstract** persistence interface
   (also the DI token). Holds the `trips` signal; all CRUD (trip + nested
-  accommodation/activity/transport) re-saves the whole trip and `refresh()`es the
-  signal. The Timeline derives its trip via `computed(() => trips().find(...))`, so
+  accommodation/car-reservation/activity/transport) re-saves the whole trip and
+  `refresh()`es the signal. The Timeline derives its trip via `computed(() => trips().find(...))`, so
   any mutation reactively updates the view. Two implementations, selected in
   [app.config.ts](src/app/app.config.ts) by `environment.storageBackend`:
   - [IndexedDbTripStore](src/app/services/indexeddb-trip-store.ts) — **default**,
@@ -88,8 +95,8 @@ Services (signal-backed, `providedIn: 'root'` unless noted):
   validated import (validates required fields, runs `migrateTrip()`, assigns a fresh id).
 - [TripActionsService](src/app/services/trip-actions.service.ts) — all dialog-driven
   trip mutations (edit trip, add/edit/delete + open-details for accommodation/
-  activity/transport, the `confirm` helper, JSON export). Shared by every view so
-  there's one implementation; each method takes the current trip explicitly.
+  car-reservation/activity/transport, the `confirm` helper, JSON export). Shared by
+  every view so there's one implementation; each method takes the current trip explicitly.
 
 Timeline composition:
 - [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid; computes
@@ -106,20 +113,24 @@ Timeline composition:
   become direct children of the timeline grid, sharing rows with span blocks.
 - [HotelCell](src/app/trips/timeline/hotel-cell.ts) — one day's accommodation cell
   (top = morning hotel, bottom = night hotel); computed in `TimelineView.hotelCells`.
+- [CarSpan](src/app/trips/timeline/car-span.ts) — one car reservation as a single
+  continuous block in the car lane (col 3), spanning pickup→return rows; computed in
+  `TimelineView.carSpans`.
 - [EntryCard](src/app/trips/timeline/entry-card.ts) — one single-day activity/transport.
 - [StraddleCard](src/app/trips/timeline/straddle-card.ts) — a day-crossing entry,
   anchored on the separator line (`grid-row` from `TimelineView.layout`, then
   `translateY(-50%)`); adjacent days get padding so the card has clear space.
-  The grid columns ([marker][hotel][content]) are built in
-  `TimelineView.gridTemplateColumns`.
+  The grid columns ([marker][hotel][car][content]) are built in
+  `TimelineView.gridTemplateColumns` (hotel and car lanes each collapse to 0px when
+  their entity is absent; content is referenced as the last column via `-2/-1`).
 - [FlightCard](src/app/trips/timeline/flight-card.ts) — prominent dual-tz flight,
   shown in the Overview section.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
-[src/app/shared/](src/app/shared/)): trip form, accommodation, activity, transport,
-a shared read-only **details** dialog (Edit/Delete actions), and a generic
-**confirm** dialog. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`,
-`SuggestField` (free-text autocomplete used for the train/bus kind).
+[src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,
+activity, transport, a shared read-only **details** dialog (Edit/Delete actions), and
+a generic **confirm** dialog. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`,
+`DateField`, `SuggestField` (free-text autocomplete used for the train/bus kind).
 
 ## Data Model
 
@@ -129,11 +140,15 @@ string + IANA zone (no offset), so Luxon can render the same instant in any zone
 
 ```
 TripDto { id, schemaVersion, title, startDate, endDate, homeTimeZone,
-          destinationTimeZone, description?, accommodations[], activities[],
-          transport[], createdAt, updatedAt }
+          destinationTimeZone, description?, accommodations[], carReservations[],
+          activities[], transport[], createdAt, updatedAt }
 ZonedTime { dateTime: "YYYY-MM-DDTHH:mm", zone: "Asia/Tokyo" }
 AccommodationDto { id, name, fullName?, address?, googleMapsUrl?, bookingUrl?,
                    remarks?, color?, checkInDate, checkOutDate }
+CarReservationDto { id, name, company?, carType?, pickupLocation?, dropoffLocation?,
+                    pickupDate, dropoffDate, pickupTime?, dropoffTime?,
+                    pickupGoogleMapsUrl?, dropoffGoogleMapsUrl?, bookingUrl?,
+                    remarks?, color? }
 ActivityDto { id, title, start, end?, location?, googleMapsUrl?, bookingUrl?, notes?, color? }
 TransportDto { id, mode: flight|train|bus|car, title, start, end?, fromLocation?,
                toLocation?, bookingUrl?, notes?, color?,
@@ -152,10 +167,17 @@ written for their mode (the dialog clears the others on save), as `airline`/
 env-configurable (see "Configuration"). All new fields are optional, so adding
 them was an additive **schema v3** step (no data transform).
 
+`CarReservationDto` is a rental car available across a span of days (rendered as a
+left-lane block, see the timeline section). `pickupDate`/`dropoffDate` are calendar
+dates in the destination tz that drive the lane (return day inclusive); `pickup`/
+`dropoffLocation` are the stations (may differ); times are optional `"HH:mm"`.
+Adding the `carReservations[]` array was an additive **schema v4** step (the
+migration seeds an empty array on older documents).
+
 Every entity may carry an optional `color` (a hex accent). When unset, a default
-applies: accommodations cycle distinct tints by storage order; each transport
-mode has its own colour; activities use their own accent (kept distinct from the
-flight blue). Colour logic + the quick-pick palette live in
+applies: accommodations and car reservations each cycle their own distinct tints by
+storage order; each transport mode has its own colour; activities use their own
+accent (kept distinct from the flight blue). Colour logic + the quick-pick palette live in
 [src/app/shared/color/color.ts](src/app/shared/color/color.ts); the reusable
 picker (palette swatches + native colour input) is
 [ColorField](src/app/shared/color/color-field.ts), embedded in each entity

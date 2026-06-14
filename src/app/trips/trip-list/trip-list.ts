@@ -95,7 +95,7 @@ export class TripList {
   confirmDelete(trip: TripDto): void {
     const data: ConfirmDialogData = {
       title: 'Delete trip?',
-      message: `"${trip.title}" and all its days, accommodations, activities and transport will be permanently deleted.`,
+      message: `"${trip.title}" and all its days, accommodations, car rentals, activities and transport will be permanently deleted.`,
       confirmLabel: 'Delete',
       destructive: true,
     };
