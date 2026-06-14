@@ -2,6 +2,7 @@ import { Signal } from '@angular/core';
 import {
   AccommodationDto,
   ActivityDto,
+  CarReservationDto,
   TransportDto,
   TripDto,
 } from '../models/trip.model';
@@ -51,6 +52,14 @@ export abstract class TripStore {
     accommodation: AccommodationDto,
   ): Promise<TripDto>;
   abstract removeAccommodation(trip: TripDto, id: string): Promise<TripDto>;
+
+  // --- Car reservation CRUD ------------------------------------------------
+
+  abstract upsertCarReservation(
+    trip: TripDto,
+    car: CarReservationDto,
+  ): Promise<TripDto>;
+  abstract removeCarReservation(trip: TripDto, id: string): Promise<TripDto>;
 
   // --- Activity CRUD -------------------------------------------------------
 
