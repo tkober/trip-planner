@@ -1,0 +1,15 @@
+@use './views.scss';
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
