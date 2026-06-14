@@ -15,7 +15,7 @@ import { TimezoneSelect } from '../timezone-select/timezone-select';
   selector: 'app-zoned-time-field',
   imports: [FormsModule, MatFormFieldModule, MatInputModule, TimezoneSelect],
   template: `
-    <div class="zoned-field">
+    <div class="zoned-field" [class.stacked]="stack()">
       <mat-form-field class="dt">
         <mat-label>{{ label() }}</mat-label>
         <input
@@ -23,6 +23,7 @@ import { TimezoneSelect } from '../timezone-select/timezone-select';
           type="datetime-local"
           [ngModel]="value().dateTime"
           (ngModelChange)="setDateTime($event)"
+          [disabled]="disabled()"
         />
       </mat-form-field>
       <app-timezone-select
@@ -30,6 +31,7 @@ import { TimezoneSelect } from '../timezone-select/timezone-select';
         label="Zone"
         [value]="value().zone"
         (valueChange)="setZone($event)"
+        [disabled]="disabled()"
       />
     </div>
   `,
@@ -45,6 +47,10 @@ import { TimezoneSelect } from '../timezone-select/timezone-select';
       .zone {
         flex: 1;
       }
+      .zoned-field.stacked {
+        flex-direction: column;
+        gap: 0;
+      }
       @media (max-width: 520px) {
         .zoned-field {
           flex-direction: column;
@@ -56,6 +62,9 @@ import { TimezoneSelect } from '../timezone-select/timezone-select';
 })
 export class ZonedTimeField {
   readonly label = input('Time');
+  /** Stack the datetime input above the zone picker (for narrow columns). */
+  readonly stack = input(false);
+  readonly disabled = input(false);
   readonly value = model.required<ZonedTime>();
 
   setDateTime(dateTime: string): void {

@@ -1,7 +1,7 @@
 <h2 mat-dialog-title>{{ isEdit ? 'Edit transport' : 'Add transport' }}</h2>
 
 <mat-dialog-content>
-  <form class="entity-form" (ngSubmit)="save()">
+  <form class="entity-form transport-form" (ngSubmit)="save()">
     <mat-button-toggle-group
       [value]="mode()"
       (change)="setMode($event.value)"
@@ -32,38 +32,9 @@
       </mat-form-field>
     </div>
 
-    <p class="section-label">Departure</p>
-    <app-zoned-time-field label="Departure" [(value)]="start" />
-
-    <mat-checkbox [ngModel]="hasEnd()" (ngModelChange)="hasEnd.set($event)" name="hasEnd">
-      Has arrival time
-    </mat-checkbox>
-    @if (hasEnd()) {
-      <app-zoned-time-field label="Arrival" [(value)]="end" />
-    }
+    <hr class="divider" />
 
     @if (isFlight()) {
-      <p class="section-label">Flight details</p>
-      <div class="row">
-        <mat-form-field>
-          <mat-label>From airport (optional)</mat-label>
-          <input matInput [ngModel]="fromAirport()" (ngModelChange)="fromAirport.set($event)" name="fromAirport" placeholder="e.g. Haneda" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>From terminal (optional)</mat-label>
-          <input matInput [ngModel]="fromTerminal()" (ngModelChange)="fromTerminal.set($event)" name="fromTerminal" />
-        </mat-form-field>
-      </div>
-      <div class="row">
-        <mat-form-field>
-          <mat-label>To airport (optional)</mat-label>
-          <input matInput [ngModel]="toAirport()" (ngModelChange)="toAirport.set($event)" name="toAirport" placeholder="e.g. Narita" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>To terminal (optional)</mat-label>
-          <input matInput [ngModel]="toTerminal()" (ngModelChange)="toTerminal.set($event)" name="toTerminal" />
-        </mat-form-field>
-      </div>
       <div class="row">
         <mat-form-field>
           <mat-label>Airline (optional)</mat-label>
@@ -77,27 +48,6 @@
     }
 
     @if (isTrain()) {
-      <p class="section-label">Train details</p>
-      <div class="row">
-        <mat-form-field>
-          <mat-label>From station (optional)</mat-label>
-          <input matInput [ngModel]="fromStation()" (ngModelChange)="fromStation.set($event)" name="fromStation" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>From platform (optional)</mat-label>
-          <input matInput [ngModel]="fromPlatform()" (ngModelChange)="fromPlatform.set($event)" name="fromPlatform" />
-        </mat-form-field>
-      </div>
-      <div class="row">
-        <mat-form-field>
-          <mat-label>To station (optional)</mat-label>
-          <input matInput [ngModel]="toStation()" (ngModelChange)="toStation.set($event)" name="toStation" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>To platform (optional)</mat-label>
-          <input matInput [ngModel]="toPlatform()" (ngModelChange)="toPlatform.set($event)" name="toPlatform" />
-        </mat-form-field>
-      </div>
       <div class="row">
         <mat-form-field>
           <mat-label>Line (optional)</mat-label>
@@ -118,17 +68,6 @@
     }
 
     @if (isBus()) {
-      <p class="section-label">Bus details</p>
-      <div class="row">
-        <mat-form-field>
-          <mat-label>From stop (optional)</mat-label>
-          <input matInput [ngModel]="fromStop()" (ngModelChange)="fromStop.set($event)" name="fromStop" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>To stop (optional)</mat-label>
-          <input matInput [ngModel]="toStop()" (ngModelChange)="toStop.set($event)" name="toStop" />
-        </mat-form-field>
-      </div>
       <div class="row">
         <mat-form-field>
           <mat-label>Line (optional)</mat-label>
@@ -141,6 +80,79 @@
       </div>
       <app-suggest-field label="Kind (optional)" [options]="busKinds" [(value)]="busKind" />
     }
+
+    <div class="dep-arr">
+      <section class="leg">
+        <div class="leg-head">
+          <p class="section-label">Departure</p>
+        </div>
+        <app-zoned-time-field label="Departure" [stack]="true" [(value)]="start" />
+        @if (isFlight()) {
+          <mat-form-field class="full-width">
+            <mat-label>From airport (optional)</mat-label>
+            <input matInput [ngModel]="fromAirport()" (ngModelChange)="fromAirport.set($event)" name="fromAirport" placeholder="e.g. Haneda" />
+          </mat-form-field>
+          <mat-form-field class="full-width">
+            <mat-label>From terminal (optional)</mat-label>
+            <input matInput [ngModel]="fromTerminal()" (ngModelChange)="fromTerminal.set($event)" name="fromTerminal" />
+          </mat-form-field>
+        }
+        @if (isTrain()) {
+          <mat-form-field class="full-width">
+            <mat-label>From station (optional)</mat-label>
+            <input matInput [ngModel]="fromStation()" (ngModelChange)="fromStation.set($event)" name="fromStation" />
+          </mat-form-field>
+          <mat-form-field class="full-width">
+            <mat-label>From platform (optional)</mat-label>
+            <input matInput [ngModel]="fromPlatform()" (ngModelChange)="fromPlatform.set($event)" name="fromPlatform" />
+          </mat-form-field>
+        }
+        @if (isBus()) {
+          <mat-form-field class="full-width">
+            <mat-label>From stop (optional)</mat-label>
+            <input matInput [ngModel]="fromStop()" (ngModelChange)="fromStop.set($event)" name="fromStop" />
+          </mat-form-field>
+        }
+      </section>
+
+      <section class="leg">
+        <div class="leg-head">
+          <p class="section-label">Arrival</p>
+          <mat-checkbox [ngModel]="hasEnd()" (ngModelChange)="hasEnd.set($event)" name="hasEnd">
+            Has arrival time
+          </mat-checkbox>
+        </div>
+        <app-zoned-time-field label="Arrival" [stack]="true" [disabled]="!hasEnd()" [(value)]="end" />
+        @if (isFlight()) {
+          <mat-form-field class="full-width">
+            <mat-label>To airport (optional)</mat-label>
+            <input matInput [ngModel]="toAirport()" (ngModelChange)="toAirport.set($event)" name="toAirport" placeholder="e.g. Narita" />
+          </mat-form-field>
+          <mat-form-field class="full-width">
+            <mat-label>To terminal (optional)</mat-label>
+            <input matInput [ngModel]="toTerminal()" (ngModelChange)="toTerminal.set($event)" name="toTerminal" />
+          </mat-form-field>
+        }
+        @if (isTrain()) {
+          <mat-form-field class="full-width">
+            <mat-label>To station (optional)</mat-label>
+            <input matInput [ngModel]="toStation()" (ngModelChange)="toStation.set($event)" name="toStation" />
+          </mat-form-field>
+          <mat-form-field class="full-width">
+            <mat-label>To platform (optional)</mat-label>
+            <input matInput [ngModel]="toPlatform()" (ngModelChange)="toPlatform.set($event)" name="toPlatform" />
+          </mat-form-field>
+        }
+        @if (isBus()) {
+          <mat-form-field class="full-width">
+            <mat-label>To stop (optional)</mat-label>
+            <input matInput [ngModel]="toStop()" (ngModelChange)="toStop.set($event)" name="toStop" />
+          </mat-form-field>
+        }
+      </section>
+    </div>
+
+    <hr class="divider" />
 
     <mat-form-field class="full-width">
       <mat-label>Booking link (optional)</mat-label>

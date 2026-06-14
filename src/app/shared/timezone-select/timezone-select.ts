@@ -29,6 +29,7 @@ import { TimeZoneService } from '../../services/time-zone.service';
         [value]="value()"
         (input)="onInput($event)"
         [matAutocomplete]="auto"
+        [disabled]="disabled()"
         placeholder="e.g. Asia/Tokyo"
         autocomplete="off"
       />
@@ -44,6 +45,7 @@ export class TimezoneSelect {
   private readonly tz = inject(TimeZoneService);
 
   readonly label = input('Time zone');
+  readonly disabled = input(false);
   readonly value = model<string>('');
 
   private readonly query = signal('');
