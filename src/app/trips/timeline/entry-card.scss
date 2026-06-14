@@ -80,9 +80,9 @@
   .leg {
     min-width: 0;
 
-    // Push the arrival block to the right edge of the card.
+    // Mirror the departure block: arrival lines hug their own right edge while
+    // the block stays grouped with the others (no stretch to the card edge).
     &.to {
-      margin-left: auto;
       text-align: right;
     }
 
