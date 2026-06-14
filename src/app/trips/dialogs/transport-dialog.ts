@@ -73,7 +73,6 @@ export class TransportDialog {
   readonly trainKinds = environment.trainKinds;
   readonly busKinds = environment.busKinds;
 
-  readonly title = signal(this.data.transport?.title ?? '');
   readonly start = signal<ZonedTime>(
     this.data.transport?.start ?? {
       dateTime: this.data.defaultDateTime,
@@ -130,11 +129,6 @@ export class TransportDialog {
   }
 
   save(): void {
-    const title = this.title().trim();
-    if (!title) {
-      this.error.set('Please enter a title.');
-      return;
-    }
     if (!this.start().dateTime) {
       this.error.set('Please choose a departure time.');
       return;
@@ -149,7 +143,6 @@ export class TransportDialog {
     const result: TransportDto = {
       id: this.id,
       mode: this.mode(),
-      title,
       start: this.start(),
       end: this.hasEnd() && this.end().dateTime ? this.end() : undefined,
       fromLocation: this.fromLocation().trim() || undefined,

@@ -39,15 +39,10 @@
   }
 }
 
-.title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-top: 0.15rem;
-}
-
 .airline {
   font-size: 0.85rem;
   opacity: 0.85;
+  margin-top: 0.15rem;
 }
 
 .legs {
@@ -96,6 +91,23 @@
   font-size: 0.78rem;
   opacity: 0.8;
   margin-top: 0.1rem;
+}
+
+// From → To arrow with the travel time stacked above it.
+.arrow-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  flex-shrink: 0;
+}
+
+.duration {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--mat-sys-on-surface);
+  white-space: nowrap;
 }
 
 .arrow {

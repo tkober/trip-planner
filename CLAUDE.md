@@ -27,10 +27,19 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   reservations never appear in the right-hand activity/transport content column.
 - Activities and **Transport as separate entities** (flight/train/bus/car), always
   rendered as list cards interleaved per day, sorted by start time, colour/icon-
-  differentiated by mode. An entry whose start and end fall on different
+  differentiated by mode. Transport has **no title**: its headline is the
+  **route `FROM → TO`** derived from `fromLocation`/`toLocation` (falling back to the
+  mode's airport/station/stop), with departure/arrival times above it and the
+  **travel duration** ("11h 30min") shown over the arrow; the subtitle carries the
+  mode detail (airport + terminal / station + platform / stop). Activities still use
+  their own title + location. An entry whose start and end fall on different
   destination-tz days is drawn as a **straddle card centered on the separator**
-  between the two days (dashed divider = the day boundary; start time on top, arrival
-  on the bottom) so both days stay recognizable.
+  between the two days (dashed divider = the day boundary). For transport the route
+  maps vertically — **FROM + departure on the top half, TO + arrival + subtitle on the
+  bottom**, duration on the divider — so both days stay recognizable.
+  Route/subtitle/duration formatting is shared in
+  [transport-format.ts](src/app/shared/transport-format.ts) +
+  `TimeZoneService.durationLabel`.
 - Prominent **departure & return flight cards** with dual-timezone times.
 - Create/edit/delete for every entity via Material dialogs; all destructive actions
   and trip-duration changes are gated by a confirmation modal.
@@ -150,7 +159,7 @@ CarReservationDto { id, name, company?, carType?, pickupLocation?, dropoffLocati
                     pickupGoogleMapsUrl?, dropoffGoogleMapsUrl?, bookingUrl?,
                     remarks?, color? }
 ActivityDto { id, title, start, end?, location?, googleMapsUrl?, bookingUrl?, notes?, color? }
-TransportDto { id, mode: flight|train|bus|car, title, start, end?, fromLocation?,
+TransportDto { id, mode: flight|train|bus|car, start, end?, fromLocation?,
                toLocation?, bookingUrl?, notes?, color?,
                // flight-only: airline?, flightNumber?, fromAirport?, toAirport?,
                //              fromTerminal?, toTerminal?
@@ -173,6 +182,9 @@ dates in the destination tz that drive the lane (return day inclusive); `pickup`
 `dropoffLocation` are the stations (may differ); times are optional `"HH:mm"`.
 Adding the `carReservations[]` array was an additive **schema v4** step (the
 migration seeds an empty array on older documents).
+
+Removing the redundant transport `title` (the route is now derived) was a
+**schema v5** step whose migration strips `title` from each `transport[]` entry.
 
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations and car reservations each cycle their own distinct tints by

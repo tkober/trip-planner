@@ -61,7 +61,7 @@ describe('migrateTrip', () => {
       }),
     );
     expect(result.schemaVersion).toBe(SCHEMA_VERSION);
-    expect((result.transport[0] as Record<string, unknown>)['title']).toBeUndefined();
+    expect('title' in result.transport[0]).toBe(false);
     expect(result.transport[0].fromLocation).toBe('Odawara');
   });
 

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "title": "Japan — Cherry Blossom Tour 2026",
   "startDate": "2026-04-03",
   "endDate": "2026-04-18",
@@ -87,7 +87,6 @@
     {
       "id": "trn-dep",
       "mode": "flight",
-      "title": "Frankfurt → Tokyo",
       "start": { "dateTime": "2026-04-02T13:30", "zone": "Europe/Berlin" },
       "end": { "dateTime": "2026-04-03T08:55", "zone": "Asia/Tokyo" },
       "fromLocation": "FRA (Frankfurt)",
@@ -100,7 +99,6 @@
     {
       "id": "trn-romancecar",
       "mode": "train",
-      "title": "Romancecar to Hakone",
       "start": { "dateTime": "2026-04-08T09:00", "zone": "Asia/Tokyo" },
       "end": { "dateTime": "2026-04-08T10:25", "zone": "Asia/Tokyo" },
       "fromLocation": "Shinjuku",
@@ -111,7 +109,6 @@
     {
       "id": "trn-shinkansen-kyoto",
       "mode": "train",
-      "title": "Shinkansen to Kyoto",
       "start": { "dateTime": "2026-04-09T11:12", "zone": "Asia/Tokyo" },
       "end": { "dateTime": "2026-04-09T13:33", "zone": "Asia/Tokyo" },
       "fromLocation": "Odawara",
@@ -121,7 +118,6 @@
     {
       "id": "trn-kyoto-osaka",
       "mode": "train",
-      "title": "Special Rapid to Osaka",
       "start": { "dateTime": "2026-04-13T10:30", "zone": "Asia/Tokyo" },
       "end": { "dateTime": "2026-04-13T11:00", "zone": "Asia/Tokyo" },
       "fromLocation": "Kyoto",
@@ -131,7 +127,6 @@
     {
       "id": "trn-night-bus",
       "mode": "bus",
-      "title": "Overnight bus to Tokyo",
       "start": { "dateTime": "2026-04-15T22:30", "zone": "Asia/Tokyo" },
       "end": { "dateTime": "2026-04-16T06:50", "zone": "Asia/Tokyo" },
       "fromLocation": "Osaka (Umeda)",
@@ -142,7 +137,6 @@
     {
       "id": "trn-ret",
       "mode": "flight",
-      "title": "Tokyo → Frankfurt",
       "start": { "dateTime": "2026-04-18T11:25", "zone": "Asia/Tokyo" },
       "end": { "dateTime": "2026-04-18T16:05", "zone": "Europe/Berlin" },
       "fromLocation": "HND (Haneda)",
