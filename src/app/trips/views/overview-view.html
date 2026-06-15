@@ -46,21 +46,25 @@
       <h3 class="section-title">Flights</h3>
       <div class="flights">
         @if (departureFlight(); as dep) {
-          <app-flight-card
-            [flight]="dep"
+          <app-transport-card
+            [transport]="dep"
             role="Departure"
             [homeZone]="t.homeTimeZone"
             [destZone]="t.destinationTimeZone"
             (open)="openFlight($event)"
+            (edit)="editFlight($event)"
+            (delete)="deleteFlight($event)"
           />
         }
         @if (returnFlight(); as ret) {
-          <app-flight-card
-            [flight]="ret"
+          <app-transport-card
+            [transport]="ret"
             role="Return"
             [homeZone]="t.homeTimeZone"
             [destZone]="t.destinationTimeZone"
             (open)="openFlight($event)"
+            (edit)="editFlight($event)"
+            (delete)="deleteFlight($event)"
           />
         }
       </div>
