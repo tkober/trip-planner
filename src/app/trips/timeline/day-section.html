@@ -1,11 +1,31 @@
-<div class="day-marker" [style.grid-row]="rowIndex()">
+<button
+  type="button"
+  class="day-marker"
+  [style.grid-row]="rowIndex()"
+  (click)="openDayMenu($event)"
+  aria-label="Add to this day"
+>
   <div class="day-index">Day {{ view().day.index }}</div>
   <div class="day-date">{{ view().day.startOfDay.toFormat('ccc') }}</div>
   <div class="day-date-num">{{ view().day.startOfDay.toFormat('d LLL') }}</div>
   <div class="day-zone">
     <mat-icon class="zone-icon">schedule</mat-icon>{{ zoneLabel() }}
   </div>
-</div>
+</button>
+<div
+  class="day-menu-anchor"
+  [style.left.px]="menuX()"
+  [style.top.px]="menuY()"
+  [matMenuTriggerFor]="dayMenu"
+></div>
+<mat-menu #dayMenu="matMenu">
+  <button mat-menu-item (click)="addAccommodation.emit(view().day.date)">
+    <mat-icon>hotel</mat-icon><span>Add Accommodation</span>
+  </button>
+  <button mat-menu-item (click)="addCarReservation.emit(view().day.date)">
+    <mat-icon>directions_car</mat-icon><span>Add Car Rental</span>
+  </button>
+</mat-menu>
 
 <div
   class="day-content"

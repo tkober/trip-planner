@@ -7,9 +7,22 @@
   display: flex;
   flex-direction: column;
   padding: 0.75rem 0.75rem 0.75rem 0;
+  // Reset the native button so it reads as the day marker.
+  appearance: none;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
   border-top: 1px solid var(--mat-sys-outline-variant);
   // The continuous vertical timeline spine.
   border-right: 2px solid var(--mat-sys-outline-variant);
+
+  &:hover .day-index,
+  &:focus-visible .day-index {
+    text-decoration: underline;
+  }
 
   .day-index {
     font-weight: 600;
@@ -44,6 +57,14 @@
       height: 0.85rem;
     }
   }
+}
+
+// Zero-size element anchoring the day menu at the click coordinates.
+.day-menu-anchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+  visibility: hidden;
 }
 
 .day-content {

@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { DateTime } from 'luxon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -108,10 +109,12 @@ export class TripActionsService {
 
   // --- Accommodation -------------------------------------------------------
 
-  addAccommodation(trip: TripDto): void {
+  addAccommodation(trip: TripDto, date?: string): void {
     const data: AccommodationDialogData = {
-      defaultCheckIn: trip.startDate,
-      defaultCheckOut: trip.endDate,
+      // Seed a 1-night stay on the clicked day (check-out next morning),
+      // else default to the whole trip.
+      defaultCheckIn: date ?? trip.startDate,
+      defaultCheckOut: date ? this.nextDay(date) : trip.endDate,
       defaultColor: accommodationDefaultColor(trip.accommodations.length),
       newId: () => this.store.newId(),
     };
@@ -174,10 +177,11 @@ export class TripActionsService {
 
   // --- Car reservation -----------------------------------------------------
 
-  addCarReservation(trip: TripDto): void {
+  addCarReservation(trip: TripDto, date?: string): void {
     const data: CarReservationDialogData = {
-      defaultPickup: trip.startDate,
-      defaultDropoff: trip.endDate,
+      // Seed a same-day rental on the clicked day, else the whole trip.
+      defaultPickup: date ?? trip.startDate,
+      defaultDropoff: date ?? trip.endDate,
       defaultColor: carReservationDefaultColor(trip.carReservations.length),
       newId: () => this.store.newId(),
     };
@@ -360,6 +364,11 @@ export class TripActionsService {
   }
 
   // --- Helpers -------------------------------------------------------------
+
+  /** The calendar day after a "YYYY-MM-DD" date. */
+  private nextDay(date: string): string {
+    return DateTime.fromISO(date).plus({ days: 1 }).toISODate() ?? date;
+  }
 
   confirm(data: ConfirmDialogData): Promise<boolean> {
     return new Promise((resolve) => {
