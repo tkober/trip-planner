@@ -103,6 +103,10 @@
       "end": { "dateTime": "2026-04-08T10:25", "zone": "Asia/Tokyo" },
       "fromLocation": "Shinjuku",
       "toLocation": "Hakone-Yumoto",
+      "line": "Odakyu Line",
+      "trainName": "Romancecar GSE",
+      "operator": "Odakyu",
+      "trainKind": "Limited express",
       "bookingUrl": "https://www.odakyu.jp/english/romancecar/",
       "notes": "Odakyu Romancecar GSE. Sit on the right for Mt. Fuji glimpses. Bags forwarded to ryokan."
     },
@@ -113,6 +117,10 @@
       "end": { "dateTime": "2026-04-09T13:33", "zone": "Asia/Tokyo" },
       "fromLocation": "Odawara",
       "toLocation": "Kyoto",
+      "line": "Tōkaidō Shinkansen",
+      "trainName": "Hikari 463",
+      "operator": "JR Central",
+      "trainKind": "Shinkansen",
       "notes": "Local bus Hakone → Odawara first (~35 min). Hikari 463, reserved car 7, seats D/E for Fuji."
     },
     {
@@ -122,6 +130,9 @@
       "end": { "dateTime": "2026-04-13T11:00", "zone": "Asia/Tokyo" },
       "fromLocation": "Kyoto",
       "toLocation": "Osaka",
+      "line": "JR Kyoto Line",
+      "operator": "JR West",
+      "trainKind": "Rapid",
       "notes": "JR Kyoto Line, no reservation needed. Suica works."
     },
     {
@@ -131,6 +142,9 @@
       "end": { "dateTime": "2026-04-16T06:50", "zone": "Asia/Tokyo" },
       "fromLocation": "Osaka (Umeda)",
       "toLocation": "Tokyo (Shinjuku)",
+      "line": "Osaka ⇄ Tokyo",
+      "operator": "Willer Express",
+      "busKind": "Overnight",
       "bookingUrl": "https://willerexpress.com/en/",
       "notes": "Willer Express 'Cocoon' reclining seats. Saves a hotel night — no accommodation booked for the 15th."
     },

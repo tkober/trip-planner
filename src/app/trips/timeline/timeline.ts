@@ -351,6 +351,16 @@ export class TimelineView {
     if (trip) this.actions.addTransport(trip, date);
   }
 
+  addAccommodation(date: string): void {
+    const trip = this.trip();
+    if (trip) this.actions.addAccommodation(trip, date);
+  }
+
+  addCarReservation(date: string): void {
+    const trip = this.trip();
+    if (trip) this.actions.addCarReservation(trip, date);
+  }
+
   openEntry(entry: TimelineEntry): void {
     const trip = this.trip();
     if (trip) this.actions.openEntry(trip, entry);

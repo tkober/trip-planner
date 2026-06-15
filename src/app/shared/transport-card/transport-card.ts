@@ -89,6 +89,27 @@ export class TransportCard {
       : undefined;
   });
 
+  /**
+   * Mode-specific detail lines for the right-hand column (flight number/airline,
+   * train line/name/operator/kind, bus line/operator/kind). Empty entries are
+   * dropped; car has none, so it keeps the old full-width route layout.
+   */
+  readonly details = computed<string[]>(() => {
+    const t = this.transport();
+    const lines = (...xs: (string | undefined)[]) =>
+      xs.map((x) => x?.trim()).filter((x): x is string => !!x);
+    switch (t.mode) {
+      case 'flight':
+        return lines(t.flightNumber, t.airline);
+      case 'train':
+        return lines(t.line, t.trainName, t.operator, t.trainKind);
+      case 'bus':
+        return lines(t.line, t.operator, t.busKind);
+      default:
+        return [];
+    }
+  });
+
   private endpoint(zt: ZonedTime, place: string, detail?: string): Endpoint {
     const dual = this.tz.dualLabel(zt, this.homeZone(), this.destZone());
     return {

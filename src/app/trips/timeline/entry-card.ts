@@ -71,6 +71,13 @@ const MODE_ICON: Record<TransportMode, string> = {
           }
         </div>
       }
+      @if (details().length) {
+        <div class="detail">
+          @for (line of details(); track $index) {
+            <div class="line">{{ line }}</div>
+          }
+        </div>
+      }
       <button
         matIconButton
         class="entry-menu"
@@ -147,6 +154,29 @@ export class EntryCard {
         : '',
       duration: t.end ? this.tz.durationLabel(t.start, t.end) : '',
     };
+  });
+
+  /**
+   * Mode-specific detail lines for the right-hand column, mirroring the shared
+   * TransportCard (flight: number/airline; train: line/name/operator/kind; bus:
+   * line/operator/kind). Empty for activities and car, so the route keeps the
+   * full width in those cases.
+   */
+  readonly details = computed<string[]>(() => {
+    const t = this.entry().transport;
+    if (!t) return [];
+    const lines = (...xs: (string | undefined)[]) =>
+      xs.map((x) => x?.trim()).filter((x): x is string => !!x);
+    switch (t.mode) {
+      case 'flight':
+        return lines(t.flightNumber, t.airline);
+      case 'train':
+        return lines(t.line, t.trainName, t.operator, t.trainKind);
+      case 'bus':
+        return lines(t.line, t.operator, t.busKind);
+      default:
+        return [];
+    }
   });
 
   /** Start time in the destination tz (the timeline's primary reference). */

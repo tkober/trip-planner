@@ -64,6 +64,14 @@
     </div>
   </div>
 
+  @if (details().length) {
+    <div class="detail">
+      @for (line of details(); track $index) {
+        <div class="line">{{ line }}</div>
+      }
+    </div>
+  }
+
   <button
     matIconButton
     class="card-menu"

@@ -1,8 +1,8 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal, viewChild } from '@angular/core';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { TimelineEntry } from '../../models/trip.model';
 import { TripDay } from '../../services/time-zone.service';
 import { EntryCard } from './entry-card';
@@ -43,8 +43,22 @@ export class DaySection {
 
   readonly addActivity = output<string>();
   readonly addTransport = output<string>();
+  readonly addAccommodation = output<string>();
+  readonly addCarReservation = output<string>();
   readonly openEntry = output<TimelineEntry>();
   readonly editEntry = output<TimelineEntry>();
   readonly deleteEntry = output<TimelineEntry>();
   readonly dropped = output<CdkDragDrop<DayView>>();
+
+  /** Invisible anchor for the day menu, positioned at the click coordinates. */
+  private readonly menuTrigger = viewChild.required(MatMenuTrigger);
+  readonly menuX = signal(0);
+  readonly menuY = signal(0);
+
+  /** Open the add-to-day menu anchored at the cursor. */
+  openDayMenu(event: MouseEvent): void {
+    this.menuX.set(event.clientX);
+    this.menuY.set(event.clientY);
+    this.menuTrigger().openMenu();
+  }
 }

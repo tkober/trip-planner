@@ -38,8 +38,37 @@
 }
 
 .main {
+  // Route region takes ~2/3; the detail column (when present) takes ~1/3.
+  flex: 2;
+  min-width: 0;
+}
+
+// Right-hand mode detail (flight number/airline, train/bus line·operator·kind),
+// separated from the route by a full-height divider. Absent for car and when no
+// detail fields are set, so the route then reclaims the full width.
+.detail {
   flex: 1;
   min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--mat-sys-outline-variant);
+
+  .line {
+    font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .line:first-child {
+    font-weight: 600;
+    color: var(--mat-sys-on-surface);
+  }
 }
 
 .eyebrow {

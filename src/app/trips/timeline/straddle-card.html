@@ -18,6 +18,13 @@
         <div class="subtitle">{{ detail }}</div>
       }
     </div>
+    @if (details().length) {
+      <div class="detail">
+        @for (line of details(); track $index) {
+          <div class="line">{{ line }}</div>
+        }
+      </div>
+    }
     <button
       matIconButton
       class="straddle-menu"
