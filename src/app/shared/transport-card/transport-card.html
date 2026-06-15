@@ -1,0 +1,87 @@
+<div
+  class="transport-card"
+  [style.--accent]="accent()"
+  (click)="open.emit(transport())"
+>
+  <div class="bullet"><mat-icon>{{ icon() }}</mat-icon></div>
+
+  <div class="main">
+    <div class="eyebrow">{{ eyebrow() }}</div>
+
+    <div class="route">
+      <div class="leg from">
+        <div class="place">{{ from() }}</div>
+        <div class="time">
+          {{ departure().primary }}
+          <span class="zone">{{ departure().primaryZone }}</span>
+        </div>
+        @if (!departure().sameZone) {
+          <div class="alt">
+            {{ departure().secondary }}
+            <span class="zone">{{ departure().secondaryZone }}</span>
+          </div>
+        }
+        <div class="date">{{ departure().date }}</div>
+        @if (departure().detail; as d) {
+          <div class="detail">{{ d }}</div>
+        }
+      </div>
+
+      <div class="connector">
+        @if (duration(); as d) {
+          <span class="duration">{{ d }}</span>
+        }
+        <div class="track">
+          <span class="line"></span>
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+      </div>
+
+      @if (arrival(); as arr) {
+        <div class="leg to">
+          <div class="place">{{ to() }}</div>
+          <div class="time">
+            {{ arr.primary }}
+            <span class="zone">{{ arr.primaryZone }}</span>
+          </div>
+          @if (!arr.sameZone) {
+            <div class="alt">
+              {{ arr.secondary }}
+              <span class="zone">{{ arr.secondaryZone }}</span>
+            </div>
+          }
+          <div class="date">{{ arr.date }}</div>
+          @if (arr.detail; as d) {
+            <div class="detail">{{ d }}</div>
+          }
+        </div>
+      } @else {
+        <div class="leg to muted">
+          <div class="place">{{ to() }}</div>
+          <div class="time">—</div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <button
+    matIconButton
+    class="card-menu"
+    [matMenuTriggerFor]="menu"
+    (click)="$event.stopPropagation()"
+    aria-label="Transport actions"
+  >
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #menu="matMenu">
+    <button mat-menu-item (click)="open.emit(transport())">
+      <mat-icon>info</mat-icon><span>Details</span>
+    </button>
+    <button mat-menu-item (click)="edit.emit(transport())">
+      <mat-icon>edit</mat-icon><span>Edit</span>
+    </button>
+    <button mat-menu-item (click)="delete.emit(transport())">
+      <mat-icon>delete</mat-icon><span>Delete</span>
+    </button>
+  </mat-menu>
+</div>

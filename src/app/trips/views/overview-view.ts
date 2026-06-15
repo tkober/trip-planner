@@ -5,12 +5,12 @@ import { TransportDto, TripDto } from '../../models/trip.model';
 import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
-import { FlightCard } from '../timeline/flight-card';
+import { TransportCard } from '../../shared/transport-card/transport-card';
 
 /** Trip summary: dates, length, zones, description and the departure/return flights. */
 @Component({
   selector: 'app-overview-view',
-  imports: [MatButtonModule, MatIconModule, FlightCard],
+  imports: [MatButtonModule, MatIconModule, TransportCard],
   templateUrl: './overview-view.html',
   styleUrl: './overview-view.scss',
 })
@@ -58,5 +58,15 @@ export class OverviewView {
   openFlight(flight: TransportDto): void {
     const trip = this.trip();
     if (trip) this.actions.openFlight(trip, flight);
+  }
+
+  editFlight(flight: TransportDto): void {
+    const trip = this.trip();
+    if (trip) this.actions.editTransport(trip, flight);
+  }
+
+  deleteFlight(flight: TransportDto): void {
+    const trip = this.trip();
+    if (trip) void this.actions.deleteTransport(trip, flight);
   }
 }

@@ -40,7 +40,8 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   Route/subtitle/duration formatting is shared in
   [transport-format.ts](src/app/shared/transport-format.ts) +
   `TimeZoneService.durationLabel`.
-- Prominent **departure & return flight cards** with dual-timezone times.
+- **Departure & return flight cards** with dual-timezone times, rendered in the
+  shared timeline **route-card** style (see `TransportCard`), as is the Transport list.
 - Create/edit/delete for every entity via Material dialogs; all destructive actions
   and trip-duration changes are gated by a confirmation modal.
 - Drag-and-drop of activity/transport entries between days (CDK) with a confirm modal;
@@ -78,7 +79,7 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
   - `car-reservations` → [CarReservationsView](src/app/trips/views/car-reservations-view.ts)
     — all rentals, ordered by pickup, as detail cards.
   - `transport` → [TransportView](src/app/trips/views/transport-view.ts) — all
-    transport, ordered by departure, with dual-tz times.
+    transport, ordered by departure, as shared `TransportCard`s (dual-tz times).
   Child views receive the parent `:id` param via `withComponentInputBinding()` +
   `paramsInheritanceStrategy: 'always'` (set in [app.config.ts](src/app/app.config.ts));
   each derives its trip with `computed(() => trips().find(...))`.
@@ -132,8 +133,13 @@ Timeline composition:
   The grid columns ([marker][hotel][car][content]) are built in
   `TimelineView.gridTemplateColumns` (hotel and car lanes each collapse to 0px when
   their entity is absent; content is referenced as the last column via `-2/-1`).
-- [FlightCard](src/app/trips/timeline/flight-card.ts) — prominent dual-tz flight,
-  shown in the Overview section.
+- [TransportCard](src/app/shared/transport-card/transport-card.ts) — a shared,
+  full-width transport card in the **same route style as the timeline** (accent icon
+  bullet, derived `FROM → TO` headline with dual-tz departure/arrival times + dates and
+  the travel duration over the arrow, optional eyebrow `role`, kebab menu). Used by the
+  Overview **Flights** section (departure/return) and the Transport list so every
+  surface shares one visual language; route/detail strings come from the same
+  [transport-format.ts](src/app/shared/transport-format.ts) helpers the timeline uses.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,
