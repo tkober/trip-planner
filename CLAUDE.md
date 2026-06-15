@@ -127,16 +127,25 @@ Timeline composition:
   continuous block in the car lane (col 3), spanning pickup→return rows; computed in
   `TimelineView.carSpans`.
 - [EntryCard](src/app/trips/timeline/entry-card.ts) — one single-day activity/transport.
+  Transport entries split ~2/3 route · ~1/3 **detail column** (same per-mode facts as
+  `TransportCard`; absent for activities/car or when no detail fields are set).
 - [StraddleCard](src/app/trips/timeline/straddle-card.ts) — a day-crossing entry,
   anchored on the separator line (`grid-row` from `TimelineView.layout`, then
-  `translateY(-50%)`); adjacent days get padding so the card has clear space.
+  `translateY(-50%)`); adjacent days get padding so the card has clear space. The
+  per-mode detail (same set as `EntryCard`) is stacked **in the top half's
+  upper-right corner**, just left of the kebab; the equal-height rows keep the day
+  divider centred even when that makes the top half the taller one.
   The grid columns ([marker][hotel][car][content]) are built in
   `TimelineView.gridTemplateColumns` (hotel and car lanes each collapse to 0px when
   their entity is absent; content is referenced as the last column via `-2/-1`).
 - [TransportCard](src/app/shared/transport-card/transport-card.ts) — a shared,
   full-width transport card in the **same route style as the timeline** (accent icon
   bullet, derived `FROM → TO` headline with dual-tz departure/arrival times + dates and
-  the travel duration over the arrow, optional eyebrow `role`, kebab menu). Used by the
+  the travel duration over the arrow, optional eyebrow `role`, kebab menu). The route
+  occupies ~2/3 of the width; a divider then a ~1/3 **detail column** carries the
+  mode-specific facts (flight: number, airline; train: line, name, operator, kind;
+  bus: line, operator, kind). Car has no detail column, and when no detail fields are
+  set the route reclaims the full width. Used by the
   Overview **Flights** section (departure/return) and the Transport list so every
   surface shares one visual language; route/detail strings come from the same
   [transport-format.ts](src/app/shared/transport-format.ts) helpers the timeline uses.

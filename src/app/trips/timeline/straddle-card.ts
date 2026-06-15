@@ -105,6 +105,29 @@ export class StraddleCard {
     return t?.end ? this.tz.durationLabel(t.start, t.end) : '';
   });
 
+  /**
+   * Whole-journey detail lines, mode-specific (flight: number/airline; train:
+   * line/name/operator/kind; bus: line/operator/kind). Empty for activities and
+   * car. Shown stacked in the top half's upper-right corner (same per-mode set as
+   * EntryCard).
+   */
+  readonly details = computed<string[]>(() => {
+    const t = this.entry().transport;
+    if (!t) return [];
+    const lines = (...xs: (string | undefined)[]) =>
+      xs.map((x) => x?.trim()).filter((x): x is string => !!x);
+    switch (t.mode) {
+      case 'flight':
+        return lines(t.flightNumber, t.airline);
+      case 'train':
+        return lines(t.line, t.trainName, t.operator, t.trainKind);
+      case 'bus':
+        return lines(t.line, t.operator, t.busKind);
+      default:
+        return [];
+    }
+  });
+
   readonly startLabel = computed(() => this.label(this.entry().start));
   readonly endLabel = computed(() => {
     const end = this.entry().activity?.end ?? this.entry().transport?.end;
