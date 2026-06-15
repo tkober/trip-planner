@@ -1,58 +1,16 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import {
-  TransportDto,
-  TransportMode,
-  TripDto,
-  ZonedTime,
-} from '../../models/trip.model';
+import { TransportDto, TripDto } from '../../models/trip.model';
 import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
-import { transportColor } from '../../shared/color/color';
-import { transportFrom, transportTo } from '../../shared/transport-format';
+import { TransportCard } from '../../shared/transport-card/transport-card';
 
-const MODE_ICON: Record<TransportMode, string> = {
-  flight: 'flight',
-  train: 'train',
-  bus: 'directions_bus',
-  car: 'directions_car',
-};
-
-const MODE_LABEL: Record<TransportMode, string> = {
-  flight: 'Flight',
-  train: 'Train',
-  bus: 'Bus',
-  car: 'Car',
-};
-
-interface TimeLabel {
-  date: string;
-  primary: string;
-  primaryZone: string;
-  secondary: string;
-  secondaryZone: string;
-  sameZone: boolean;
-}
-
-interface TransportRow {
-  transport: TransportDto;
-  icon: string;
-  modeLabel: string;
-  from: string;
-  to: string;
-  duration: string;
-  departure: TimeLabel;
-  arrival?: TimeLabel;
-  color: string;
-}
-
-/** All transport as a list, ordered by departure time, with details. */
+/** All transport as a list, ordered by departure time, in the timeline card style. */
 @Component({
   selector: 'app-transport-view',
-  imports: [MatButtonModule, MatIconModule, MatMenuModule],
+  imports: [MatButtonModule, MatIconModule, TransportCard],
   templateUrl: './transport-view.html',
   styleUrl: './transport-view.scss',
 })
@@ -68,40 +26,14 @@ export class TransportView {
     this.store.trips().find((t) => t.id === this.id()),
   );
 
-  readonly rows = computed<TransportRow[]>(() => {
+  /** Transport ordered by departure time. */
+  readonly transports = computed<TransportDto[]>(() => {
     const t = this.trip();
     if (!t) return [];
     return t.transport
       .slice()
-      .sort((a, b) => this.tz.toMillis(a.start) - this.tz.toMillis(b.start))
-      .map((x) => ({
-        transport: x,
-        icon: MODE_ICON[x.mode],
-        modeLabel: MODE_LABEL[x.mode],
-        from: transportFrom(x),
-        to: transportTo(x),
-        duration: x.end ? this.tz.durationLabel(x.start, x.end) : '',
-        departure: this.timeLabel(x.start, t),
-        arrival: x.end ? this.timeLabel(x.end, t) : undefined,
-        color: transportColor(x),
-      }));
+      .sort((a, b) => this.tz.toMillis(a.start) - this.tz.toMillis(b.start));
   });
-
-  private timeLabel(zt: ZonedTime, trip: TripDto): TimeLabel {
-    const dual = this.tz.dualLabel(
-      zt,
-      trip.homeTimeZone,
-      trip.destinationTimeZone,
-    );
-    return {
-      date: this.tz.toDateTime(zt).toFormat('ccc, d LLL yyyy'),
-      primary: dual.primary,
-      primaryZone: dual.primaryZoneAbbr,
-      secondary: dual.secondary,
-      secondaryZone: dual.secondaryZoneAbbr,
-      sameZone: dual.sameZone,
-    };
-  }
 
   add(): void {
     const trip = this.trip();
