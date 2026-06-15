@@ -14,6 +14,7 @@ import {
   ZonedTime,
 } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
+import { transportLabel } from '../../shared/transport-format';
 
 export type DetailsKind =
   | 'accommodation'
@@ -66,7 +67,7 @@ export class DetailsDialog {
       case 'activity':
         return this.activity?.title ?? 'Activity';
       case 'transport':
-        return this.transport?.title ?? 'Transport';
+        return this.transport ? transportLabel(this.transport) : 'Transport';
     }
   });
 

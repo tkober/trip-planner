@@ -44,6 +44,27 @@ describe('migrateTrip', () => {
     expect(result.carReservations).toEqual([]);
   });
 
+  it('strips the redundant transport title on a pre-v5 document', () => {
+    const result = migrateTrip(
+      baseTrip({
+        schemaVersion: 4,
+        transport: [
+          {
+            id: 't1',
+            mode: 'train',
+            title: 'Shinkansen to Kyoto',
+            start: { dateTime: '2026-04-02T09:00', zone: 'Asia/Tokyo' },
+            fromLocation: 'Odawara',
+            toLocation: 'Kyoto',
+          },
+        ],
+      }),
+    );
+    expect(result.schemaVersion).toBe(SCHEMA_VERSION);
+    expect('title' in result.transport[0]).toBe(false);
+    expect(result.transport[0].fromLocation).toBe('Odawara');
+  });
+
   it('rejects a document from a newer app version', () => {
     expect(() => migrateTrip(baseTrip({ schemaVersion: SCHEMA_VERSION + 1 }))).toThrow(
       /newer version/,

@@ -32,7 +32,6 @@ interface FlightEndpoint {
         <mat-icon>flight_takeoff</mat-icon>
         <span>{{ role() }}</span>
       </div>
-      <div class="title">{{ flight().title }}</div>
       @if (flight().airline || flight().flightNumber) {
         <div class="airline">
           {{ flight().airline }} {{ flight().flightNumber }}
@@ -56,7 +55,12 @@ interface FlightEndpoint {
           <div class="date">{{ departure().dateLabel }}</div>
         </div>
 
-        <mat-icon class="arrow">arrow_forward</mat-icon>
+        <div class="arrow-col">
+          @if (duration(); as d) {
+            <span class="duration">{{ d }}</span>
+          }
+          <mat-icon class="arrow">arrow_forward</mat-icon>
+        </div>
 
         @if (arrival(); as arr) {
           <div class="leg">
@@ -99,6 +103,12 @@ export class FlightCard {
 
   /** Effective accent colour: explicit colour or the flight default. */
   readonly accent = computed(() => transportColor(this.flight()));
+
+  /** Travel time between departure and arrival; empty when no arrival. */
+  readonly duration = computed(() => {
+    const f = this.flight();
+    return f.end ? this.tz.durationLabel(f.start, f.end) : '';
+  });
 
   readonly departure = computed(() =>
     this.endpoint(this.flight().start),

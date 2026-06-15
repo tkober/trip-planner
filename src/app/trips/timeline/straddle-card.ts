@@ -5,6 +5,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { TimelineEntry, TransportMode } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { activityColor, transportColor } from '../../shared/color/color';
+import {
+  transportFrom,
+  transportFromDetail,
+  transportTo,
+  transportToDetail,
+} from '../../shared/transport-format';
 
 const MODE_ICON: Record<TransportMode, string> = {
   flight: 'flight',
@@ -48,6 +54,16 @@ export class StraddleCard {
     return e.kind === 'activity' ? 'local_activity' : MODE_ICON[e.transport!.mode];
   });
 
+  /** Departure-leg icon: takeoff for flights, a generic out-arrow otherwise. */
+  readonly departIcon = computed(() =>
+    this.entry().transport?.mode === 'flight' ? 'flight_takeoff' : 'north_east',
+  );
+
+  /** Arrival-leg icon: landing for flights, a generic in-arrow otherwise. */
+  readonly arriveIcon = computed(() =>
+    this.entry().transport?.mode === 'flight' ? 'flight_land' : 'south_east',
+  );
+
   /** Effective accent colour: explicit colour or the entity-type default. */
   readonly accent = computed(() => {
     const e = this.entry();
@@ -56,9 +72,38 @@ export class StraddleCard {
       : transportColor(e.transport!);
   });
 
-  readonly title = computed(
-    () => this.entry().activity?.title ?? this.entry().transport?.title ?? '',
-  );
+  /** Activity title (transport uses from/to places instead). */
+  readonly title = computed(() => this.entry().activity?.title ?? '');
+
+  /** Origin place (top half) for transport entries; undefined for activities. */
+  readonly fromPlace = computed(() => {
+    const t = this.entry().transport;
+    return t ? transportFrom(t) : undefined;
+  });
+
+  /** Destination place (bottom half) for transport entries. */
+  readonly toPlace = computed(() => {
+    const t = this.entry().transport;
+    return t ? transportTo(t) : undefined;
+  });
+
+  /** Departure-leg detail (airport/terminal …) shown on the top half. */
+  readonly fromDetail = computed(() => {
+    const t = this.entry().transport;
+    return t ? transportFromDetail(t) : undefined;
+  });
+
+  /** Arrival-leg detail shown on the bottom half. */
+  readonly toDetail = computed(() => {
+    const t = this.entry().transport;
+    return t ? transportToDetail(t) : undefined;
+  });
+
+  /** Travel time shown on the day-boundary divider; empty when unavailable. */
+  readonly duration = computed(() => {
+    const t = this.entry().transport;
+    return t?.end ? this.tz.durationLabel(t.start, t.end) : '';
+  });
 
   readonly startLabel = computed(() => this.label(this.entry().start));
   readonly endLabel = computed(() => {
@@ -66,13 +111,10 @@ export class StraddleCard {
     return end ? this.label(end) : undefined;
   });
 
-  readonly subtitle = computed<string | undefined>(() => {
-    const t = this.entry().transport;
-    if (t && (t.fromLocation || t.toLocation)) {
-      return `${t.fromLocation ?? '?'} → ${t.toLocation ?? '?'}`;
-    }
-    return this.entry().activity?.location ?? undefined;
-  });
+  /** Activity location subtitle (transport renders per-leg detail instead). */
+  readonly subtitle = computed<string | undefined>(
+    () => this.entry().activity?.location ?? undefined,
+  );
 
   /** Whether the two endpoints sit in different zones (show the zone tag). */
   readonly showZones = computed(() => {

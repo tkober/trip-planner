@@ -45,6 +45,7 @@ import {
   accommodationDefaultColor,
   carReservationDefaultColor,
 } from '../shared/color/color';
+import { transportLabel } from '../shared/transport-format';
 
 /**
  * All dialog-driven trip mutations (edit trip, add/edit/delete + open-details for
@@ -314,7 +315,7 @@ export class TripActionsService {
   async deleteTransport(trip: TripDto, transport: TransportDto): Promise<void> {
     const confirmed = await this.confirm({
       title: 'Delete transport?',
-      message: `"${transport.title}" will be removed.`,
+      message: `"${transportLabel(transport)}" will be removed.`,
       confirmLabel: 'Delete',
       destructive: true,
     });

@@ -5,6 +5,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { TimelineEntry, TransportMode } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { activityColor, transportColor } from '../../shared/color/color';
+import {
+  transportFrom,
+  transportFromDetail,
+  transportTo,
+  transportToDetail,
+} from '../../shared/transport-format';
 
 const MODE_ICON: Record<TransportMode, string> = {
   flight: 'flight',
@@ -30,13 +36,41 @@ const MODE_ICON: Record<TransportMode, string> = {
       <div class="bullet">
         <mat-icon>{{ icon() }}</mat-icon>
       </div>
-      <div class="body">
-        <div class="time">{{ timeLabel() }}</div>
-        <div class="title">{{ title() }}</div>
-        @if (subtitle(); as sub) {
-          <div class="subtitle">{{ sub }}</div>
-        }
-      </div>
+      @if (route(); as r) {
+        <div class="body route">
+          <div class="leg from">
+            <div class="time">{{ r.depTime }}</div>
+            <div class="place">{{ r.from }}</div>
+            @if (r.fromDetail) {
+              <div class="detail">{{ r.fromDetail }}</div>
+            }
+          </div>
+          <div class="connector">
+            @if (r.duration) {
+              <span class="duration">{{ r.duration }}</span>
+            }
+            <div class="track">
+              <span class="line"></span>
+              <mat-icon>arrow_forward</mat-icon>
+            </div>
+          </div>
+          <div class="leg to">
+            <div class="time">{{ r.arrTime }}</div>
+            <div class="place">{{ r.to }}</div>
+            @if (r.toDetail) {
+              <div class="detail">{{ r.toDetail }}</div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="body">
+          <div class="time">{{ timeLabel() }}</div>
+          <div class="title">{{ title() }}</div>
+          @if (subtitle(); as sub) {
+            <div class="subtitle">{{ sub }}</div>
+          }
+        </div>
+      }
       <button
         matIconButton
         class="entry-menu"
@@ -84,9 +118,36 @@ export class EntryCard {
       : transportColor(e.transport!);
   });
 
-  readonly title = computed(
-    () => this.entry().activity?.title ?? this.entry().transport?.title ?? '',
-  );
+  /** Activity title (transport uses the route headline instead). */
+  readonly title = computed(() => this.entry().activity?.title ?? '');
+
+  /**
+   * Transport route block (from/to places + times + per-leg detail + duration);
+   * null for activities. Times are rendered in the destination tz.
+   */
+  readonly route = computed<{
+    from: string;
+    to: string;
+    fromDetail?: string;
+    toDetail?: string;
+    depTime: string;
+    arrTime: string;
+    duration: string;
+  } | null>(() => {
+    const t = this.entry().transport;
+    if (!t) return null;
+    return {
+      from: transportFrom(t),
+      to: transportTo(t),
+      fromDetail: transportFromDetail(t),
+      toDetail: transportToDetail(t),
+      depTime: this.tz.inZone(t.start, this.destZone()).toFormat('HH:mm'),
+      arrTime: t.end
+        ? this.tz.inZone(t.end, this.destZone()).toFormat('HH:mm')
+        : '',
+      duration: t.end ? this.tz.durationLabel(t.start, t.end) : '',
+    };
+  });
 
   /** Start time in the destination tz (the timeline's primary reference). */
   readonly timeLabel = computed(() => {
@@ -100,11 +161,8 @@ export class EntryCard {
     return startStr;
   });
 
-  readonly subtitle = computed<string | undefined>(() => {
-    const t = this.entry().transport;
-    if (t && (t.fromLocation || t.toLocation)) {
-      return `${t.fromLocation ?? '?'} → ${t.toLocation ?? '?'}`;
-    }
-    return this.entry().activity?.location ?? undefined;
-  });
+  /** Activity location subtitle (transport renders per-leg detail in the route). */
+  readonly subtitle = computed<string | undefined>(
+    () => this.entry().activity?.location ?? undefined,
+  );
 }

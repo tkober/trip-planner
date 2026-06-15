@@ -12,6 +12,7 @@ import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { transportColor } from '../../shared/color/color';
+import { transportFrom, transportTo } from '../../shared/transport-format';
 
 const MODE_ICON: Record<TransportMode, string> = {
   flight: 'flight',
@@ -40,6 +41,9 @@ interface TransportRow {
   transport: TransportDto;
   icon: string;
   modeLabel: string;
+  from: string;
+  to: string;
+  duration: string;
   departure: TimeLabel;
   arrival?: TimeLabel;
   color: string;
@@ -74,6 +78,9 @@ export class TransportView {
         transport: x,
         icon: MODE_ICON[x.mode],
         modeLabel: MODE_LABEL[x.mode],
+        from: transportFrom(x),
+        to: transportTo(x),
+        duration: x.end ? this.tz.durationLabel(x.start, x.end) : '',
         departure: this.timeLabel(x.start, t),
         arrival: x.end ? this.timeLabel(x.end, t) : undefined,
         color: transportColor(x),

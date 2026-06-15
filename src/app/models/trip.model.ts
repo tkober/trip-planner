@@ -6,7 +6,7 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 /**
  * A wall-clock time anchored to an IANA time zone. No offset is stored — Luxon
@@ -91,8 +91,6 @@ export interface TransportDto {
   id: string;
   /** Drives the icon / colour differentiation on the timeline. */
   mode: TransportMode;
-  /** e.g. "Shinkansen to Kyoto" or "LH716 to Tokyo". */
-  title: string;
   /** Departure time. */
   start: ZonedTime;
   /** Arrival time — may be in a different zone than `start` (e.g. flights). */

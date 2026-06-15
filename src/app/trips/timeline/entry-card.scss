@@ -68,6 +68,87 @@
   }
 }
 
+// Transport route: three blocks — [departure][duration/arrow][arrival] — with
+// time / place / detail stacked in each outer block.
+.body.route {
+  display: grid;
+  // Legs share the remaining width (departure left, arrival right); the centre
+  // connector is sized to its own content (a short fixed-length arrow).
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 0.5rem;
+
+  .leg {
+    min-width: 0;
+
+    &.to {
+      text-align: right;
+    }
+
+    .time {
+      font-size: 0.78rem;
+      color: var(--mat-sys-on-surface-variant);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .place {
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .detail {
+      font-size: 0.78rem;
+      color: var(--mat-sys-on-surface-variant);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  // Centre block: the travel time rests on top of a short arrow, sized just a
+  // bit wider than a long duration label (e.g. "22h 35min").
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    line-height: 1;
+
+    .duration {
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--mat-sys-on-surface);
+      white-space: nowrap;
+    }
+
+    // A horizontal shaft (.line) terminated by the arrowhead icon.
+    .track {
+      display: flex;
+      align-items: center;
+
+      .line {
+        width: 5rem;
+        height: 1.5px;
+        background: var(--mat-sys-outline);
+      }
+
+      mat-icon {
+        flex-shrink: 0;
+        // Pull the arrowhead onto the end of the shaft.
+        margin-left: -0.55rem;
+        font-size: 1.1rem;
+        width: 1.1rem;
+        height: 1.1rem;
+        color: var(--mat-sys-outline);
+      }
+    }
+  }
+}
+
 .entry-menu {
   flex-shrink: 0;
 }
