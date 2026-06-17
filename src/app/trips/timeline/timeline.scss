@@ -15,6 +15,15 @@
   }
 }
 
+// Zero-size, invisible anchor the lane context menu opens against; positioned
+// at the cursor (viewport coords) right before openMenu() in the component.
+.lane-menu-anchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+  visibility: hidden;
+}
+
 .days-grid {
   display: grid;
   // grid-template-columns is bound from the component (see gridTemplateColumns):

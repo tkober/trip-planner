@@ -64,6 +64,7 @@
         [top]="cell.top"
         [bottom]="cell.bottom"
         (open)="openAccommodation($event)"
+        (context)="onAccommodationContext($event)"
       />
     }
     @for (label of stayLabels(); track label.id) {
@@ -75,6 +76,7 @@
         [color]="s.color"
         [gridRow]="s.gridRow"
         (open)="openCarReservation($event)"
+        (context)="onCarContext($event)"
       />
     }
     @for (s of straddles(); track s.entry.activity?.id ?? s.entry.transport?.id) {
@@ -87,4 +89,20 @@
       />
     }
   </div>
+
+  <!-- Right-click context menu for the hotel/car lanes (Start/End ±1 day). The
+       anchor is moved to the cursor before the menu opens (see openLaneMenu). -->
+  <div
+    #laneMenuAnchor
+    class="lane-menu-anchor"
+    [matMenuTriggerFor]="laneMenu"
+  ></div>
+  <mat-menu #laneMenu="matMenu">
+    <button mat-menu-item [disabled]="!canPlus()" (click)="nudge(1)">
+      <mat-icon>add</mat-icon><span>{{ sideLabel() }} +1 day</span>
+    </button>
+    <button mat-menu-item [disabled]="!canMinus()" (click)="nudge(-1)">
+      <mat-icon>remove</mat-icon><span>{{ sideLabel() }} −1 day</span>
+    </button>
+  </mat-menu>
 }
