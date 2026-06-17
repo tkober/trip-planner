@@ -42,6 +42,7 @@ export interface HotelDayCell {
         [class.round-bottom]="top()?.rounded"
         [style.--hotel]="top()?.color ?? null"
         (click)="openHalf(top())"
+        (contextmenu)="onContext(top(), 'top', $event)"
       ></div>
       <div
         class="half bottom"
@@ -49,6 +50,7 @@ export interface HotelDayCell {
         [class.round-top]="bottom()?.rounded"
         [style.--hotel]="bottom()?.color ?? null"
         (click)="openHalf(bottom())"
+        (contextmenu)="onContext(bottom(), 'bottom', $event)"
       >
         @if (bottom()?.isStart) {
           <mat-icon class="start-icon">hotel</mat-icon>
@@ -64,8 +66,34 @@ export class HotelCell {
   readonly top = input<HotelHalf | undefined>();
   readonly bottom = input<HotelHalf | undefined>();
   readonly open = output<AccommodationDto>();
+  /**
+   * Right-click on a filled half → lane context menu. Emits which half (top =
+   * morning, bottom = night) and this cell's grid row so the timeline can place
+   * the click within the stay's full span and pick start vs end.
+   */
+  readonly context = output<{
+    event: MouseEvent;
+    accommodation: AccommodationDto;
+    half: 'top' | 'bottom';
+    rowIndex: number;
+  }>();
 
   openHalf(half: HotelHalf | undefined): void {
     if (half) this.open.emit(half.accommodation);
+  }
+
+  onContext(
+    half: HotelHalf | undefined,
+    which: 'top' | 'bottom',
+    event: MouseEvent,
+  ): void {
+    if (!half) return;
+    event.preventDefault();
+    this.context.emit({
+      event,
+      accommodation: half.accommodation,
+      half: which,
+      rowIndex: this.rowIndex(),
+    });
   }
 }

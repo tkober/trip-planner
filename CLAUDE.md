@@ -18,13 +18,21 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   **half-day handoff**: each day's top half is the hotel you wake up in, the bottom
   half the hotel you sleep in. A continuous stay reads as one solid block; a hotel
   switch splits that day top/bottom — always one lane, no overlap. Different hotels
-  get distinct tints. Click → details. (Transport whose departure and arrival fall
-  on different destination-tz days still spans via lane-packed `SpanBar` blocks.)
+  get distinct tints. Click → details; **right-click → a position-sensitive context
+  menu that nudges the stay by ±1 day** — clicking the upper half of the stay's block
+  offers *Start ±1* (check-in), the lower half *End ±1* (check-out). The side is judged
+  against the stay's full span centre (so it's correct even on the stay's middle days
+  and hotel-switch days, where the cell's morning/night halves belong to different
+  stays); moves that would collapse the stay to zero nights are disabled. (Transport
+  whose departure and arrival fall on different destination-tz days still spans via
+  lane-packed `SpanBar` blocks.)
 - **Car reservations** render in a second left lane (right of the hotel lane) as one
   continuous tinted block per rental spanning pickup→return days (inclusive), with a
-  car icon + vertical name; click → details. Pickup and return may be at different
-  stations and carry optional times. The lane collapses to 0px when empty, and car
-  reservations never appear in the right-hand activity/transport content column.
+  car icon + vertical name; click → details, **right-click → the same position-sensitive
+  Start/End ±1-day menu** (upper half = pickup, lower half = dropoff; pickup may equal
+  dropoff, a one-day rental). Pickup and return may be at different stations and carry
+  optional times. The lane collapses to 0px when empty, and car reservations never
+  appear in the right-hand activity/transport content column.
 - Activities and **Transport as separate entities** (flight/train/bus/car), always
   rendered as list cards interleaved per day, sorted by start time, colour/icon-
   differentiated by mode. Transport has **no title**: its headline is the

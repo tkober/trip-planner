@@ -1,8 +1,17 @@
-import { Component, computed, inject, input } from '@angular/core';
+import {
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { DateTime } from 'luxon';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   AccommodationDto,
@@ -32,6 +41,15 @@ interface StraddleItem {
 }
 
 /**
+ * The lane item a right-click context menu is acting on. `side` (chosen by which
+ * half of the block was clicked — upper = start, lower = end) selects which date
+ * the ±1-day actions move: accommodation check-in/out, car pickup/dropoff.
+ */
+type LaneContext =
+  | { kind: 'accommodation'; accommodation: AccommodationDto; side: 'start' | 'end' }
+  | { kind: 'car'; car: CarReservationDto; side: 'start' | 'end' };
+
+/**
  * A grayed pseudo-day prepended/appended for an international flight whose home
  * endpoint sits outside the destination-tz trip range (the home-tz departure day
  * before the trip, or the home-tz arrival day at its end).
@@ -51,7 +69,16 @@ interface VirtualDay {
 /** The day-by-day timeline grid (one of the trip-page views). */
 @Component({
   selector: 'app-timeline-view',
-  imports: [DragDropModule, MatButtonModule, MatIconModule, DaySection, HotelCell, CarSpan, StraddleCard],
+  imports: [
+    DragDropModule,
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
+    DaySection,
+    HotelCell,
+    CarSpan,
+    StraddleCard,
+  ],
   templateUrl: './timeline.html',
   styleUrl: './timeline.scss',
 })
@@ -390,6 +417,123 @@ export class TimelineView {
   openCarReservation(car: CarReservationDto): void {
     const trip = this.trip();
     if (trip) this.actions.openCarReservation(trip, car);
+  }
+
+  // --- Lane context menu (Start/End ±1 day) --------------------------------
+
+  /** Invisible element the lane menu anchors to; moved to the cursor on open. */
+  private readonly laneMenuAnchor =
+    viewChild.required<ElementRef<HTMLElement>>('laneMenuAnchor');
+  private readonly laneMenuTrigger = viewChild.required(MatMenuTrigger);
+
+  /** The accommodation/car + side the open lane menu acts on. */
+  readonly laneContext = signal<LaneContext | null>(null);
+
+  /** Menu heading word for the active side ("Start" vs "End"). */
+  readonly sideLabel = computed(() =>
+    this.laneContext()?.side === 'end' ? 'End' : 'Start',
+  );
+
+  // A move is blocked only when it would collapse the span. Widening (start −1,
+  // end +1) is always allowed; the guarded direction depends on the active side.
+  // Accommodation needs at least one night (check-in < check-out); a car may be
+  // a single day (pickup <= dropoff), so its bounds are allowed to meet.
+  readonly canPlus = computed(() => {
+    const c = this.laneContext();
+    if (!c) return false;
+    if (c.side === 'end') return true; // end +1 always widens
+    return c.kind === 'accommodation'
+      ? this.addDays(c.accommodation.checkInDate, 1) < c.accommodation.checkOutDate
+      : this.addDays(c.car.pickupDate, 1) <= c.car.dropoffDate;
+  });
+  readonly canMinus = computed(() => {
+    const c = this.laneContext();
+    if (!c) return false;
+    if (c.side === 'start') return true; // start −1 always widens
+    return c.kind === 'accommodation'
+      ? this.addDays(c.accommodation.checkOutDate, -1) > c.accommodation.checkInDate
+      : this.addDays(c.car.dropoffDate, -1) >= c.car.pickupDate;
+  });
+
+  onAccommodationContext(e: {
+    event: MouseEvent;
+    accommodation: AccommodationDto;
+    half: 'top' | 'bottom';
+    rowIndex: number;
+  }): void {
+    this.openLaneMenu(e.event, {
+      kind: 'accommodation',
+      accommodation: e.accommodation,
+      side: this.accommodationSide(e.accommodation, e.rowIndex, e.half),
+    });
+  }
+
+  onCarContext(e: {
+    event: MouseEvent;
+    reservation: CarReservationDto;
+    side: 'start' | 'end';
+  }): void {
+    this.openLaneMenu(e.event, { kind: 'car', car: e.reservation, side: e.side });
+  }
+
+  /**
+   * Which side of a stay a clicked hotel cell falls on. The stay's coloured
+   * block runs from the check-in day's bottom half to the check-out day's top
+   * half; comparing the click's position (day row + half) to the block's centre
+   * picks start vs end — correct even on switch days and the stay's middle.
+   */
+  private accommodationSide(
+    accommodation: AccommodationDto,
+    rowIndex: number,
+    half: 'top' | 'bottom',
+  ): 'start' | 'end' {
+    const dayIndex = rowIndex - 1 - this.rowOffset();
+    const s = this.clampIndex(accommodation.checkInDate);
+    const e = this.clampIndex(accommodation.checkOutDate);
+    const clickPos = dayIndex + (half === 'top' ? 0.25 : 0.75);
+    const center = (s + e + 1) / 2;
+    return clickPos < center ? 'start' : 'end';
+  }
+
+  private openLaneMenu(event: MouseEvent, target: LaneContext): void {
+    // Position the (fixed) anchor at the cursor directly on the DOM node so the
+    // overlay reads the right origin synchronously — no change-detection round
+    // trip needed before openMenu() (important under zoneless).
+    const el = this.laneMenuAnchor().nativeElement;
+    el.style.left = `${event.clientX}px`;
+    el.style.top = `${event.clientY}px`;
+    this.laneContext.set(target);
+    this.laneMenuTrigger().openMenu();
+  }
+
+  /** Nudge the active side's date (check-in/pickup or check-out/dropoff) by ±1 day. */
+  nudge(delta: number): void {
+    const c = this.laneContext();
+    const trip = this.trip();
+    if (!c || !trip) return;
+    if (c.kind === 'accommodation') {
+      const a = c.accommodation;
+      void this.store.upsertAccommodation(
+        trip,
+        c.side === 'start'
+          ? { ...a, checkInDate: this.addDays(a.checkInDate, delta) }
+          : { ...a, checkOutDate: this.addDays(a.checkOutDate, delta) },
+      );
+    } else {
+      const car = c.car;
+      void this.store.upsertCarReservation(
+        trip,
+        c.side === 'start'
+          ? { ...car, pickupDate: this.addDays(car.pickupDate, delta) }
+          : { ...car, dropoffDate: this.addDays(car.dropoffDate, delta) },
+      );
+    }
+    this.snack.open('Dates updated', undefined, { duration: 2000 });
+  }
+
+  /** Add N calendar days to a "YYYY-MM-DD" date string. */
+  private addDays(date: string, delta: number): string {
+    return DateTime.fromISO(date).plus({ days: delta }).toISODate() ?? date;
   }
 
   // --- Drag and drop between days ------------------------------------------

@@ -23,6 +23,7 @@ import { CarReservationDto } from '../../models/trip.model';
       class="car-block"
       [style.--car]="color()"
       (click)="open.emit(reservation())"
+      (contextmenu)="onContext($event)"
     >
       <mat-icon class="car-icon">directions_car</mat-icon>
       <span class="car-name">{{ reservation().name }}</span>
@@ -37,4 +38,21 @@ export class CarSpan {
   /** Resolved accent colour (explicit colour or default tint). */
   readonly color = input<string>('');
   readonly open = output<CarReservationDto>();
+  /**
+   * Right-click → lane context menu. `side` is which half of the block was
+   * clicked (the block spans the whole rental, so upper = pickup/start, lower =
+   * dropoff/end), driving which date the menu offers to nudge.
+   */
+  readonly context = output<{
+    event: MouseEvent;
+    reservation: CarReservationDto;
+    side: 'start' | 'end';
+  }>();
+
+  onContext(event: MouseEvent): void {
+    event.preventDefault();
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const side = event.clientY < rect.top + rect.height / 2 ? 'start' : 'end';
+    this.context.emit({ event, reservation: this.reservation(), side });
+  }
 }
