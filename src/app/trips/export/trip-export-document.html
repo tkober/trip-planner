@@ -1,0 +1,27 @@
+@if (trip(); as t) {
+  <div class="timeline-capture">
+    <header class="export-cover">
+      <h1>{{ t.title }}</h1>
+      <p class="cover-dates">{{ t.startDate }} → {{ t.endDate }}</p>
+      @if (anonymized()) {
+        <p class="cover-anon">Shared copy — personal details redacted</p>
+      }
+    </header>
+    <section class="timeline-section">
+      <app-timeline-view [id]="t.id" [tripOverride]="t" [exportMode]="true" />
+    </section>
+  </div>
+
+  <section class="export-section">
+    <app-overview-view [id]="t.id" [tripOverride]="t" />
+  </section>
+  <section class="export-section">
+    <app-accommodations-view [id]="t.id" [tripOverride]="t" />
+  </section>
+  <section class="export-section">
+    <app-car-reservations-view [id]="t.id" [tripOverride]="t" />
+  </section>
+  <section class="export-section">
+    <app-transport-view [id]="t.id" [tripOverride]="t" />
+  </section>
+}

@@ -40,3 +40,146 @@ body {
 .full-width {
   width: 100%;
 }
+
+/* ---- Plan export (PNG / PDF) --------------------------------------------
+   The export document is rendered off-screen by ExportHost for html-to-image
+   capture (PNG) or native print (PDF). These rules are global so they reach
+   into the reused timeline/section child components (emulated encapsulation). */
+
+// The host element is a pass-through wrapper; the `.export-host` div positions.
+app-export-host {
+  display: contents;
+}
+
+.export-host {
+  // Stay laid out (not display:none) so html-to-image can measure it, but keep
+  // it out of sight on screen.
+  position: fixed;
+  top: 0;
+  left: -100000px;
+  width: 1024px;
+  z-index: -1;
+  background: #fff;
+  pointer-events: none;
+}
+
+.export-doc {
+  display: block;
+  background: #fff;
+  color: var(--mat-sys-on-surface);
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  padding: 24px;
+
+  .timeline-capture {
+    background: #fff;
+    padding: 8px;
+  }
+
+  .export-cover {
+    margin-bottom: 1.25rem;
+
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+    .cover-dates {
+      margin: 0.25rem 0 0;
+      color: var(--mat-sys-on-surface-variant);
+      font-variant-numeric: tabular-nums;
+    }
+    .cover-anon {
+      margin: 0.4rem 0 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--mat-sys-error);
+    }
+  }
+
+  .export-section {
+    margin-top: 1.5rem;
+  }
+
+  // Hide interactive chrome so the document reads as a static print-out. The
+  // day marker is a plain (non-mat) button carrying the day labels, so it stays.
+  .mat-mdc-icon-button,
+  .view-header button,
+  .card-actions,
+  .add-btn,
+  .no-entries {
+    display: none !important;
+  }
+
+  // The cover already carries the trip title; drop the timeline view's header.
+  .timeline-section .view-header {
+    display: none;
+  }
+}
+
+@media print {
+  // Only while an export is deliberately being printed: hide the live app and
+  // bring the off-screen export document into normal flow.
+  html.printing-export {
+    .trip-layout,
+    .cdk-overlay-container {
+      display: none !important;
+    }
+
+    .export-host {
+      position: static;
+      left: auto;
+      top: auto;
+      width: auto;
+      z-index: auto;
+    }
+  }
+
+  // Each section starts on a fresh page; avoid splitting cards across pages.
+  .export-doc {
+    padding: 0;
+    // Print background fills (hotel/car lane tints, bullets) — browsers drop
+    // them by default; this is inherited by all descendants.
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+
+    .export-section {
+      break-before: page;
+      margin-top: 0;
+    }
+
+    app-day-section,
+    app-entry-card,
+    app-straddle-card,
+    app-transport-card,
+    .detail-card {
+      break-inside: avoid;
+    }
+
+    // Pack grid rows at the top instead of stretching them to fill the page —
+    // otherwise the first day's row balloons and shoves its card to the bottom.
+    .days-grid {
+      align-content: start;
+    }
+
+    // Outline the accommodation runs + car spans so the lane boundaries stay
+    // legible even if a printer drops the tint. The run's vertical sides are
+    // every filled half; the rounded halves cap its start (check-in) and end.
+    app-hotel-cell .half.filled {
+      border-left: 1.5px solid
+        color-mix(in srgb, var(--hotel, var(--mat-sys-primary)) 60%, white);
+      border-right: 1.5px solid
+        color-mix(in srgb, var(--hotel, var(--mat-sys-primary)) 60%, white);
+    }
+    app-hotel-cell .half.round-top {
+      border-top: 1.5px solid
+        color-mix(in srgb, var(--hotel, var(--mat-sys-primary)) 60%, white);
+    }
+    app-hotel-cell .half.round-bottom {
+      border-bottom: 1.5px solid
+        color-mix(in srgb, var(--hotel, var(--mat-sys-primary)) 60%, white);
+    }
+    app-car-span .car-block {
+      border: 1.5px solid
+        color-mix(in srgb, var(--car, var(--mat-sys-primary)) 60%, white);
+    }
+  }
+}

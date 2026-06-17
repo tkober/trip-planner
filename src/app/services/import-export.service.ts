@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { migrateTrip } from '../models/migrations';
 import { SCHEMA_VERSION, TripDto } from '../models/trip.model';
 import { uuid } from './trip-store-util';
+import { downloadBlob, slugify } from '../shared/download';
 
 @Injectable({ providedIn: 'root' })
 export class ImportExportService {
@@ -9,14 +10,7 @@ export class ImportExportService {
   exportTrip(trip: TripDto): void {
     const json = JSON.stringify(trip, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${slugify(trip.title) || 'trip'}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${slugify(trip.title) || 'trip'}.json`);
   }
 
   /** Read a File, validate it, and return a normalized TripDto (new id). */
@@ -73,11 +67,4 @@ export class ImportExportService {
       updatedAt: now,
     };
   }
-}
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 }

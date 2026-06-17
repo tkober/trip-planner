@@ -58,14 +58,18 @@ interface VirtualDay {
 export class TimelineView {
   /** Parent route param, bound via withComponentInputBinding. */
   readonly id = input.required<string>();
+  /** When set, render this trip instead of looking it up in the store (export). */
+  readonly tripOverride = input<TripDto | undefined>(undefined);
+  /** Deterministic fixed-px lane widths for export output (no viewport `clamp`). */
+  readonly exportMode = input(false);
 
   private readonly store = inject(TripStore);
   private readonly tz = inject(TimeZoneService);
   private readonly actions = inject(TripActionsService);
   private readonly snack = inject(MatSnackBar);
 
-  readonly trip = computed<TripDto | undefined>(() =>
-    this.store.trips().find((t) => t.id === this.id()),
+  readonly trip = computed<TripDto | undefined>(
+    () => this.tripOverride() ?? this.store.trips().find((t) => t.id === this.id()),
   );
 
   readonly days = computed(() => {
@@ -93,9 +97,11 @@ export class TimelineView {
    * The hotel and car lanes each collapse to 0px when their entity is absent.
    */
   readonly gridTemplateColumns = computed(() => {
-    const marker = 'clamp(72px, 16vw, 96px)';
-    const hotel = this.hasAccommodations() ? 'clamp(40px, 9vw, 52px)' : '0px';
-    const car = this.hasCarReservations() ? 'clamp(40px, 9vw, 52px)' : '0px';
+    const exp = this.exportMode();
+    const marker = exp ? '88px' : 'clamp(72px, 16vw, 96px)';
+    const lane = exp ? '48px' : 'clamp(40px, 9vw, 52px)';
+    const hotel = this.hasAccommodations() ? lane : '0px';
+    const car = this.hasCarReservations() ? lane : '0px';
     return `${marker} ${hotel} ${car} minmax(0, 1fr)`;
   });
 
