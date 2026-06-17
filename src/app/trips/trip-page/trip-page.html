@@ -19,6 +19,9 @@
           <button mat-menu-item (click)="addAccommodation()">
             <mat-icon>hotel</mat-icon><span>Add accommodation</span>
           </button>
+          <button mat-menu-item (click)="exportPlan()">
+            <mat-icon>ios_share</mat-icon><span>Export plan…</span>
+          </button>
           <button mat-menu-item (click)="exportTrip()">
             <mat-icon>download</mat-icon><span>Export JSON</span>
           </button>
@@ -50,6 +53,8 @@
       <router-outlet />
     </main>
   </div>
+
+  <app-export-host />
 } @else if (loaded()) {
   <div class="not-found">
     <mat-icon>error_outline</mat-icon>

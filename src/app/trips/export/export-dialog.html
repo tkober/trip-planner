@@ -1,0 +1,63 @@
+<h2 mat-dialog-title>Export plan</h2>
+<mat-dialog-content>
+  <mat-button-toggle-group
+    class="format-group"
+    [value]="format()"
+    (change)="format.set($event.value)"
+    hideSingleSelectionIndicator
+  >
+    <mat-button-toggle value="pdf">
+      <mat-icon>picture_as_pdf</mat-icon> PDF (full plan)
+    </mat-button-toggle>
+    <mat-button-toggle value="png">
+      <mat-icon>image</mat-icon> PNG (timeline)
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <p class="format-note">
+    @if (format() === 'pdf') {
+      Opens your browser's print dialog — choose “Save as PDF”. Includes the
+      timeline plus Overview, Accommodations, Car Rentals and Transport,
+      paginated for printing.
+    } @else {
+      Downloads a PNG image of the timeline.
+    }
+  </p>
+
+  <mat-slide-toggle
+    [checked]="anonymize()"
+    (change)="anonymize.set($event.checked)"
+  >
+    Anonymize for sharing
+  </mat-slide-toggle>
+
+  @if (anonymize()) {
+    <div class="anon-options">
+      <mat-checkbox
+        [checked]="bookingRefs()"
+        (change)="bookingRefs.set($event.checked)"
+      >
+        Booking references &amp; links
+      </mat-checkbox>
+      <mat-checkbox
+        [checked]="addresses()"
+        (change)="addresses.set($event.checked)"
+      >
+        Addresses &amp; map links
+      </mat-checkbox>
+      <mat-checkbox [checked]="notes()" (change)="notes.set($event.checked)">
+        Notes &amp; remarks
+      </mat-checkbox>
+      <mat-checkbox
+        [checked]="locations()"
+        (change)="locations.set($event.checked)"
+      >
+        Precise locations
+      </mat-checkbox>
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton mat-dialog-close>Cancel</button>
+  <button matButton="filled" color="primary" (click)="confirm()">Export</button>
+</mat-dialog-actions>

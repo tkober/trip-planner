@@ -24,6 +24,7 @@
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
     "dexie": "^4.4.3",
+    "html-to-image": "^1.11.13",
     "luxon": "^3.7.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"

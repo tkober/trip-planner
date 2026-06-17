@@ -17,13 +17,15 @@ import { TransportCard } from '../../shared/transport-card/transport-card';
 export class TransportView {
   /** Parent route param, bound via withComponentInputBinding. */
   readonly id = input.required<string>();
+  /** When set, render this trip instead of looking it up in the store (export). */
+  readonly tripOverride = input<TripDto | undefined>(undefined);
 
   private readonly store = inject(TripStore);
   private readonly tz = inject(TimeZoneService);
   private readonly actions = inject(TripActionsService);
 
-  readonly trip = computed<TripDto | undefined>(() =>
-    this.store.trips().find((t) => t.id === this.id()),
+  readonly trip = computed<TripDto | undefined>(
+    () => this.tripOverride() ?? this.store.trips().find((t) => t.id === this.id()),
   );
 
   /** Transport ordered by departure time. */

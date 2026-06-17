@@ -47,6 +47,12 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
 - Drag-and-drop of activity/transport entries between days (CDK) with a confirm modal;
   the entry keeps its time-of-day, its date shifts to the target day.
 - JSON export/import (schema-version validated).
+- **Plan export** ("Export plan…" in the trip-page menu): a **PNG** of the timeline
+  (via `html-to-image`) and a **PDF** of the whole plan (timeline + Overview /
+  Accommodations / Car Rentals / Transport sections, each on its own page) produced by
+  **native browser print** (`window.print()` → "Save as PDF"). An opt-in
+  **anonymization mode** (chosen per-export in the export dialog) blacks out sensitive
+  fields for public sharing. See "Plan export" below.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -149,6 +155,29 @@ Timeline composition:
   Overview **Flights** section (departure/return) and the Transport list so every
   surface shares one visual language; route/detail strings come from the same
   [transport-format.ts](src/app/shared/transport-format.ts) helpers the timeline uses.
+
+Plan export ([src/app/trips/export/](src/app/trips/export/) +
+[export.service.ts](src/app/services/export.service.ts)):
+- The timeline ([TimelineView](src/app/trips/timeline/timeline.ts)) and the four section
+  views each take an optional **`tripOverride`** input — when set, they render that trip
+  instead of the store lookup. So **anonymization is a pure data transform**
+  ([anonymize.ts](src/app/shared/export/anonymize.ts) `anonymizeTrip`): redacted *visible*
+  fields become block-glyph bars (`█████`), URL fields are dropped, and every existing
+  surface renders the redacted copy with no per-component logic. `TimelineView` also has
+  an **`exportMode`** input that swaps `clamp(vw)` lane widths for fixed px (deterministic
+  output).
+- [TripExportDocument](src/app/trips/export/trip-export-document.ts) composes a cover +
+  timeline + the four views (all fed the same trip). Its `.export-doc` host class scopes
+  the **chrome-hiding** + **print pagination** rules in [styles.scss](src/styles.scss)
+  (hide kebabs/add buttons; `break-before: page` per section; `break-inside: avoid` on
+  cards). [ExportHost](src/app/trips/export/export-host.ts) (mounted in the trip-page
+  shell) renders it off-screen, then for **PNG** captures `.timeline-capture` with
+  `html-to-image`, or for **PDF** adds a `printing-export` class (which hides the live app
+  and reveals the document) and calls `window.print()`.
+- [ExportDialog](src/app/trips/export/export-dialog.ts) picks the format and the
+  anonymization categories; [TripActionsService](src/app/services/trip-actions.service.ts)
+  `exportPlan()` wires the dialog → `anonymizeTrip` → `ExportService`. File downloads use
+  the shared [download.ts](src/app/shared/download.ts) helper.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,

@@ -7,6 +7,7 @@ import { TripDto } from '../../models/trip.model';
 import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
+import { ExportHost } from '../export/export-host';
 
 interface NavItem {
   path: string;
@@ -28,6 +29,7 @@ interface NavItem {
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
+    ExportHost,
   ],
   templateUrl: './trip-page.html',
   styleUrl: './trip-page.scss',
@@ -80,5 +82,10 @@ export class TripPage {
   exportTrip(): void {
     const trip = this.trip();
     if (trip) this.actions.exportTrip(trip);
+  }
+
+  exportPlan(): void {
+    const trip = this.trip();
+    if (trip) this.actions.exportPlan(trip);
   }
 }

@@ -13,6 +13,12 @@ import {
 import { TripStore } from './trip-store';
 import { TimeZoneService } from './time-zone.service';
 import { ImportExportService } from './import-export.service';
+import { ExportService } from './export.service';
+import {
+  ExportDialog,
+  ExportDialogResult,
+} from '../trips/export/export-dialog';
+import { anonymizeTrip } from '../shared/export/anonymize';
 import {
   TripFormDialog,
   TripFormResult,
@@ -62,6 +68,7 @@ export class TripActionsService {
   private readonly store = inject(TripStore);
   private readonly tz = inject(TimeZoneService);
   private readonly importExport = inject(ImportExportService);
+  private readonly exportService = inject(ExportService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
 
@@ -105,6 +112,33 @@ export class TripActionsService {
 
   exportTrip(trip: TripDto): void {
     this.importExport.exportTrip(trip);
+  }
+
+  /**
+   * Export the plan as a PNG (timeline) or PDF (full plan via native print),
+   * optionally with sensitive fields blacked out. Renders an off-screen
+   * `TripExportDocument` through `ExportService`.
+   */
+  exportPlan(trip: TripDto): void {
+    this.dialog
+      .open(ExportDialog)
+      .afterClosed()
+      .subscribe((result?: ExportDialogResult) => {
+        if (!result) return;
+        const out = result.anonymize
+          ? anonymizeTrip(trip, result.anonymize)
+          : trip;
+        const anon = !!result.anonymize;
+        if (result.format === 'png') {
+          void this.exportService.exportPng(out, anon).then(() => {
+            this.snack.open('Timeline PNG downloaded', undefined, {
+              duration: 2500,
+            });
+          });
+        } else {
+          void this.exportService.exportPdf(out, anon);
+        }
+      });
   }
 
   // --- Accommodation -------------------------------------------------------
