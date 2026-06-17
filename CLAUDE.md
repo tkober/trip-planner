@@ -321,6 +321,9 @@ No compose file — images are deployed by the cluster.
 
 ## Conventions
 
+- **Every new feature goes on its own feature branch** (e.g. `feature/<short-name>`),
+  branched off `main`; never commit feature work directly to `main`. Land it via a
+  pull request once it's complete.
 - Standalone components only (no NgModules); prefer `signal`/`computed`/`input`/`output`.
 - Keep DTOs JSON-serializable. On any shape change, bump `SCHEMA_VERSION` **and** add
   a matching `MIGRATIONS[<new version>]` step in
