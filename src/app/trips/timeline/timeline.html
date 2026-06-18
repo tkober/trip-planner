@@ -69,7 +69,10 @@
       />
     }
     @for (label of stayLabels(); track label.id) {
-      <div class="stay-label" [style.grid-row]="label.gridRow">{{ label.name }}</div>
+      <div class="stay-label" [style.grid-row]="label.gridRow">
+        <mat-icon class="stay-icon">hotel</mat-icon>
+        <span class="stay-name">{{ label.name }}</span>
+      </div>
     }
     @for (s of carSpans(); track s.car.id) {
       <app-car-span

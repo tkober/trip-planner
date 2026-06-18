@@ -1,5 +1,4 @@
 import { Component, input, output } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 import { AccommodationDto } from '../../models/trip.model';
 
 /** One half (morning or night) of a day's hotel cell. */
@@ -29,7 +28,6 @@ export interface HotelDayCell {
  */
 @Component({
   selector: 'app-hotel-cell',
-  imports: [MatIconModule],
   host: {
     '[style.grid-row]': 'rowIndex()',
     '[style.grid-column]': "'2 / 3'",
@@ -51,11 +49,7 @@ export interface HotelDayCell {
         [style.--hotel]="bottom()?.color ?? null"
         (click)="openHalf(bottom())"
         (contextmenu)="onContext(bottom(), 'bottom', $event)"
-      >
-        @if (bottom()?.isStart) {
-          <mat-icon class="start-icon">hotel</mat-icon>
-        }
-      </div>
+      ></div>
     </div>
   `,
   styleUrl: './hotel-cell.scss',

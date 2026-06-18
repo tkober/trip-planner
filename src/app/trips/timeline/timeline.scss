@@ -93,21 +93,35 @@
   }
 }
 
-// Vertical hotel name centered over its stay, in the hotel lane. Click-through
-// so the colored half-cells beneath handle taps (details dialog).
+// Bed icon + vertical hotel name as one group, centered over the stay in the
+// hotel lane (mirrors the car lane's icon + name). Click-through so the colored
+// half-cells beneath handle taps (details dialog).
 .stay-label {
   grid-column: 2 / 3;
   pointer-events: none;
   z-index: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: #1c2733;
-  white-space: nowrap;
   overflow: hidden;
   padding: 0.5rem 0;
+
+  .stay-icon {
+    color: #1c2733;
+    font-size: 1.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  .stay-name {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    margin-top: 0.25rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #1c2733;
+    white-space: nowrap;
+    overflow: hidden;
+  }
 }

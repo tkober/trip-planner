@@ -6,15 +6,18 @@
 }
 
 .car-block {
+  // Icon + name sit together as one group, centered over the whole span (the
+  // hotel lane's stay-label matches this), so the two left lanes read alike.
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   height: 100%;
   min-height: 3rem;
   border-radius: 12px;
   cursor: pointer;
   overflow: hidden;
-  padding: 4px 0 0.5rem;
+  padding: 0.5rem 0;
   // Soft per-reservation tint (light mix of the accent colour), matching the
   // hotel lane so the two left lanes read as a consistent pair.
   background: color-mix(in srgb, var(--car, var(--mat-sys-primary)) 22%, white);
