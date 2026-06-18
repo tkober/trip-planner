@@ -7,7 +7,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { AnonymizeOptions } from '../../shared/export/anonymize';
 
-export type ExportFormat = 'png' | 'pdf';
+export type ExportFormat = 'png' | 'pdf' | 'md';
 
 export interface ExportDialogResult {
   format: ExportFormat;
