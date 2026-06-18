@@ -40,10 +40,10 @@
   @if (anonymize()) {
     <div class="anon-options">
       <mat-checkbox
-        [checked]="bookingRefs()"
-        (change)="bookingRefs.set($event.checked)"
+        [checked]="flightNumbers()"
+        (change)="flightNumbers.set($event.checked)"
       >
-        Booking references &amp; links
+        Flight numbers
       </mat-checkbox>
       <mat-checkbox
         [checked]="addresses()"

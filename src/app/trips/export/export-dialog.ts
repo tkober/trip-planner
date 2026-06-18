@@ -61,7 +61,7 @@ export class ExportDialog {
   readonly format = signal<ExportFormat>('pdf');
   readonly anonymize = signal(false);
   // Defaults when anonymization is enabled (locations off — it's the aggressive one).
-  readonly bookingRefs = signal(true);
+  readonly flightNumbers = signal(true);
   readonly addresses = signal(true);
   readonly notes = signal(true);
   readonly locations = signal(false);
@@ -71,7 +71,7 @@ export class ExportDialog {
       format: this.format(),
       anonymize: this.anonymize()
         ? {
-            bookingRefs: this.bookingRefs(),
+            flightNumbers: this.flightNumbers(),
             addresses: this.addresses(),
             notes: this.notes(),
             locations: this.locations(),

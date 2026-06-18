@@ -80,13 +80,13 @@ function sampleTrip(): TripDto {
 }
 
 const ALL: AnonymizeOptions = {
-  bookingRefs: true,
+  flightNumbers: true,
   addresses: true,
   notes: true,
   locations: true,
 };
 const NONE: AnonymizeOptions = {
-  bookingRefs: false,
+  flightNumbers: false,
   addresses: false,
   notes: false,
   locations: false,
@@ -105,17 +105,18 @@ describe('anonymizeTrip', () => {
     expect(anonymizeTrip(trip, NONE)).toEqual(trip);
   });
 
-  it('redacts booking references and removes booking URLs', () => {
+  it('redacts flight numbers only', () => {
     const out = anonymizeTrip(sampleTrip(), {
       ...NONE,
-      bookingRefs: true,
+      flightNumbers: true,
     });
-    expect(out.accommodations[0].bookingUrl).toBeUndefined();
-    expect(out.carReservations[0].bookingUrl).toBeUndefined();
-    expect(out.activities[0].bookingUrl).toBeUndefined();
-    expect(out.transport[0].bookingUrl).toBeUndefined();
     expect(out.transport[0].flightNumber).toBe(REDACTED);
-    expect(out.transport[1].trainName).toBe(REDACTED);
+    // Train names and booking URLs are no longer affected.
+    expect(out.transport[1].trainName).toBe('Nozomi 21');
+    expect(out.accommodations[0].bookingUrl).toBe('https://booking.example/xyz');
+    expect(out.carReservations[0].bookingUrl).toBe('https://booking.example/car');
+    expect(out.activities[0].bookingUrl).toBe('https://booking.example/teamlab');
+    expect(out.transport[0].bookingUrl).toBe('https://booking.example/flight');
     // Untouched by this category.
     expect(out.accommodations[0].address).toBe('1-2-3 Chiyoda, Tokyo');
     expect(out.transport[0].airline).toBe('ANA');

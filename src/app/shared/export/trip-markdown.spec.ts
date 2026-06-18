@@ -124,7 +124,7 @@ describe('tripToMarkdown', () => {
 
   it('carries an anonymization note and redacted fields through', () => {
     const anon = anonymizeTrip(sampleTrip(), {
-      bookingRefs: true,
+      flightNumbers: true,
       addresses: true,
       notes: true,
       locations: true,
@@ -132,8 +132,7 @@ describe('tripToMarkdown', () => {
     const md = tripToMarkdown(anon, tz, true);
     expect(md).toContain('Anonymized for sharing');
     expect(md).toContain('- Address: █████');
-    // Dropped URL no longer appears.
-    expect(md).not.toContain('Booking: https://booking.example/xyz');
+    expect(md).toContain('- Flight number: █████');
   });
 
   it('always ends with a single trailing newline', () => {

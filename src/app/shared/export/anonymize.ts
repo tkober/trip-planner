@@ -5,8 +5,8 @@ import { TripDto } from '../../models/trip.model';
  * for public sharing. Chosen per-export in the export dialog.
  */
 export interface AnonymizeOptions {
-  /** bookingUrl (all entities), flight numbers, train service names. */
-  bookingRefs: boolean;
+  /** Flight numbers only (no train names, no booking URLs). */
+  flightNumbers: boolean;
   /** Accommodation address & full name, all Google Maps URLs. */
   addresses: boolean;
   /** Free-text notes / remarks on every entity. */
@@ -41,7 +41,6 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
       if (a.address) a.address = REDACTED;
       a.googleMapsUrl = undefined;
     }
-    if (opts.bookingRefs) a.bookingUrl = undefined;
     if (opts.notes && a.remarks) a.remarks = REDACTED;
   }
 
@@ -50,7 +49,6 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
       c.pickupGoogleMapsUrl = undefined;
       c.dropoffGoogleMapsUrl = undefined;
     }
-    if (opts.bookingRefs) c.bookingUrl = undefined;
     if (opts.notes && c.remarks) c.remarks = REDACTED;
     if (opts.locations) {
       if (c.pickupLocation) c.pickupLocation = REDACTED;
@@ -60,17 +58,12 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
 
   for (const a of t.activities) {
     if (opts.addresses) a.googleMapsUrl = undefined;
-    if (opts.bookingRefs) a.bookingUrl = undefined;
     if (opts.notes && a.notes) a.notes = REDACTED;
     if (opts.locations && a.location) a.location = REDACTED;
   }
 
   for (const tr of t.transport) {
-    if (opts.bookingRefs) {
-      tr.bookingUrl = undefined;
-      if (tr.flightNumber) tr.flightNumber = REDACTED;
-      if (tr.trainName) tr.trainName = REDACTED;
-    }
+    if (opts.flightNumbers && tr.flightNumber) tr.flightNumber = REDACTED;
     if (opts.notes && tr.notes) tr.notes = REDACTED;
   }
 
