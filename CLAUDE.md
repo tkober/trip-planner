@@ -226,13 +226,14 @@ TripDto { id, schemaVersion, title, startDate, endDate, homeTimeZone,
 ZonedTime { dateTime: "YYYY-MM-DDTHH:mm", zone: "Asia/Tokyo" }
 AccommodationDto { id, name, fullName?, address?, googleMapsUrl?, bookingUrl?,
                    remarks?, color?, checkInDate, checkOutDate }
-CarReservationDto { id, name, company?, carType?, pickupLocation?, dropoffLocation?,
-                    pickupDate, dropoffDate, pickupTime?, dropoffTime?,
-                    pickupGoogleMapsUrl?, dropoffGoogleMapsUrl?, bookingUrl?,
-                    remarks?, color? }
+CarReservationDto { id, name, company?, carType?, price?, pickupLocation?,
+                    dropoffLocation?, pickupDate, dropoffDate, pickupTime?,
+                    dropoffTime?, pickupGoogleMapsUrl?, dropoffGoogleMapsUrl?,
+                    pickupStationUrl?, dropoffStationUrl?, bookingUrl?,
+                    bookingReference?, remarks?, color? }
 ActivityDto { id, title, start, end?, location?, googleMapsUrl?, bookingUrl?, notes?, color? }
 TransportDto { id, mode: flight|train|bus|car, start, end?, fromLocation?,
-               toLocation?, bookingUrl?, notes?, color?,
+               toLocation?, bookingUrl?, bookingReference?, notes?, color?,
                // flight-only: airline?, flightNumber?, fromAirport?, toAirport?,
                //              fromTerminal?, toTerminal?
                // train-only:  fromStation?, toStation?, fromPlatform?,
@@ -257,6 +258,10 @@ migration seeds an empty array on older documents).
 
 Removing the redundant transport `title` (the route is now derived) was a
 **schema v5** step whose migration strips `title` from each `transport[]` entry.
+
+Adding the optional car-rental `price`, pickup/return `*StationUrl` links and
+`bookingReference`, plus the transport `bookingReference`, was an additive
+**schema v6** step (no data transform).
 
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations and car reservations each cycle their own distinct tints by

@@ -38,7 +38,11 @@ function sampleTrip(): TripDto {
         dropoffDate: '2026-04-08',
         pickupGoogleMapsUrl: 'https://maps.example/pick',
         dropoffGoogleMapsUrl: 'https://maps.example/drop',
+        pickupStationUrl: 'https://rental.example/pick',
+        dropoffStationUrl: 'https://rental.example/drop',
         bookingUrl: 'https://booking.example/car',
+        bookingReference: 'CAR-ABC123',
+        price: '¥12,000',
         remarks: 'Confirmation 12345',
       },
     ],
@@ -129,9 +133,17 @@ describe('anonymizeTrip', () => {
     expect(out.accommodations[0].googleMapsUrl).toBeUndefined();
     expect(out.carReservations[0].pickupGoogleMapsUrl).toBeUndefined();
     expect(out.carReservations[0].dropoffGoogleMapsUrl).toBeUndefined();
+    expect(out.carReservations[0].pickupStationUrl).toBeUndefined();
+    expect(out.carReservations[0].dropoffStationUrl).toBeUndefined();
     expect(out.activities[0].googleMapsUrl).toBeUndefined();
     // Short name (timeline label) is kept.
     expect(out.accommodations[0].name).toBe('Hotel Tokyo');
+  });
+
+  it('keeps the car price and booking reference under every category', () => {
+    const out = anonymizeTrip(sampleTrip(), ALL);
+    expect(out.carReservations[0].price).toBe('¥12,000');
+    expect(out.carReservations[0].bookingReference).toBe('CAR-ABC123');
   });
 
   it('redacts notes and remarks', () => {

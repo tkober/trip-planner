@@ -48,6 +48,8 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
     if (opts.addresses) {
       c.pickupGoogleMapsUrl = undefined;
       c.dropoffGoogleMapsUrl = undefined;
+      c.pickupStationUrl = undefined;
+      c.dropoffStationUrl = undefined;
     }
     if (opts.notes && c.remarks) c.remarks = REDACTED;
     if (opts.locations) {

@@ -62,6 +62,14 @@
         <dt>Car type</dt>
         <dd>{{ c.carType }}</dd>
       }
+      @if (c.price) {
+        <dt>Price</dt>
+        <dd>{{ c.price }}</dd>
+      }
+      @if (c.bookingReference) {
+        <dt>Booking ref.</dt>
+        <dd>{{ c.bookingReference }}</dd>
+      }
       @if (c.remarks) {
         <dt>Remarks</dt>
         <dd class="multiline">{{ c.remarks }}</dd>
@@ -152,6 +160,10 @@
         }
       }
 
+      @if (t.bookingReference) {
+        <dt>Booking ref.</dt>
+        <dd>{{ t.bookingReference }}</dd>
+      }
       @if (t.notes) {
         <dt>Notes</dt>
         <dd class="multiline">{{ t.notes }}</dd>
@@ -173,6 +185,16 @@
     @if (carReservation?.dropoffGoogleMapsUrl; as maps) {
       <a matButton href="{{ maps }}" target="_blank" rel="noopener">
         <mat-icon>map</mat-icon> Return map
+      </a>
+    }
+    @if (carReservation?.pickupStationUrl; as station) {
+      <a matButton href="{{ station }}" target="_blank" rel="noopener">
+        <mat-icon>link</mat-icon> Pickup station
+      </a>
+    }
+    @if (carReservation?.dropoffStationUrl; as station) {
+      <a matButton href="{{ station }}" target="_blank" rel="noopener">
+        <mat-icon>link</mat-icon> Return station
       </a>
     }
     @if (

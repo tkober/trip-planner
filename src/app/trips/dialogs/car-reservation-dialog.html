@@ -18,6 +18,11 @@
       </mat-form-field>
     </div>
 
+    <mat-form-field class="full-width">
+      <mat-label>Price (optional)</mat-label>
+      <input matInput [ngModel]="price()" (ngModelChange)="price.set($event)" name="price" placeholder="e.g. ¥12,000" />
+    </mat-form-field>
+
     <p class="section-label">Pickup</p>
     <div class="row">
       <app-date-field
@@ -38,6 +43,10 @@
     <mat-form-field class="full-width">
       <mat-label>Pickup Google Maps link (optional)</mat-label>
       <input matInput type="url" [ngModel]="pickupGoogleMapsUrl()" (ngModelChange)="pickupGoogleMapsUrl.set($event)" name="pickupMaps" />
+    </mat-form-field>
+    <mat-form-field class="full-width">
+      <mat-label>Pickup station link (optional)</mat-label>
+      <input matInput type="url" [ngModel]="pickupStationUrl()" (ngModelChange)="pickupStationUrl.set($event)" name="pickupStation" />
     </mat-form-field>
 
     <p class="section-label">Return</p>
@@ -61,12 +70,21 @@
       <mat-label>Return Google Maps link (optional)</mat-label>
       <input matInput type="url" [ngModel]="dropoffGoogleMapsUrl()" (ngModelChange)="dropoffGoogleMapsUrl.set($event)" name="dropoffMaps" />
     </mat-form-field>
+    <mat-form-field class="full-width">
+      <mat-label>Return station link (optional)</mat-label>
+      <input matInput type="url" [ngModel]="dropoffStationUrl()" (ngModelChange)="dropoffStationUrl.set($event)" name="dropoffStation" />
+    </mat-form-field>
 
     <hr class="divider" />
 
     <mat-form-field class="full-width">
       <mat-label>Booking link (optional)</mat-label>
       <input matInput type="url" [ngModel]="bookingUrl()" (ngModelChange)="bookingUrl.set($event)" name="booking" />
+    </mat-form-field>
+
+    <mat-form-field class="full-width">
+      <mat-label>Booking reference (optional)</mat-label>
+      <input matInput [ngModel]="bookingReference()" (ngModelChange)="bookingReference.set($event)" name="bookingRef" placeholder="e.g. confirmation number" />
     </mat-form-field>
 
     <mat-form-field class="full-width">

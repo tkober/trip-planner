@@ -31,6 +31,14 @@
               </dd>
               <dt>Days</dt>
               <dd>{{ row.days }}</dd>
+              @if (row.car.price) {
+                <dt>Price</dt>
+                <dd>{{ row.car.price }}</dd>
+              }
+              @if (row.car.bookingReference) {
+                <dt>Booking ref.</dt>
+                <dd>{{ row.car.bookingReference }}</dd>
+              }
             </dl>
             <div class="links">
               @if (row.car.pickupGoogleMapsUrl) {
@@ -41,6 +49,16 @@
               @if (row.car.dropoffGoogleMapsUrl) {
                 <a [href]="row.car.dropoffGoogleMapsUrl" target="_blank" rel="noopener">
                   <mat-icon>location_on</mat-icon> Return map
+                </a>
+              }
+              @if (row.car.pickupStationUrl) {
+                <a [href]="row.car.pickupStationUrl" target="_blank" rel="noopener">
+                  <mat-icon>link</mat-icon> Pickup station
+                </a>
+              }
+              @if (row.car.dropoffStationUrl) {
+                <a [href]="row.car.dropoffStationUrl" target="_blank" rel="noopener">
+                  <mat-icon>link</mat-icon> Return station
                 </a>
               }
               @if (row.car.bookingUrl) {

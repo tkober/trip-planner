@@ -123,6 +123,7 @@ export function tripToMarkdown(
       push(`### ${i + 1}. ${c.name}`);
       if (c.company) push(`- Company: ${c.company}`);
       if (c.carType) push(`- Vehicle: ${c.carType}`);
+      if (c.price) push(`- Price: ${c.price}`);
       push(`- Pickup: ${stationLine(c.pickupDate, c.pickupTime, c.pickupLocation)}`);
       push(
         `- Drop-off: ${stationLine(c.dropoffDate, c.dropoffTime, c.dropoffLocation)}`,
@@ -130,7 +131,10 @@ export function tripToMarkdown(
       if (c.pickupGoogleMapsUrl) push(`- Pickup map: ${c.pickupGoogleMapsUrl}`);
       if (c.dropoffGoogleMapsUrl)
         push(`- Drop-off map: ${c.dropoffGoogleMapsUrl}`);
+      if (c.pickupStationUrl) push(`- Pickup station: ${c.pickupStationUrl}`);
+      if (c.dropoffStationUrl) push(`- Drop-off station: ${c.dropoffStationUrl}`);
       if (c.bookingUrl) push(`- Booking: ${c.bookingUrl}`);
+      if (c.bookingReference) push(`- Booking ref: ${c.bookingReference}`);
       if (c.remarks) push(`- Remarks: ${c.remarks}`);
       push();
     });
@@ -212,6 +216,7 @@ export function tripToMarkdown(
         break;
     }
     if (t.bookingUrl) out.push(`  - Booking: ${t.bookingUrl}`);
+    if (t.bookingReference) out.push(`  - Booking ref: ${t.bookingReference}`);
     if (t.notes) out.push(`  - Notes: ${t.notes}`);
     return out;
   }
