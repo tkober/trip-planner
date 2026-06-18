@@ -36,17 +36,42 @@
   [cdkDropListData]="view()"
   (cdkDropListDropped)="dropped.emit($event)"
 >
-  @for (entry of view().entries; track entry.activity?.id ?? entry.transport?.id) {
-    <app-entry-card
-      cdkDrag
-      [cdkDragData]="entry"
-      [entry]="entry"
-      [destZone]="destZone()"
-      (open)="openEntry.emit($event)"
-      (edit)="editEntry.emit($event)"
-      (delete)="deleteEntry.emit($event)"
-    />
-  } @empty {
+  @for (item of view().items; track item.key) {
+    @if (item.entry; as entry) {
+      <app-entry-card
+        cdkDrag
+        [cdkDragData]="entry"
+        [entry]="entry"
+        [destZone]="destZone()"
+        (open)="openEntry.emit($event)"
+        (edit)="editEntry.emit($event)"
+        (delete)="deleteEntry.emit($event)"
+      />
+    } @else if (item.deadline; as d) {
+      <button
+        type="button"
+        class="car-pill"
+        [style.--accent]="d.color"
+        (click)="openCar.emit(d.car)"
+      >
+        <mat-icon class="pill-icon">{{
+          d.kind === 'pickup' ? 'key' : 'keyboard_return'
+        }}</mat-icon>
+        <span class="pill-label">{{ d.label }}</span>
+        @if (d.time) {
+          <span class="pill-time">{{ d.time }}</span>
+        }
+        <span class="pill-name">{{ d.car.name }}</span>
+        @if (d.company) {
+          <span class="pill-company">– {{ d.company }}</span>
+        }
+        @if (d.location) {
+          <span class="pill-station">– {{ d.location }}</span>
+        }
+      </button>
+    }
+  }
+  @if (!view().hasEntries) {
     <p class="no-entries">No activities or transport yet.</p>
   }
 

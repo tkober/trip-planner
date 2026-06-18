@@ -23,7 +23,7 @@ import {
 import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
-import { DaySection, DayView } from './day-section';
+import { CarDeadline, DayItem, DaySection, DayView } from './day-section';
 import { HotelCell, HotelDayCell } from './hotel-cell';
 import { CarSpan } from './car-span';
 import { StraddleCard } from './straddle-card';
@@ -338,15 +338,77 @@ export class TimelineView {
       };
     }
 
-    const dayViews: DayView[] = days.map((day, i) => ({
-      day,
-      entries: (buckets.get(day.date) ?? []).sort(
-        (a, b) => this.tz.toMillis(a.start) - this.tz.toMillis(b.start),
-      ),
-      dropListId: 'day-' + day.date,
-      padTop: padTop.has(i),
-      padBottom: padBottom.has(i),
-    }));
+    // Car rental pickup / return deadlines, bucketed into the day they fall on
+    // (exact destination-tz date — a deadline outside the trip range simply
+    // isn't shown, unlike the car lane block which clamps to the edge).
+    const carColorById = carReservationColors(trip.carReservations);
+    const deadlinesByDate = new Map<string, CarDeadline[]>();
+    const pushDeadline = (date: string, d: CarDeadline) => {
+      if (!buckets.has(date)) return; // deadline outside the trip range — skip
+      const list = deadlinesByDate.get(date) ?? [];
+      list.push(d);
+      deadlinesByDate.set(date, list);
+    };
+    for (const c of trip.carReservations) {
+      const color = carColorById.get(c.id) ?? '';
+      pushDeadline(c.pickupDate, {
+        car: c,
+        kind: 'pickup',
+        label: 'Fetch by',
+        time: c.pickupTime ?? '',
+        company: c.company ?? '',
+        location: c.pickupLocation ?? '',
+        color,
+      });
+      pushDeadline(c.dropoffDate, {
+        car: c,
+        kind: 'dropoff',
+        label: 'Return by',
+        time: c.dropoffTime ?? '',
+        company: c.company ?? '',
+        location: c.dropoffLocation ?? '',
+        color,
+      });
+    }
+    // Tiebreaker rank for items sharing a time: pickup (0) above entries (1),
+    // return (2) below them.
+    const tieRank = (it: DayItem) =>
+      it.deadline ? (it.deadline.kind === 'pickup' ? 0 : 2) : 1;
+
+    const dayViews: DayView[] = days.map((day, i) => {
+      const entries = buckets.get(day.date) ?? [];
+      const deadlines = deadlinesByDate.get(day.date) ?? [];
+      // Interleave entries and deadlines by time so a "Return by 14:00" pill
+      // lands between the activities before and after it. Untimed deadlines
+      // float to the top of the day (their time is unknown).
+      const items: DayItem[] = [
+        ...entries.map((entry): DayItem => ({
+          key: (entry.activity?.id ?? entry.transport?.id)!,
+          sortMillis: this.tz.toMillis(entry.start),
+          entry,
+        })),
+        ...deadlines.map((deadline): DayItem => ({
+          key: deadline.car.id + deadline.kind,
+          sortMillis: deadline.time
+            ? this.tz.toMillis({
+                dateTime: `${day.date}T${deadline.time}`,
+                zone: destZone,
+              })
+            : Number.NEGATIVE_INFINITY,
+          deadline,
+        })),
+        // On a tie, order by intent: a pickup happens before you set off (pill
+        // above the entry), a return happens after you arrive (pill below it).
+      ].sort((a, b) => a.sortMillis - b.sortMillis || tieRank(a) - tieRank(b));
+      return {
+        day,
+        items,
+        hasEntries: entries.length > 0,
+        dropListId: 'day-' + day.date,
+        padTop: padTop.has(i),
+        padBottom: padBottom.has(i),
+      };
+    });
 
     return { dayViews, straddles, leading, trailing, offset };
   });

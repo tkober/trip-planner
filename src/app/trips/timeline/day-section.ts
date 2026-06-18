@@ -3,13 +3,51 @@ import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
-import { TimelineEntry } from '../../models/trip.model';
+import { CarReservationDto, TimelineEntry } from '../../models/trip.model';
 import { TripDay } from '../../services/time-zone.service';
 import { EntryCard } from './entry-card';
 
+/**
+ * A car rental pickup ("Fetch by") or return ("Return by") deadline, shown as a
+ * compact pill in the day it falls on. It's not its own entity — it's derived
+ * from the reservation and tinted with the reservation's accent colour.
+ */
+export interface CarDeadline {
+  car: CarReservationDto;
+  kind: 'pickup' | 'dropoff';
+  /** "Fetch by" | "Return by". */
+  label: string;
+  /** Deadline time "HH:mm" in the destination tz, or '' when none is set. */
+  time: string;
+  /** Rental company, or '' when none is set. */
+  company: string;
+  /** Pickup / return station for this deadline, or '' when none is set. */
+  location: string;
+  /** Resolved accent colour of the reservation. */
+  color: string;
+}
+
+/**
+ * One row in a day's content column: either an activity/transport entry card or
+ * a car deadline pill. Both carry a `sortMillis` so they interleave by time —
+ * e.g. a "Return by 14:00" pill sits between the activities before and after it.
+ */
+export interface DayItem {
+  /** Stable track key. */
+  key: string;
+  /** Absolute instant used to order items within the day. */
+  sortMillis: number;
+  /** Exactly one of `entry` / `deadline` is set. */
+  entry?: TimelineEntry;
+  deadline?: CarDeadline;
+}
+
 export interface DayView {
   day: TripDay;
-  entries: TimelineEntry[];
+  /** Entries and car pickup/return deadlines for the day, interleaved by time. */
+  items: DayItem[];
+  /** Whether the day has any activity/transport entry (drives the empty message). */
+  hasEntries: boolean;
   dropListId: string;
   /** Reserve space at the top/bottom for a straddle card on that boundary. */
   padTop: boolean;
@@ -48,6 +86,7 @@ export class DaySection {
   readonly openEntry = output<TimelineEntry>();
   readonly editEntry = output<TimelineEntry>();
   readonly deleteEntry = output<TimelineEntry>();
+  readonly openCar = output<CarReservationDto>();
   readonly dropped = output<CdkDragDrop<DayView>>();
 
   /** Invisible anchor for the day menu, positioned at the click coordinates. */

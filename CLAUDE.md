@@ -32,7 +32,18 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   Start/End ±1-day menu** (upper half = pickup, lower half = dropoff; pickup may equal
   dropoff, a one-day rental). Pickup and return may be at different stations and carry
   optional times. The lane collapses to 0px when empty, and car reservations never
-  appear in the right-hand activity/transport content column.
+  appear in the right-hand activity/transport content column. Each rental's pickup
+  and return additionally surface as compact **deadline pills** in the content column
+  of the day they fall on, **interleaved with that day's activity/transport cards by
+  time** (so a "Return by 14:00" pill sits between the activities before and after it;
+  the day's content is one chronologically-sorted list of `DayItem`s — each either an
+  entry card or a deadline pill — built in `TimelineView.layout`). Each pill shows a
+  `Fetch by` / `Return by` label, the optional time, the car's name, the rental company,
+  and the relevant station (pickup station for a fetch, return station for a return),
+  tinted with the reservation's accent colour (not a separate entity — derived from
+  `carReservations`); click → the car details. Untimed deadlines float to the top of the day; a deadline
+  whose date sits outside the trip range is simply not shown (unlike the lane block,
+  which clamps to the edge).
 - Activities and **Transport as separate entities** (flight/train/bus/car), always
   rendered as list cards interleaved per day, sorted by start time, colour/icon-
   differentiated by mode. Transport has **no title**: its headline is the

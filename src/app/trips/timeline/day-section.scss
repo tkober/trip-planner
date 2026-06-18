@@ -99,6 +99,66 @@
   margin: 0;
 }
 
+// Car rental pickup / return deadline pills — lightweight markers interleaved
+// with the entry cards by time, not full entry cards. Tinted with the
+// reservation's accent colour.
+.car-pill {
+  align-self: flex-start;
+  // Never overflow the day-content column; the station truncates instead.
+  max-width: 100%;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 45%, white);
+  background: color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 16%, white);
+  color: #1c2733;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(0.97);
+  }
+
+  .pill-icon {
+    align-self: center;
+    color: var(--accent, var(--mat-sys-primary));
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .pill-label {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    font-size: 0.7rem;
+  }
+
+  .pill-time {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .pill-name {
+    color: var(--mat-sys-on-surface-variant);
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .pill-company,
+  .pill-station {
+    color: var(--mat-sys-on-surface-variant);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 .add-btn {
   align-self: flex-start;
 }
