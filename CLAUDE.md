@@ -48,11 +48,12 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   the entry keeps its time-of-day, its date shifts to the target day.
 - JSON export/import (schema-version validated).
 - **Plan export** ("Export plan…" in the trip-page menu): a **PNG** of the timeline
-  (via `html-to-image`) and a **PDF** of the whole plan (timeline + Overview /
+  (via `html-to-image`), a **PDF** of the whole plan (timeline + Overview /
   Accommodations / Car Rentals / Transport sections, each on its own page) produced by
-  **native browser print** (`window.print()` → "Save as PDF"). An opt-in
-  **anonymization mode** (chosen per-export in the export dialog) blacks out sensitive
-  fields for public sharing. See "Plan export" below.
+  **native browser print** (`window.print()` → "Save as PDF"), and a **Markdown** (`.md`)
+  text rendering of the whole plan (no graphics) intended for handing the itinerary to an
+  **LLM / agent**. An opt-in **anonymization mode** (chosen per-export in the export
+  dialog) blacks out sensitive fields for public sharing. See "Plan export" below.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -178,6 +179,14 @@ Plan export ([src/app/trips/export/](src/app/trips/export/) +
   anonymization categories; [TripActionsService](src/app/services/trip-actions.service.ts)
   `exportPlan()` wires the dialog → `anonymizeTrip` → `ExportService`. File downloads use
   the shared [download.ts](src/app/shared/download.ts) helper.
+- The **Markdown** format needs none of the off-screen DOM machinery above:
+  [trip-markdown.ts](src/app/shared/export/trip-markdown.ts) `tripToMarkdown(trip, tz,
+  anonymized?)` is a **pure data transform** (like `anonymizeTrip`) that renders the
+  already-anonymized `TripDto` to structured text — Overview, Accommodations and Car
+  rentals reference lists, then a day-by-day Itinerary with the overnight stay and every
+  activity/transport leg in chronological order (times printed in their own IANA zone so
+  day/zone crossings are unambiguous). `exportPlan()` calls it directly and downloads the
+  `.md` via `download.ts`; no `ExportService`/`ExportHost` round-trip.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,

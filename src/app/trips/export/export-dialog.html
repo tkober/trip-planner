@@ -12,6 +12,9 @@
     <mat-button-toggle value="png">
       <mat-icon>image</mat-icon> PNG (timeline)
     </mat-button-toggle>
+    <mat-button-toggle value="md">
+      <mat-icon>description</mat-icon> Markdown (text)
+    </mat-button-toggle>
   </mat-button-toggle-group>
 
   <p class="format-note">
@@ -19,8 +22,11 @@
       Opens your browser's print dialog — choose “Save as PDF”. Includes the
       timeline plus Overview, Accommodations, Car Rentals and Transport,
       paginated for printing.
-    } @else {
+    } @else if (format() === 'png') {
       Downloads a PNG image of the timeline.
+    } @else {
+      Downloads a Markdown (.md) file of the full plan — text only, structured
+      day-by-day. Ideal for handing the plan to an LLM or agent.
     }
   </p>
 

@@ -19,6 +19,8 @@ import {
   ExportDialogResult,
 } from '../trips/export/export-dialog';
 import { anonymizeTrip } from '../shared/export/anonymize';
+import { tripToMarkdown } from '../shared/export/trip-markdown';
+import { downloadBlob, slugify } from '../shared/download';
 import {
   TripFormDialog,
   TripFormResult,
@@ -115,9 +117,10 @@ export class TripActionsService {
   }
 
   /**
-   * Export the plan as a PNG (timeline) or PDF (full plan via native print),
-   * optionally with sensitive fields blacked out. Renders an off-screen
-   * `TripExportDocument` through `ExportService`.
+   * Export the plan as a PNG (timeline), PDF (full plan via native print) or
+   * Markdown (text-only, for feeding to an LLM/agent), optionally with sensitive
+   * fields blacked out. PNG/PDF render an off-screen `TripExportDocument` through
+   * `ExportService`; Markdown is a pure data transform downloaded directly.
    */
   exportPlan(trip: TripDto): void {
     this.dialog
@@ -135,10 +138,20 @@ export class TripActionsService {
               duration: 2500,
             });
           });
+        } else if (result.format === 'md') {
+          this.exportMarkdown(out, anon);
         } else {
           void this.exportService.exportPdf(out, anon);
         }
       });
+  }
+
+  /** Build the Markdown document and trigger a `.md` download. */
+  private exportMarkdown(trip: TripDto, anonymized: boolean): void {
+    const md = tripToMarkdown(trip, this.tz, anonymized);
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    downloadBlob(blob, `${slugify(trip.title) || 'trip'}-plan.md`);
+    this.snack.open('Markdown plan downloaded', undefined, { duration: 2500 });
   }
 
   // --- Accommodation -------------------------------------------------------
