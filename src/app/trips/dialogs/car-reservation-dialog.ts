@@ -63,7 +63,11 @@ export class CarReservationDialog {
   readonly dropoffGoogleMapsUrl = signal(
     this.data.car?.dropoffGoogleMapsUrl ?? '',
   );
+  readonly pickupStationUrl = signal(this.data.car?.pickupStationUrl ?? '');
+  readonly dropoffStationUrl = signal(this.data.car?.dropoffStationUrl ?? '');
+  readonly price = signal(this.data.car?.price ?? '');
   readonly bookingUrl = signal(this.data.car?.bookingUrl ?? '');
+  readonly bookingReference = signal(this.data.car?.bookingReference ?? '');
   readonly remarks = signal(this.data.car?.remarks ?? '');
   readonly color = signal<string | undefined>(this.data.car?.color);
   readonly defaultColor = this.data.defaultColor;
@@ -104,7 +108,11 @@ export class CarReservationDialog {
       dropoffTime: this.dropoffTime() || undefined,
       pickupGoogleMapsUrl: this.pickupGoogleMapsUrl().trim() || undefined,
       dropoffGoogleMapsUrl: this.dropoffGoogleMapsUrl().trim() || undefined,
+      pickupStationUrl: this.pickupStationUrl().trim() || undefined,
+      dropoffStationUrl: this.dropoffStationUrl().trim() || undefined,
       bookingUrl: this.bookingUrl().trim() || undefined,
+      bookingReference: this.bookingReference().trim() || undefined,
+      price: this.price().trim() || undefined,
       remarks: this.remarks().trim() || undefined,
       color: this.color() || undefined,
     };

@@ -44,6 +44,9 @@ function sampleTrip(): TripDto {
         pickupDate: '2026-04-02',
         dropoffDate: '2026-04-03',
         pickupTime: '09:00',
+        price: '¥12,000',
+        pickupStationUrl: 'https://rental.example/pick',
+        bookingReference: 'CAR-ABC123',
       },
     ],
     activities: [
@@ -66,6 +69,7 @@ function sampleTrip(): TripDto {
         toLocation: 'Tokyo',
         airline: 'ANA',
         flightNumber: 'NH216',
+        bookingReference: 'FL-XYZ789',
       },
     ],
   };
@@ -93,6 +97,14 @@ describe('tripToMarkdown', () => {
     expect(md).toContain('### 1. Toyota Aqua');
     expect(md).toContain('- Pickup: 2026-04-02 09:00 — Naha Airport');
     expect(md).toContain('- Drop-off: 2026-04-03 — Naha City');
+    expect(md).toContain('- Price: ¥12,000');
+    expect(md).toContain('- Pickup station: https://rental.example/pick');
+    expect(md).toContain('- Booking ref: CAR-ABC123');
+  });
+
+  it('lists the flight booking reference', () => {
+    const md = tripToMarkdown(sampleTrip(), tz);
+    expect(md).toContain('  - Booking ref: FL-XYZ789');
   });
 
   it('buckets a day-crossing flight under its destination-tz start day', () => {

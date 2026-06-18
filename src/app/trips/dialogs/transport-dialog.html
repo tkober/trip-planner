@@ -155,6 +155,11 @@
     </mat-form-field>
 
     <mat-form-field class="full-width">
+      <mat-label>Booking reference (optional)</mat-label>
+      <input matInput [ngModel]="bookingReference()" (ngModelChange)="bookingReference.set($event)" name="bookingRef" placeholder="e.g. confirmation number" />
+    </mat-form-field>
+
+    <mat-form-field class="full-width">
       <mat-label>Notes (optional)</mat-label>
       <textarea matInput rows="2" [ngModel]="notes()" (ngModelChange)="notes.set($event)" name="notes"></textarea>
     </mat-form-field>

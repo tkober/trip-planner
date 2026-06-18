@@ -110,6 +110,7 @@ export class TransportDialog {
   readonly line = signal(this.data.transport?.line ?? '');
   readonly operator = signal(this.data.transport?.operator ?? '');
   readonly bookingUrl = signal(this.data.transport?.bookingUrl ?? '');
+  readonly bookingReference = signal(this.data.transport?.bookingReference ?? '');
   readonly notes = signal(this.data.transport?.notes ?? '');
   readonly color = signal<string | undefined>(this.data.transport?.color);
   /** Default swatch follows the selected mode's colour. */
@@ -169,6 +170,7 @@ export class TransportDialog {
       line: trainOrBus(this.line()),
       operator: trainOrBus(this.operator()),
       bookingUrl: this.bookingUrl().trim() || undefined,
+      bookingReference: this.bookingReference().trim() || undefined,
       notes: this.notes().trim() || undefined,
       color: this.color() || undefined,
     };

@@ -6,7 +6,7 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 /**
  * A wall-clock time anchored to an IANA time zone. No offset is stored — Luxon
@@ -64,7 +64,15 @@ export interface CarReservationDto {
   dropoffTime?: string;
   pickupGoogleMapsUrl?: string;
   dropoffGoogleMapsUrl?: string;
+  /** Free link for the pickup station (e.g. branch page), separate from the map. */
+  pickupStationUrl?: string;
+  /** Free link for the return station (e.g. branch page), separate from the map. */
+  dropoffStationUrl?: string;
   bookingUrl?: string;
+  /** Booking / confirmation number (often there is no booking link). */
+  bookingReference?: string;
+  /** Free-text price, e.g. "¥12,000" — what the rental costs on pickup. */
+  price?: string;
   remarks?: string;
   /** Explicit accent colour (hex). When unset a default tint applies. */
   color?: string;
@@ -126,6 +134,8 @@ export interface TransportDto {
   /** Operator, e.g. "JR East", "Deutsche Bahn". */
   operator?: string;
   bookingUrl?: string;
+  /** Booking / confirmation number (often there is no booking link). */
+  bookingReference?: string;
   notes?: string;
   /** Explicit accent colour (hex). When unset the mode's default applies. */
   color?: string;
