@@ -44,8 +44,8 @@ const MIGRATIONS: Record<number, TripMigration> = {
       : old.transport,
   }),
   // v6 adds optional car-rental fields (pickup/return station links, booking
-  // reference, price) and an optional transport booking reference. They are
-  // absent on older documents, so this is an identity upgrade.
+  // reference, price), a transport booking reference, and an accommodation
+  // price. They are absent on older documents, so this is an identity upgrade.
   [6]: (old) => old,
 };
 

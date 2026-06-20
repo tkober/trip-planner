@@ -29,6 +29,10 @@
                 <dt>Address</dt>
                 <dd>{{ row.accommodation.address }}</dd>
               }
+              @if (row.accommodation.price) {
+                <dt>Price</dt>
+                <dd>{{ row.accommodation.price }}</dd>
+              }
             </dl>
             <div class="links">
               @if (row.accommodation.googleMapsUrl) {

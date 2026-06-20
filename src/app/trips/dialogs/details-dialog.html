@@ -33,6 +33,10 @@
         <dt>Address</dt>
         <dd>{{ a.address }}</dd>
       }
+      @if (a.price) {
+        <dt>Price</dt>
+        <dd>{{ a.price }}</dd>
+      }
       @if (a.remarks) {
         <dt>Remarks</dt>
         <dd class="multiline">{{ a.remarks }}</dd>

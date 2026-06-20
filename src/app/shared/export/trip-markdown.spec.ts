@@ -31,6 +31,7 @@ function sampleTrip(): TripDto {
         fullName: 'The Grand Tokyo Hotel',
         address: '1-2-3 Chiyoda, Tokyo',
         bookingUrl: 'https://booking.example/xyz',
+        price: '¥18,000 / night',
         checkInDate: '2026-04-01',
         checkOutDate: '2026-04-03',
       },
@@ -90,6 +91,7 @@ describe('tripToMarkdown', () => {
     expect(md).toContain('### 1. Hotel Tokyo');
     expect(md).toContain('- Full name: The Grand Tokyo Hotel');
     expect(md).toContain('- Stay: 2026-04-01 → 2026-04-03 (2 nights)');
+    expect(md).toContain('- Price: ¥18,000 / night');
   });
 
   it('lists car rentals with pickup time and location', () => {

@@ -47,6 +47,7 @@ export class AccommodationDialog {
   readonly address = signal(this.data.accommodation?.address ?? '');
   readonly googleMapsUrl = signal(this.data.accommodation?.googleMapsUrl ?? '');
   readonly bookingUrl = signal(this.data.accommodation?.bookingUrl ?? '');
+  readonly price = signal(this.data.accommodation?.price ?? '');
   readonly remarks = signal(this.data.accommodation?.remarks ?? '');
   readonly checkInDate = signal(
     this.data.accommodation?.checkInDate ?? this.data.defaultCheckIn,
@@ -87,6 +88,7 @@ export class AccommodationDialog {
       address: this.address().trim() || undefined,
       googleMapsUrl: this.googleMapsUrl().trim() || undefined,
       bookingUrl: this.bookingUrl().trim() || undefined,
+      price: this.price().trim() || undefined,
       remarks: this.remarks().trim() || undefined,
       color: this.color() || undefined,
       checkInDate: this.checkInDate(),

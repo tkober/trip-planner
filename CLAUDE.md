@@ -225,7 +225,7 @@ TripDto { id, schemaVersion, title, startDate, endDate, homeTimeZone,
           activities[], transport[], createdAt, updatedAt }
 ZonedTime { dateTime: "YYYY-MM-DDTHH:mm", zone: "Asia/Tokyo" }
 AccommodationDto { id, name, fullName?, address?, googleMapsUrl?, bookingUrl?,
-                   remarks?, color?, checkInDate, checkOutDate }
+                   price?, remarks?, color?, checkInDate, checkOutDate }
 CarReservationDto { id, name, company?, carType?, price?, pickupLocation?,
                     dropoffLocation?, pickupDate, dropoffDate, pickupTime?,
                     dropoffTime?, pickupGoogleMapsUrl?, dropoffGoogleMapsUrl?,
@@ -260,8 +260,8 @@ Removing the redundant transport `title` (the route is now derived) was a
 **schema v5** step whose migration strips `title` from each `transport[]` entry.
 
 Adding the optional car-rental `price`, pickup/return `*StationUrl` links and
-`bookingReference`, plus the transport `bookingReference`, was an additive
-**schema v6** step (no data transform).
+`bookingReference`, the transport `bookingReference`, and the accommodation
+`price`, was an additive **schema v6** step (no data transform).
 
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations and car reservations each cycle their own distinct tints by

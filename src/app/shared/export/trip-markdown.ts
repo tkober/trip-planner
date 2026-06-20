@@ -102,6 +102,7 @@ export function tripToMarkdown(
         `- Stay: ${a.checkInDate} → ${a.checkOutDate} (${n} night${n === 1 ? '' : 's'})`,
       );
       if (a.address) push(`- Address: ${a.address}`);
+      if (a.price) push(`- Price: ${a.price}`);
       if (a.googleMapsUrl) push(`- Map: ${a.googleMapsUrl}`);
       if (a.bookingUrl) push(`- Booking: ${a.bookingUrl}`);
       if (a.remarks) push(`- Remarks: ${a.remarks}`);

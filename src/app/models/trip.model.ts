@@ -28,6 +28,8 @@ export interface AccommodationDto {
   address?: string;
   googleMapsUrl?: string;
   bookingUrl?: string;
+  /** Free-text price, e.g. "¥18,000 / night" or "€450 total". */
+  price?: string;
   remarks?: string;
   /** Explicit accent colour (hex). When unset a default tint applies. */
   color?: string;
