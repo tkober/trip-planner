@@ -43,14 +43,11 @@
     </mat-form-field>
 
     <mat-form-field class="full-width">
-      <mat-label>Price (optional)</mat-label>
-      <input matInput [ngModel]="price()" (ngModelChange)="price.set($event)" name="price" placeholder="e.g. ¥18,000 / night" />
-    </mat-form-field>
-
-    <mat-form-field class="full-width">
       <mat-label>Remarks (optional)</mat-label>
       <textarea matInput rows="2" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)" name="remarks"></textarea>
     </mat-form-field>
+
+    <app-cost-fieldset [options]="currencies" [(value)]="cost" />
 
     <app-color-field
       label="Colour"

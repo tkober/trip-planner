@@ -65,6 +65,7 @@ export class ExportDialog {
   readonly addresses = signal(true);
   readonly notes = signal(true);
   readonly locations = signal(false);
+  readonly costs = signal(true);
 
   confirm(): void {
     this.dialogRef.close({
@@ -75,6 +76,7 @@ export class ExportDialog {
             addresses: this.addresses(),
             notes: this.notes(),
             locations: this.locations(),
+            costs: this.costs(),
           }
         : null,
     });

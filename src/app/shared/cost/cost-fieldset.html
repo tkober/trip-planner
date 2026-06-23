@@ -1,0 +1,55 @@
+<p class="section-label">{{ label() }}</p>
+
+<div class="row">
+  <mat-form-field class="full-width">
+    <mat-label>Total price</mat-label>
+    <input
+      matInput
+      type="number"
+      inputmode="decimal"
+      [ngModel]="totalPrice()"
+      (ngModelChange)="setTotalPrice($event)"
+      name="totalPrice"
+    />
+  </mat-form-field>
+  <app-suggest-field
+    label="Currency"
+    [options]="options()"
+    [value]="currency()"
+    (valueChange)="setCurrency($event)"
+  />
+</div>
+
+<mat-checkbox
+  class="paid-toggle"
+  [ngModel]="alreadyPaid()"
+  (ngModelChange)="setAlreadyPaid($event)"
+  name="alreadyPaid"
+>
+  Already paid
+</mat-checkbox>
+
+<div class="row">
+  <app-date-field
+    label="Payment date"
+    [value]="paymentDate()"
+    (valueChange)="setPaymentDate($event)"
+  />
+  <app-date-field
+    label="Free cancellation until"
+    [value]="freeCancellationUntil()"
+    (valueChange)="setFreeCancellationUntil($event)"
+  />
+</div>
+
+<mat-form-field class="full-width">
+  <mat-label>Cancellation cost</mat-label>
+  <input
+    matInput
+    type="number"
+    inputmode="decimal"
+    [ngModel]="cancellationCost()"
+    (ngModelChange)="setCancellationCost($event)"
+    name="cancellationCost"
+  />
+</mat-form-field>

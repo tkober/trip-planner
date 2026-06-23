@@ -50,4 +50,6 @@ export const environment = {
   trainKinds: splitList(runtime.trainKinds) ?? ["Local train","Rapid","Limited express","Shinkansen"],
   /** Selectable options for a bus's "kind" field. */
   busKinds: splitList(runtime.busKinds) ?? ["City bus","Long-distance coach","Overnight","Hop on/off"],
+  /** Selectable currency codes for the cost picker (free typing still allowed). */
+  currencies: splitList(runtime.currencies) ?? ["EUR","USD","JPY"],
 };

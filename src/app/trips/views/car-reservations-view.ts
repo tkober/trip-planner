@@ -8,6 +8,7 @@ import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { carReservationColors } from '../../shared/color/color';
+import { formatMoney } from '../../shared/cost/cost';
 
 interface CarReservationRow {
   car: CarReservationDto;
@@ -59,6 +60,11 @@ export class CarReservationsView {
     const dt = DateTime.fromISO(date);
     const dateStr = dt.isValid ? dt.toFormat('ccc, d LLL yyyy') : date;
     return time ? `${dateStr} · ${time}` : dateStr;
+  }
+
+  /** Format an optional amount in its currency, or '' when unset. */
+  money(amount?: number, currency?: string): string {
+    return amount != null ? formatMoney(amount, currency) : '';
   }
 
   add(): void {

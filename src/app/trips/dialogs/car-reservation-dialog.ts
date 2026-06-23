@@ -8,9 +8,12 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { CarReservationDto } from '../../models/trip.model';
+import { CarReservationDto, CostInfo } from '../../models/trip.model';
 import { DateField } from '../../shared/date-field/date-field';
 import { ColorField } from '../../shared/color/color-field';
+import { CostFieldset } from '../../shared/cost/cost-fieldset';
+import { pickCost } from '../../shared/cost/cost';
+import { environment } from '../../../environments/environment';
 
 export interface CarReservationDialogData {
   car?: CarReservationDto;
@@ -31,6 +34,7 @@ export interface CarReservationDialogData {
     MatInputModule,
     DateField,
     ColorField,
+    CostFieldset,
   ],
   templateUrl: './car-reservation-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -65,10 +69,11 @@ export class CarReservationDialog {
   );
   readonly pickupStationUrl = signal(this.data.car?.pickupStationUrl ?? '');
   readonly dropoffStationUrl = signal(this.data.car?.dropoffStationUrl ?? '');
-  readonly price = signal(this.data.car?.price ?? '');
   readonly bookingUrl = signal(this.data.car?.bookingUrl ?? '');
   readonly bookingReference = signal(this.data.car?.bookingReference ?? '');
   readonly remarks = signal(this.data.car?.remarks ?? '');
+  readonly cost = signal<CostInfo>(pickCost(this.data.car));
+  readonly currencies = environment.currencies;
   readonly color = signal<string | undefined>(this.data.car?.color);
   readonly defaultColor = this.data.defaultColor;
   readonly error = signal('');
@@ -112,9 +117,9 @@ export class CarReservationDialog {
       dropoffStationUrl: this.dropoffStationUrl().trim() || undefined,
       bookingUrl: this.bookingUrl().trim() || undefined,
       bookingReference: this.bookingReference().trim() || undefined,
-      price: this.price().trim() || undefined,
       remarks: this.remarks().trim() || undefined,
       color: this.color() || undefined,
+      ...this.cost(),
     };
     this.dialogRef.close(result);
   }

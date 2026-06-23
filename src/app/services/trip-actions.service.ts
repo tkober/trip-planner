@@ -101,6 +101,27 @@ export class TripActionsService {
     this.snack.open('Trip updated', undefined, { duration: 2000 });
   }
 
+  /**
+   * Persist an exchange rate (EUR per one foreign unit) for a currency on the
+   * trip. Passing a non-positive / non-finite rate clears it. Flows through the
+   * whole-trip `saveTrip`, so the cost summary recomputes reactively.
+   */
+  async setExchangeRate(
+    trip: TripDto,
+    currency: string,
+    eurPerUnit: number,
+  ): Promise<void> {
+    const code = currency.trim().toUpperCase();
+    if (!code) return;
+    const rates = { ...(trip.exchangeRates ?? {}) };
+    if (Number.isFinite(eurPerUnit) && eurPerUnit > 0) {
+      rates[code] = eurPerUnit;
+    } else {
+      delete rates[code];
+    }
+    await this.store.saveTrip({ ...trip, exchangeRates: rates });
+  }
+
   private countOrphans(trip: TripDto, start: string, end: string): number {
     const inRange = (zt: { dateTime: string; zone: string }) => {
       const key = this.tz.dayKeyLocal(zt);

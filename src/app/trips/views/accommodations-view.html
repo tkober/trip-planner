@@ -29,9 +29,21 @@
                 <dt>Address</dt>
                 <dd>{{ row.accommodation.address }}</dd>
               }
-              @if (row.accommodation.price) {
-                <dt>Price</dt>
-                <dd>{{ row.accommodation.price }}</dd>
+              @if (row.accommodation.totalPrice != null) {
+                <dt>Total price</dt>
+                <dd>{{ money(row.accommodation.totalPrice, row.accommodation.currency) }}</dd>
+              }
+              @if (row.accommodation.alreadyPaid) {
+                <dt>Already paid</dt>
+                <dd>Yes</dd>
+              }
+              @if (row.accommodation.paymentDate) {
+                <dt>Payment date</dt>
+                <dd>{{ row.accommodation.paymentDate }}</dd>
+              }
+              @if (row.accommodation.freeCancellationUntil) {
+                <dt>Free cancellation until</dt>
+                <dd>{{ row.accommodation.freeCancellationUntil }}</dd>
               }
             </dl>
             <div class="links">

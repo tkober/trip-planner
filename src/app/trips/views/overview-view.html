@@ -42,6 +42,59 @@
       </div>
     </div>
 
+    @if (costSummary(); as cost) {
+      @if (cost.byCategory.length) {
+        <h3 class="section-title">Trip cost</h3>
+        <div class="facts">
+          <div class="fact">
+            <span class="label">Total</span>
+            <span class="value">{{ formatEur(cost.grandTotalEur) }}</span>
+          </div>
+          <div class="fact">
+            <span class="label">Already paid</span>
+            <span class="value">{{ formatEur(cost.paidEur) }}</span>
+          </div>
+          <div class="fact">
+            <span class="label">Outstanding</span>
+            <span class="value">{{ formatEur(cost.outstandingEur) }}</span>
+          </div>
+          @for (c of cost.byCategory; track c.category) {
+            <div class="fact">
+              <span class="label">{{ c.label }}{{ c.hasUnconverted ? ' *' : '' }}</span>
+              <span class="value">{{ formatEur(c.totalEur) }}</span>
+            </div>
+          }
+        </div>
+
+        @if (cost.currenciesInUse.length && !tripOverride()) {
+          <div class="rates">
+            <p class="rates-title">Exchange rates</p>
+            @for (code of cost.currenciesInUse; track code) {
+              <div class="rate-row">
+                <span class="rate-label">1 EUR =</span>
+                <mat-form-field class="rate-input" subscriptSizing="dynamic">
+                  <input
+                    matInput
+                    type="number"
+                    inputmode="decimal"
+                    [value]="rateDisplay(code)"
+                    (change)="onRateChange(code, $any($event.target).value)"
+                  />
+                  <span matTextSuffix>{{ code }}</span>
+                </mat-form-field>
+              </div>
+            }
+            @if (cost.missingRates.length) {
+              <p class="rate-warning">
+                * Enter a rate for {{ cost.missingRates.join(', ') }} to include
+                those costs in the total.
+              </p>
+            }
+          </div>
+        }
+      }
+    }
+
     @if (departureFlight() || returnFlight()) {
       <h3 class="section-title">Flights</h3>
       <div class="flights">

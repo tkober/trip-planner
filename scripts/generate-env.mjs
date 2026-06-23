@@ -14,6 +14,9 @@
  *                         When set, replaces the built-in defaults.
  *   BUS_KINDS             Comma-separated options for a bus's "kind" field.
  *                         When set, replaces the built-in defaults.
+ *   CURRENCIES            Comma-separated currency codes for the cost picker.
+ *                         EUR is the base currency; when set, replaces the
+ *                         built-in defaults ("EUR,USD,JPY").
  *
  * These can be set on the command line (e.g. `STORAGE_BACKEND=http npm start`)
  * or placed in a `.env` file at the repo root (see `.env.example`). Variables
@@ -72,6 +75,7 @@ const DEFAULT_BUS_KINDS = [
   'Overnight',
   'Hop on/off',
 ];
+const DEFAULT_CURRENCIES = ['EUR', 'USD', 'JPY'];
 
 /** Parse a comma-separated env var into a trimmed list, or fall back. */
 function parseList(value, fallback) {
@@ -89,6 +93,7 @@ const storageBackend =
 const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
 const trainKinds = parseList(process.env.TRAIN_KINDS, DEFAULT_TRAIN_KINDS);
 const busKinds = parseList(process.env.BUS_KINDS, DEFAULT_BUS_KINDS);
+const currencies = parseList(process.env.CURRENCIES, DEFAULT_CURRENCIES);
 
 const literal = (value) => JSON.stringify(value);
 
@@ -144,6 +149,8 @@ export const environment = {
   trainKinds: splitList(runtime.trainKinds) ?? ${literal(trainKinds)},
   /** Selectable options for a bus's "kind" field. */
   busKinds: splitList(runtime.busKinds) ?? ${literal(busKinds)},
+  /** Selectable currency codes for the cost picker (free typing still allowed). */
+  currencies: splitList(runtime.currencies) ?? ${literal(currencies)},
 };
 `;
 
@@ -153,5 +160,6 @@ writeFileSync(target, contents);
 console.log(
   `[generate-env] departure="${departure || '(device zone)'}" trip="${trip}" ` +
     `backend="${storageBackend}"${storageBackend === 'http' ? ` api="${apiBaseUrl}"` : ''} ` +
-    `trainKinds=${trainKinds.length} busKinds=${busKinds.length}`,
+    `trainKinds=${trainKinds.length} busKinds=${busKinds.length} ` +
+    `currencies=${currencies.length}`,
 );

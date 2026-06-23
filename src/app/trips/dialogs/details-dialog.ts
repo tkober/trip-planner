@@ -15,6 +15,7 @@ import {
 } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { transportLabel } from '../../shared/transport-format';
+import { formatMoney } from '../../shared/cost/cost';
 
 export type DetailsKind =
   | 'accommodation'
@@ -57,6 +58,18 @@ export class DetailsDialog {
   readonly carReservation = this.data.carReservation;
   readonly activity = this.data.activity;
   readonly transport = this.data.transport;
+
+  /** The single present entity, as its shared CostInfo (all entities extend it). */
+  readonly cost =
+    this.accommodation ??
+    this.carReservation ??
+    this.activity ??
+    this.transport;
+
+  /** Format an optional amount in its currency, or '' when unset. */
+  money(amount?: number, currency?: string): string {
+    return amount != null ? formatMoney(amount, currency) : '';
+  }
 
   readonly heading = computed(() => {
     switch (this.data.kind) {

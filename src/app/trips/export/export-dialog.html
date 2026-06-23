@@ -60,6 +60,9 @@
       >
         Precise locations
       </mat-checkbox>
+      <mat-checkbox [checked]="costs()" (change)="costs.set($event.checked)">
+        Prices &amp; costs
+      </mat-checkbox>
     </div>
   }
 </mat-dialog-content>

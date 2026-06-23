@@ -1,4 +1,4 @@
-import { TripDto } from '../../models/trip.model';
+import { CostInfo, TripDto } from '../../models/trip.model';
 
 /**
  * Which categories of sensitive information to black out when exporting a trip
@@ -13,7 +13,19 @@ export interface AnonymizeOptions {
   notes: boolean;
   /** Activity locations and car pickup / drop-off station names. */
   locations: boolean;
+  /** All prices, amounts paid, payment/cancellation dates and exchange rates. */
+  costs: boolean;
 }
+
+/** Cost fields cleared when the `costs` category is anonymized. */
+const COST_FIELDS = [
+  'totalPrice',
+  'currency',
+  'alreadyPaid',
+  'paymentDate',
+  'freeCancellationUntil',
+  'cancellationCost',
+] as const;
 
 /**
  * Sentinel used for redacted *visible text* fields. Block glyphs render as a
@@ -35,6 +47,12 @@ const REDACTED = '█████';
 export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
   const t = structuredClone(trip);
 
+  // Drop all cost fields (they are numbers/dates, so removed rather than barred).
+  const stripCost = (x: CostInfo) => {
+    for (const f of COST_FIELDS) (x as Record<string, unknown>)[f] = undefined;
+  };
+  if (opts.costs) t.exchangeRates = undefined;
+
   for (const a of t.accommodations) {
     if (opts.addresses) {
       if (a.fullName) a.fullName = REDACTED;
@@ -42,6 +60,7 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
       a.googleMapsUrl = undefined;
     }
     if (opts.notes && a.remarks) a.remarks = REDACTED;
+    if (opts.costs) stripCost(a);
   }
 
   for (const c of t.carReservations) {
@@ -56,17 +75,20 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
       if (c.pickupLocation) c.pickupLocation = REDACTED;
       if (c.dropoffLocation) c.dropoffLocation = REDACTED;
     }
+    if (opts.costs) stripCost(c);
   }
 
   for (const a of t.activities) {
     if (opts.addresses) a.googleMapsUrl = undefined;
     if (opts.notes && a.notes) a.notes = REDACTED;
     if (opts.locations && a.location) a.location = REDACTED;
+    if (opts.costs) stripCost(a);
   }
 
   for (const tr of t.transport) {
     if (opts.flightNumbers && tr.flightNumber) tr.flightNumber = REDACTED;
     if (opts.notes && tr.notes) tr.notes = REDACTED;
+    if (opts.costs) stripCost(tr);
   }
 
   return t;
