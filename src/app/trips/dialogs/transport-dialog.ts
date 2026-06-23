@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import {
+  CostInfo,
   TransportDto,
   TransportMode,
   ZonedTime,
@@ -19,6 +20,8 @@ import {
 import { ZonedTimeField } from '../../shared/zoned-time-field/zoned-time-field';
 import { ColorField } from '../../shared/color/color-field';
 import { SuggestField } from '../../shared/suggest-field/suggest-field';
+import { CostFieldset } from '../../shared/cost/cost-fieldset';
+import { pickCost } from '../../shared/cost/cost';
 import { TRANSPORT_MODE_COLOR } from '../../shared/color/color';
 import { environment } from '../../../environments/environment';
 
@@ -52,6 +55,7 @@ const MODES: { value: TransportMode; label: string; icon: string }[] = [
     ZonedTimeField,
     ColorField,
     SuggestField,
+    CostFieldset,
   ],
   templateUrl: './transport-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -112,6 +116,8 @@ export class TransportDialog {
   readonly bookingUrl = signal(this.data.transport?.bookingUrl ?? '');
   readonly bookingReference = signal(this.data.transport?.bookingReference ?? '');
   readonly notes = signal(this.data.transport?.notes ?? '');
+  readonly cost = signal<CostInfo>(pickCost(this.data.transport));
+  readonly currencies = environment.currencies;
   readonly color = signal<string | undefined>(this.data.transport?.color);
   /** Default swatch follows the selected mode's colour. */
   readonly defaultColor = computed(() => TRANSPORT_MODE_COLOR[this.mode()]);
@@ -173,6 +179,7 @@ export class TransportDialog {
       bookingReference: this.bookingReference().trim() || undefined,
       notes: this.notes().trim() || undefined,
       color: this.color() || undefined,
+      ...this.cost(),
     };
     this.dialogRef.close(result);
   }

@@ -8,6 +8,7 @@ import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { accommodationColors } from '../../shared/color/color';
+import { formatMoney } from '../../shared/cost/cost';
 
 interface AccommodationRow {
   accommodation: AccommodationDto;
@@ -58,6 +59,11 @@ export class AccommodationsView {
   private formatDate(date: string): string {
     const dt = DateTime.fromISO(date);
     return dt.isValid ? dt.toFormat('ccc, d LLL yyyy') : date;
+  }
+
+  /** Format an optional amount in its currency, or '' when unset. */
+  money(amount?: number, currency?: string): string {
+    return amount != null ? formatMoney(amount, currency) : '';
   }
 
   add(): void {

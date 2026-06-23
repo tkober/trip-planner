@@ -8,7 +8,7 @@
  * a single built image is reconfigurable per deployment without a rebuild.
  *
  * Supported keys: defaultDepartureTimeZone, defaultTripTimeZone,
- * storageBackend ("indexeddb" | "http"), apiBaseUrl, trainKinds, busKinds
- * (the last two as comma-separated strings or arrays).
+ * storageBackend ("indexeddb" | "http"), apiBaseUrl, trainKinds, busKinds,
+ * currencies (the last three as comma-separated strings or arrays).
  */
 window.__TRIP_PLANNER_ENV__ = {};

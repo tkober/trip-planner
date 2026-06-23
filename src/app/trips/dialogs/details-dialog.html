@@ -33,10 +33,6 @@
         <dt>Address</dt>
         <dd>{{ a.address }}</dd>
       }
-      @if (a.price) {
-        <dt>Price</dt>
-        <dd>{{ a.price }}</dd>
-      }
       @if (a.remarks) {
         <dt>Remarks</dt>
         <dd class="multiline">{{ a.remarks }}</dd>
@@ -65,10 +61,6 @@
       @if (c.carType) {
         <dt>Car type</dt>
         <dd>{{ c.carType }}</dd>
-      }
-      @if (c.price) {
-        <dt>Price</dt>
-        <dd>{{ c.price }}</dd>
       }
       @if (c.bookingReference) {
         <dt>Booking ref.</dt>
@@ -171,6 +163,29 @@
       @if (t.notes) {
         <dt>Notes</dt>
         <dd class="multiline">{{ t.notes }}</dd>
+      }
+    }
+
+    @if (cost; as c) {
+      @if (c.totalPrice != null) {
+        <dt>Total price</dt>
+        <dd>{{ money(c.totalPrice, c.currency) }}</dd>
+      }
+      @if (c.alreadyPaid) {
+        <dt>Already paid</dt>
+        <dd>Yes</dd>
+      }
+      @if (c.cancellationCost != null) {
+        <dt>Cancellation cost</dt>
+        <dd>{{ money(c.cancellationCost, c.currency) }}</dd>
+      }
+      @if (c.paymentDate) {
+        <dt>Payment date</dt>
+        <dd>{{ c.paymentDate }}</dd>
+      }
+      @if (c.freeCancellationUntil) {
+        <dt>Free cancellation until</dt>
+        <dd>{{ c.freeCancellationUntil }}</dd>
       }
     }
   </dl>

@@ -6,7 +6,29 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
+
+/**
+ * Structured cost / payment information shared by every priced entity
+ * (accommodations, car reservations, activities and transport). All fields are
+ * optional so adding cost to any entity is purely additive. Amounts are in the
+ * currency's major units (e.g. 4711 = ¥4711, 450.5 = €450.50) and are summed to
+ * a trip-wide total via the per-currency exchange rates on the trip.
+ */
+export interface CostInfo {
+  /** Total price in major units, e.g. 4711 = ¥4711, 450.5 = €450.50. */
+  totalPrice?: number;
+  /** ISO 4217 currency code, e.g. "EUR" | "JPY". Defaults to EUR when unset. */
+  currency?: string;
+  /** Whether the total has already been paid (its full total counts as paid). */
+  alreadyPaid?: boolean;
+  /** Payment due date: "YYYY-MM-DD". */
+  paymentDate?: string;
+  /** Free-cancellation deadline: "YYYY-MM-DD". */
+  freeCancellationUntil?: string;
+  /** Cost incurred if cancelled, in the same currency / major units. */
+  cancellationCost?: number;
+}
 
 /**
  * A wall-clock time anchored to an IANA time zone. No offset is stored — Luxon
@@ -20,7 +42,7 @@ export interface ZonedTime {
   zone: string;
 }
 
-export interface AccommodationDto {
+export interface AccommodationDto extends CostInfo {
   id: string;
   /** Short title shown on the timeline bar. */
   name: string;
@@ -28,8 +50,6 @@ export interface AccommodationDto {
   address?: string;
   googleMapsUrl?: string;
   bookingUrl?: string;
-  /** Free-text price, e.g. "¥18,000 / night" or "€450 total". */
-  price?: string;
   remarks?: string;
   /** Explicit accent colour (hex). When unset a default tint applies. */
   color?: string;
@@ -44,7 +64,7 @@ export interface AccommodationDto {
  * lane on the left of the timeline (sibling of accommodations) so it's obvious
  * when a car is at your disposal. Pickup and return may be at different stations.
  */
-export interface CarReservationDto {
+export interface CarReservationDto extends CostInfo {
   id: string;
   /** Short label shown on the timeline lane / cards, e.g. "Toyota Aqua". */
   name: string;
@@ -73,15 +93,13 @@ export interface CarReservationDto {
   bookingUrl?: string;
   /** Booking / confirmation number (often there is no booking link). */
   bookingReference?: string;
-  /** Free-text price, e.g. "¥12,000" — what the rental costs on pickup. */
-  price?: string;
   remarks?: string;
   /** Explicit accent colour (hex). When unset a default tint applies. */
   color?: string;
 }
 
 /** Activities: things you do at a place. */
-export interface ActivityDto {
+export interface ActivityDto extends CostInfo {
   id: string;
   title: string;
   start: ZonedTime;
@@ -97,7 +115,7 @@ export interface ActivityDto {
 export type TransportMode = 'flight' | 'train' | 'bus' | 'car';
 
 /** Transport: a separate entity for getting between places (includes flights). */
-export interface TransportDto {
+export interface TransportDto extends CostInfo {
   id: string;
   /** Drives the icon / colour differentiation on the timeline. */
   mode: TransportMode;
@@ -156,6 +174,12 @@ export interface TripDto {
   /** Destination IANA zone, e.g. "Asia/Tokyo". */
   destinationTimeZone: string;
   description?: string;
+  /**
+   * Exchange rates as EUR per one foreign unit, keyed by ISO 4217 code
+   * (e.g. JPY → 0.00625). EUR is implicitly 1 and never stored here. Used to
+   * convert per-entity costs to the base currency (EUR) for the trip total.
+   */
+  exchangeRates?: Record<string, number>;
   accommodations: AccommodationDto[];
   carReservations: CarReservationDto[];
   activities: ActivityDto[];

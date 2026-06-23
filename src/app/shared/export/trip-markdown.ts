@@ -15,6 +15,7 @@ import { DateTime } from 'luxon';
 import {
   AccommodationDto,
   ActivityDto,
+  CostInfo,
   TransportDto,
   TripDto,
   ZonedTime,
@@ -26,6 +27,21 @@ import {
   transportTo,
   transportToDetail,
 } from '../transport-format';
+import { formatEur, formatMoney, tripCostSummary } from '../cost/cost';
+
+/** Markdown bullet lines for an entity's cost (indented for sub-lists). */
+function costLines(c: CostInfo, indent = ''): string[] {
+  const out: string[] = [];
+  const money = (n: number) => formatMoney(n, c.currency);
+  if (c.totalPrice != null) out.push(`${indent}- Price: ${money(c.totalPrice)}`);
+  if (c.alreadyPaid) out.push(`${indent}- Already paid: yes`);
+  if (c.cancellationCost != null)
+    out.push(`${indent}- Cancellation cost: ${money(c.cancellationCost)}`);
+  if (c.paymentDate) out.push(`${indent}- Payment date: ${c.paymentDate}`);
+  if (c.freeCancellationUntil)
+    out.push(`${indent}- Free cancellation until: ${c.freeCancellationUntil}`);
+  return out;
+}
 
 const MODE_LABEL: Record<TransportDto['mode'], string> = {
   flight: 'Flight',
@@ -82,6 +98,21 @@ export function tripToMarkdown(
   push(`- **Car rentals:** ${trip.carReservations.length}`);
   push(`- **Activities:** ${trip.activities.length}`);
   push(`- **Transport legs:** ${trip.transport.length}`);
+  const cost = tripCostSummary(trip, trip.exchangeRates ?? {});
+  if (cost.byCategory.length) {
+    push(`- **Total cost:** ${formatEur(cost.grandTotalEur)}`);
+    push(`- **Already paid:** ${formatEur(cost.paidEur)}`);
+    push(`- **Outstanding:** ${formatEur(cost.outstandingEur)}`);
+    for (const c of cost.byCategory) {
+      const note = c.hasUnconverted
+        ? ' (excludes amounts with no exchange rate)'
+        : '';
+      push(`  - ${c.label}: ${formatEur(c.totalEur)}${note}`);
+    }
+    if (cost.missingRates.length) {
+      push(`- **Missing exchange rates:** ${cost.missingRates.join(', ')}`);
+    }
+  }
   push();
 
   // --- accommodations (reference) ----------------------------------------
@@ -102,7 +133,7 @@ export function tripToMarkdown(
         `- Stay: ${a.checkInDate} → ${a.checkOutDate} (${n} night${n === 1 ? '' : 's'})`,
       );
       if (a.address) push(`- Address: ${a.address}`);
-      if (a.price) push(`- Price: ${a.price}`);
+      for (const l of costLines(a)) push(l);
       if (a.googleMapsUrl) push(`- Map: ${a.googleMapsUrl}`);
       if (a.bookingUrl) push(`- Booking: ${a.bookingUrl}`);
       if (a.remarks) push(`- Remarks: ${a.remarks}`);
@@ -124,7 +155,7 @@ export function tripToMarkdown(
       push(`### ${i + 1}. ${c.name}`);
       if (c.company) push(`- Company: ${c.company}`);
       if (c.carType) push(`- Vehicle: ${c.carType}`);
-      if (c.price) push(`- Price: ${c.price}`);
+      for (const l of costLines(c)) push(l);
       push(`- Pickup: ${stationLine(c.pickupDate, c.pickupTime, c.pickupLocation)}`);
       push(
         `- Drop-off: ${stationLine(c.dropoffDate, c.dropoffTime, c.dropoffLocation)}`,
@@ -181,6 +212,7 @@ export function tripToMarkdown(
     if (a.location) out.push(`  - Location: ${a.location}`);
     if (a.googleMapsUrl) out.push(`  - Map: ${a.googleMapsUrl}`);
     if (a.bookingUrl) out.push(`  - Booking: ${a.bookingUrl}`);
+    out.push(...costLines(a, '  '));
     if (a.notes) out.push(`  - Notes: ${a.notes}`);
     return out;
   }
@@ -218,6 +250,7 @@ export function tripToMarkdown(
     }
     if (t.bookingUrl) out.push(`  - Booking: ${t.bookingUrl}`);
     if (t.bookingReference) out.push(`  - Booking ref: ${t.bookingReference}`);
+    out.push(...costLines(t, '  '));
     if (t.notes) out.push(`  - Notes: ${t.notes}`);
     return out;
   }

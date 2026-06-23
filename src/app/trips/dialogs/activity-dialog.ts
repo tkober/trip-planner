@@ -9,10 +9,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { ActivityDto, ZonedTime } from '../../models/trip.model';
+import { ActivityDto, CostInfo, ZonedTime } from '../../models/trip.model';
 import { ZonedTimeField } from '../../shared/zoned-time-field/zoned-time-field';
 import { ColorField } from '../../shared/color/color-field';
 import { ACTIVITY_COLOR } from '../../shared/color/color';
+import { CostFieldset } from '../../shared/cost/cost-fieldset';
+import { pickCost } from '../../shared/cost/cost';
+import { environment } from '../../../environments/environment';
 
 export interface ActivityDialogData {
   activity?: ActivityDto;
@@ -33,6 +36,7 @@ export interface ActivityDialogData {
     MatCheckboxModule,
     ZonedTimeField,
     ColorField,
+    CostFieldset,
   ],
   templateUrl: './activity-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -62,6 +66,8 @@ export class ActivityDialog {
   readonly googleMapsUrl = signal(this.data.activity?.googleMapsUrl ?? '');
   readonly bookingUrl = signal(this.data.activity?.bookingUrl ?? '');
   readonly notes = signal(this.data.activity?.notes ?? '');
+  readonly cost = signal<CostInfo>(pickCost(this.data.activity));
+  readonly currencies = environment.currencies;
   readonly color = signal<string | undefined>(this.data.activity?.color);
   readonly defaultColor = ACTIVITY_COLOR;
   readonly error = signal('');
@@ -86,6 +92,7 @@ export class ActivityDialog {
       bookingUrl: this.bookingUrl().trim() || undefined,
       notes: this.notes().trim() || undefined,
       color: this.color() || undefined,
+      ...this.cost(),
     };
     this.dialogRef.close(result);
   }

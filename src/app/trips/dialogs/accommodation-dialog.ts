@@ -8,9 +8,12 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { AccommodationDto } from '../../models/trip.model';
+import { AccommodationDto, CostInfo } from '../../models/trip.model';
 import { DateField } from '../../shared/date-field/date-field';
 import { ColorField } from '../../shared/color/color-field';
+import { CostFieldset } from '../../shared/cost/cost-fieldset';
+import { pickCost } from '../../shared/cost/cost';
+import { environment } from '../../../environments/environment';
 
 export interface AccommodationDialogData {
   accommodation?: AccommodationDto;
@@ -31,6 +34,7 @@ export interface AccommodationDialogData {
     MatInputModule,
     DateField,
     ColorField,
+    CostFieldset,
   ],
   templateUrl: './accommodation-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -47,8 +51,9 @@ export class AccommodationDialog {
   readonly address = signal(this.data.accommodation?.address ?? '');
   readonly googleMapsUrl = signal(this.data.accommodation?.googleMapsUrl ?? '');
   readonly bookingUrl = signal(this.data.accommodation?.bookingUrl ?? '');
-  readonly price = signal(this.data.accommodation?.price ?? '');
   readonly remarks = signal(this.data.accommodation?.remarks ?? '');
+  readonly cost = signal<CostInfo>(pickCost(this.data.accommodation));
+  readonly currencies = environment.currencies;
   readonly checkInDate = signal(
     this.data.accommodation?.checkInDate ?? this.data.defaultCheckIn,
   );
@@ -88,11 +93,11 @@ export class AccommodationDialog {
       address: this.address().trim() || undefined,
       googleMapsUrl: this.googleMapsUrl().trim() || undefined,
       bookingUrl: this.bookingUrl().trim() || undefined,
-      price: this.price().trim() || undefined,
       remarks: this.remarks().trim() || undefined,
       color: this.color() || undefined,
       checkInDate: this.checkInDate(),
       checkOutDate: this.checkOutDate(),
+      ...this.cost(),
     };
     this.dialogRef.close(result);
   }

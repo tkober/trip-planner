@@ -47,6 +47,29 @@ const MIGRATIONS: Record<number, TripMigration> = {
   // reference, price), a transport booking reference, and an accommodation
   // price. They are absent on older documents, so this is an identity upgrade.
   [6]: (old) => old,
+  // v7 replaces the free-text `price` on accommodations and car reservations
+  // with structured cost fields (CostInfo). Any existing free-text price is
+  // folded into `remarks` (so no data is lost) and the obsolete `price` field is
+  // dropped. The new cost fields are additive/optional, so nothing else changes.
+  [7]: (old) => {
+    const foldPrice = ({ price, remarks, ...rest }: any) => ({
+      ...rest,
+      remarks: price
+        ? remarks
+          ? `${remarks}\nprice: ${price}`
+          : `price: ${price}`
+        : remarks,
+    });
+    return {
+      ...old,
+      accommodations: Array.isArray(old.accommodations)
+        ? old.accommodations.map(foldPrice)
+        : old.accommodations,
+      carReservations: Array.isArray(old.carReservations)
+        ? old.carReservations.map(foldPrice)
+        : old.carReservations,
+    };
+  },
 };
 
 /**

@@ -10,6 +10,7 @@ set -e
 : "${DEFAULT_DEPARTURE_TZ:=}"
 : "${TRAIN_KINDS:=Local train,Rapid,Limited express,Shinkansen}"
 : "${BUS_KINDS:=City bus,Long-distance coach,Overnight,Hop on/off}"
+: "${CURRENCIES:=EUR,USD,JPY}"
 
 # Only "http" or "indexeddb" are valid; anything else falls back to indexeddb.
 [ "$STORAGE_BACKEND" = "http" ] || STORAGE_BACKEND=indexeddb
@@ -22,8 +23,9 @@ window.__TRIP_PLANNER_ENV__ = {
   storageBackend: "${STORAGE_BACKEND}",
   apiBaseUrl: "${API_BASE_URL}",
   trainKinds: "${TRAIN_KINDS}",
-  busKinds: "${BUS_KINDS}"
+  busKinds: "${BUS_KINDS}",
+  currencies: "${CURRENCIES}"
 };
 EOF
 
-echo "[trip-planner] config.js: backend=${STORAGE_BACKEND} api=${API_BASE_URL} trip=${DEFAULT_TRIP_TZ} trainKinds=${TRAIN_KINDS} busKinds=${BUS_KINDS}"
+echo "[trip-planner] config.js: backend=${STORAGE_BACKEND} api=${API_BASE_URL} trip=${DEFAULT_TRIP_TZ} trainKinds=${TRAIN_KINDS} busKinds=${BUS_KINDS} currencies=${CURRENCIES}"

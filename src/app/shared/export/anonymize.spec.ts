@@ -42,7 +42,9 @@ function sampleTrip(): TripDto {
         dropoffStationUrl: 'https://rental.example/drop',
         bookingUrl: 'https://booking.example/car',
         bookingReference: 'CAR-ABC123',
-        price: '¥12,000',
+        totalPrice: 12000,
+        currency: 'JPY',
+        alreadyPaid: true,
         remarks: 'Confirmation 12345',
       },
     ],
@@ -88,12 +90,14 @@ const ALL: AnonymizeOptions = {
   addresses: true,
   notes: true,
   locations: true,
+  costs: true,
 };
 const NONE: AnonymizeOptions = {
   flightNumbers: false,
   addresses: false,
   notes: false,
   locations: false,
+  costs: false,
 };
 
 describe('anonymizeTrip', () => {
@@ -140,10 +144,26 @@ describe('anonymizeTrip', () => {
     expect(out.accommodations[0].name).toBe('Hotel Tokyo');
   });
 
-  it('keeps the car price and booking reference under every category', () => {
+  it('keeps the booking reference under every category', () => {
     const out = anonymizeTrip(sampleTrip(), ALL);
-    expect(out.carReservations[0].price).toBe('¥12,000');
     expect(out.carReservations[0].bookingReference).toBe('CAR-ABC123');
+  });
+
+  it('keeps cost data unless the costs category is selected', () => {
+    const kept = anonymizeTrip(sampleTrip(), { ...NONE, addresses: true });
+    expect(kept.carReservations[0].totalPrice).toBe(12000);
+    expect(kept.carReservations[0].currency).toBe('JPY');
+    expect(kept.carReservations[0].alreadyPaid).toBe(true);
+  });
+
+  it('drops all cost data when the costs category is selected', () => {
+    const out = anonymizeTrip(sampleTrip(), { ...NONE, costs: true });
+    expect(out.carReservations[0].totalPrice).toBeUndefined();
+    expect(out.carReservations[0].currency).toBeUndefined();
+    expect(out.carReservations[0].alreadyPaid).toBeUndefined();
+    // Non-cost fields stay.
+    expect(out.carReservations[0].bookingReference).toBe('CAR-ABC123');
+    expect(out.carReservations[0].name).toBe('Toyota Aqua');
   });
 
   it('redacts notes and remarks', () => {

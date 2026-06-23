@@ -31,9 +31,21 @@
               </dd>
               <dt>Days</dt>
               <dd>{{ row.days }}</dd>
-              @if (row.car.price) {
-                <dt>Price</dt>
-                <dd>{{ row.car.price }}</dd>
+              @if (row.car.totalPrice != null) {
+                <dt>Total price</dt>
+                <dd>{{ money(row.car.totalPrice, row.car.currency) }}</dd>
+              }
+              @if (row.car.alreadyPaid) {
+                <dt>Already paid</dt>
+                <dd>Yes</dd>
+              }
+              @if (row.car.paymentDate) {
+                <dt>Payment date</dt>
+                <dd>{{ row.car.paymentDate }}</dd>
+              }
+              @if (row.car.freeCancellationUntil) {
+                <dt>Free cancellation until</dt>
+                <dd>{{ row.car.freeCancellationUntil }}</dd>
               }
               @if (row.car.bookingReference) {
                 <dt>Booking ref.</dt>

@@ -31,7 +31,8 @@ function sampleTrip(): TripDto {
         fullName: 'The Grand Tokyo Hotel',
         address: '1-2-3 Chiyoda, Tokyo',
         bookingUrl: 'https://booking.example/xyz',
-        price: '¥18,000 / night',
+        totalPrice: 18000,
+        currency: 'JPY',
         checkInDate: '2026-04-01',
         checkOutDate: '2026-04-03',
       },
@@ -45,7 +46,9 @@ function sampleTrip(): TripDto {
         pickupDate: '2026-04-02',
         dropoffDate: '2026-04-03',
         pickupTime: '09:00',
-        price: '¥12,000',
+        totalPrice: 12000,
+        currency: 'JPY',
+        paymentDate: '2026-03-01',
         pickupStationUrl: 'https://rental.example/pick',
         bookingReference: 'CAR-ABC123',
       },
@@ -91,7 +94,7 @@ describe('tripToMarkdown', () => {
     expect(md).toContain('### 1. Hotel Tokyo');
     expect(md).toContain('- Full name: The Grand Tokyo Hotel');
     expect(md).toContain('- Stay: 2026-04-01 → 2026-04-03 (2 nights)');
-    expect(md).toContain('- Price: ¥18,000 / night');
+    expect(md).toMatch(/- Price: .*18[.,]000/);
   });
 
   it('lists car rentals with pickup time and location', () => {
@@ -99,7 +102,8 @@ describe('tripToMarkdown', () => {
     expect(md).toContain('### 1. Toyota Aqua');
     expect(md).toContain('- Pickup: 2026-04-02 09:00 — Naha Airport');
     expect(md).toContain('- Drop-off: 2026-04-03 — Naha City');
-    expect(md).toContain('- Price: ¥12,000');
+    expect(md).toMatch(/- Price: .*12[.,]000/);
+    expect(md).toContain('- Payment date: 2026-03-01');
     expect(md).toContain('- Pickup station: https://rental.example/pick');
     expect(md).toContain('- Booking ref: CAR-ABC123');
   });
@@ -142,6 +146,7 @@ describe('tripToMarkdown', () => {
       addresses: true,
       notes: true,
       locations: true,
+      costs: true,
     });
     const md = tripToMarkdown(anon, tz, true);
     expect(md).toContain('Anonymized for sharing');

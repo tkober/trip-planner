@@ -164,6 +164,8 @@
       <textarea matInput rows="2" [ngModel]="notes()" (ngModelChange)="notes.set($event)" name="notes"></textarea>
     </mat-form-field>
 
+    <app-cost-fieldset [options]="currencies" [(value)]="cost" />
+
     <app-color-field
       label="Colour"
       [defaultColor]="defaultColor()"

@@ -36,6 +36,37 @@
   font-size: 1.2rem;
 }
 
+.rates {
+  margin-top: 1rem;
+
+  .rates-title {
+    font-size: 0.8rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0 0 0.25rem;
+  }
+
+  .rate-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+
+    .rate-label {
+      min-width: 4.5rem;
+    }
+
+    .rate-input {
+      width: 9rem;
+    }
+  }
+
+  .rate-warning {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
 .flights {
   display: flex;
   flex-direction: column;

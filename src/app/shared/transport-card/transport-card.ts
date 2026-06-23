@@ -11,6 +11,7 @@ import {
   transportTo,
   transportToDetail,
 } from '../transport-format';
+import { formatMoney } from '../cost/cost';
 
 const MODE_ICON: Record<TransportMode, string> = {
   flight: 'flight',
@@ -98,13 +99,15 @@ export class TransportCard {
     const t = this.transport();
     const lines = (...xs: (string | undefined)[]) =>
       xs.map((x) => x?.trim()).filter((x): x is string => !!x);
+    const price =
+      t.totalPrice != null ? formatMoney(t.totalPrice, t.currency) : undefined;
     switch (t.mode) {
       case 'flight':
-        return lines(t.flightNumber, t.airline);
+        return lines(t.flightNumber, t.airline, price);
       case 'train':
-        return lines(t.line, t.trainName, t.operator, t.trainKind);
+        return lines(t.line, t.trainName, t.operator, t.trainKind, price);
       case 'bus':
-        return lines(t.line, t.operator, t.busKind);
+        return lines(t.line, t.operator, t.busKind, price);
       default:
         return [];
     }

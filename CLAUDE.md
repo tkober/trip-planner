@@ -72,7 +72,9 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   **native browser print** (`window.print()` → "Save as PDF"), and a **Markdown** (`.md`)
   text rendering of the whole plan (no graphics) intended for handing the itinerary to an
   **LLM / agent**. An opt-in **anonymization mode** (chosen per-export in the export
-  dialog) blacks out sensitive fields for public sharing. See "Plan export" below.
+  dialog) blacks out sensitive fields for public sharing — categories: flight
+  numbers, addresses/map links, notes/remarks, precise locations, and **prices &
+  costs** (cost fields are dropped, exchange rates cleared). See "Plan export" below.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -99,7 +101,9 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
   five child routes (deep-linkable), defaulting to `timeline`:
   - `timeline` → [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid.
   - `overview` → [OverviewView](src/app/trips/views/overview-view.ts) — trip facts
-    (dates, length, zones, description) + the departure/return flight cards.
+    (dates, length, zones, description), a **Trip cost** section (total / paid /
+    outstanding in EUR + per-category breakdown + the per-currency exchange-rate
+    editor) and the departure/return flight cards.
   - `accommodations` → [AccommodationsView](src/app/trips/views/accommodations-view.ts)
     — all stays, ordered by check-in, as detail cards.
   - `car-reservations` → [CarReservationsView](src/app/trips/views/car-reservations-view.ts)
@@ -221,19 +225,23 @@ string + IANA zone (no offset), so Luxon can render the same instant in any zone
 
 ```
 TripDto { id, schemaVersion, title, startDate, endDate, homeTimeZone,
-          destinationTimeZone, description?, accommodations[], carReservations[],
-          activities[], transport[], createdAt, updatedAt }
+          destinationTimeZone, description?, exchangeRates?, accommodations[],
+          carReservations[], activities[], transport[], createdAt, updatedAt }
 ZonedTime { dateTime: "YYYY-MM-DDTHH:mm", zone: "Asia/Tokyo" }
-AccommodationDto { id, name, fullName?, address?, googleMapsUrl?, bookingUrl?,
-                   price?, remarks?, color?, checkInDate, checkOutDate }
-CarReservationDto { id, name, company?, carType?, price?, pickupLocation?,
+CostInfo { totalPrice?, currency?, alreadyPaid?, paymentDate?,
+           freeCancellationUntil?, cancellationCost? }   // mixed into every entity
+AccommodationDto extends CostInfo { id, name, fullName?, address?, googleMapsUrl?,
+                   bookingUrl?, remarks?, color?, checkInDate, checkOutDate }
+CarReservationDto extends CostInfo { id, name, company?, carType?, pickupLocation?,
                     dropoffLocation?, pickupDate, dropoffDate, pickupTime?,
                     dropoffTime?, pickupGoogleMapsUrl?, dropoffGoogleMapsUrl?,
                     pickupStationUrl?, dropoffStationUrl?, bookingUrl?,
                     bookingReference?, remarks?, color? }
-ActivityDto { id, title, start, end?, location?, googleMapsUrl?, bookingUrl?, notes?, color? }
-TransportDto { id, mode: flight|train|bus|car, start, end?, fromLocation?,
-               toLocation?, bookingUrl?, bookingReference?, notes?, color?,
+ActivityDto extends CostInfo { id, title, start, end?, location?, googleMapsUrl?,
+                    bookingUrl?, notes?, color? }
+TransportDto extends CostInfo { id, mode: flight|train|bus|car, start, end?,
+               fromLocation?, toLocation?, bookingUrl?, bookingReference?, notes?,
+               color?,
                // flight-only: airline?, flightNumber?, fromAirport?, toAirport?,
                //              fromTerminal?, toTerminal?
                // train-only:  fromStation?, toStation?, fromPlatform?,
@@ -241,6 +249,18 @@ TransportDto { id, mode: flight|train|bus|car, start, end?, fromLocation?,
                // bus-only:    fromStop?, toStop?, busKind?
                // train + bus: line?, operator? }
 ```
+
+**Cost / currency:** every entity carries the shared `CostInfo` (amounts in major
+units + a 3-letter `currency`, defaulting to **EUR**). The trip's
+`exchangeRates` maps a non-EUR code → **EUR per one foreign unit** (EUR implicitly
+1). The Overview "Trip cost" section aggregates everything to EUR (total / already
+paid / outstanding + a per-category breakdown), letting you edit a rate per
+currency in use ("1 EUR = X JPY"); an amount whose rate is unset is excluded from
+the total with a warning. Pure helpers live in
+[src/app/shared/cost/cost.ts](src/app/shared/cost/cost.ts) (`formatMoney` via
+`Intl`, `toEur`, `tripCostSummary`); the reusable cost form is
+[CostFieldset](src/app/shared/cost/cost-fieldset.ts), embedded in every entity
+dialog. The selectable currency codes are env-configurable (see "Configuration").
 
 `fromLocation`/`toLocation` hold the **city**; the per-mode fields add the
 airport/station/stop (and terminal/platform). Mode-specific fields are only
@@ -262,6 +282,12 @@ Removing the redundant transport `title` (the route is now derived) was a
 Adding the optional car-rental `price`, pickup/return `*StationUrl` links and
 `bookingReference`, the transport `bookingReference`, and the accommodation
 `price`, was an additive **schema v6** step (no data transform).
+
+Replacing the free-text `price` on accommodations / car reservations with the
+structured `CostInfo` (mixed into every entity) and the trip `exchangeRates` was a
+**schema v7** step: its migration folds any old `price` value into the entity's
+`remarks` (e.g. appends `price: ¥18,000`) and drops the field; the new cost fields
+are additive.
 
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations and car reservations each cycle their own distinct tints by
@@ -310,6 +336,11 @@ New-trip timezone defaults are build-time configurable.
   Limited express, Shinkansen`; buses: `City bus, Long-distance coach, Overnight,
   Hop on/off`). Surface as `string[]` on `environment` (a runtime override may be
   a comma string or array).
+- `CURRENCIES` — comma-separated currency codes offered in the cost picker
+  ([CostFieldset](src/app/shared/cost/cost-fieldset.ts), via the same `SuggestField`
+  autocomplete, so any 3-letter code can still be typed). EUR is the base currency;
+  non-EUR amounts need an exchange rate in the trip Overview. When set, **replaces**
+  the default (`EUR, USD, JPY`). Surfaces as `string[]` on `environment`.
 
 These can be set on the command line (`STORAGE_BACKEND=http npm start`) or placed in
 a `.env` file at the repo root (see [.env.example](.env.example)); `generate-env.mjs`

@@ -65,6 +65,26 @@ describe('migrateTrip', () => {
     expect(result.transport[0].fromLocation).toBe('Odawara');
   });
 
+  it('folds the obsolete free-text price into remarks on a pre-v7 document', () => {
+    const result = migrateTrip(
+      baseTrip({
+        schemaVersion: 6,
+        accommodations: [
+          { id: 'a1', name: 'Hotel', price: '¥18,000', remarks: 'Great view' },
+        ],
+        carReservations: [{ id: 'c1', name: 'Aqua', price: '¥12,000' }],
+      }),
+    );
+    expect(result.schemaVersion).toBe(SCHEMA_VERSION);
+    // price field is dropped on both entities
+    expect('price' in result.accommodations[0]).toBe(false);
+    expect('price' in result.carReservations[0]).toBe(false);
+    // existing remarks are preserved and the price appended
+    expect(result.accommodations[0].remarks).toBe('Great view\nprice: ¥18,000');
+    // no prior remarks: just the folded price
+    expect(result.carReservations[0].remarks).toBe('price: ¥12,000');
+  });
+
   it('rejects a document from a newer app version', () => {
     expect(() => migrateTrip(baseTrip({ schemaVersion: SCHEMA_VERSION + 1 }))).toThrow(
       /newer version/,
