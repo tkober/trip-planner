@@ -5,7 +5,10 @@
 set -e
 
 : "${STORAGE_BACKEND:=indexeddb}"
-: "${API_BASE_URL:=http://localhost:8000}"
+# Same-origin by default: nginx reverse-proxies /api/ to the backend (see
+# nginx.conf), which keeps the SPA working under whatever address the browser
+# used and avoids CORS. Set an absolute URL only to bypass that proxy.
+: "${API_BASE_URL:=/api}"
 : "${DEFAULT_TRIP_TZ:=Asia/Tokyo}"
 : "${DEFAULT_DEPARTURE_TZ:=}"
 : "${TRAIN_KINDS:=Local train,Rapid,Limited express,Shinkansen}"

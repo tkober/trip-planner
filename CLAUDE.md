@@ -328,7 +328,8 @@ New-trip timezone defaults are build-time configurable.
 - `STORAGE_BACKEND` — `indexeddb` (default, browser-local) or `http` (FastAPI
   backend). See "Storage backend" below.
 - `API_BASE_URL` — backend base URL when `STORAGE_BACKEND=http`
-  (default `http://localhost:8000`).
+  (build-time default `http://localhost:8000`; the Docker image instead defaults to
+  the same-origin `/api`, see "Deploy (Docker / GHCR)"). May be a relative path.
 - `TRAIN_KINDS` / `BUS_KINDS` — comma-separated options for a train's / bus's
   "kind" field, consumed by [TransportDialog](src/app/trips/dialogs/transport-dialog.ts)
   (a free-text autocomplete via [SuggestField](src/app/shared/suggest-field/suggest-field.ts)).
@@ -402,9 +403,26 @@ as container images published to GHCR:
   the build-time baked values when absent (so `npm start` and GitHub Pages are
   unaffected — their `public/config.js` is an empty default). One image is thus
   reconfigurable per deployment without a rebuild. nginx config (SPA fallback,
-  no-cache `config.js`) is [nginx.conf](nginx.conf), shipped as a
+  no-cache `config.js`, API reverse proxy) is [nginx.conf](nginx.conf), shipped as a
   `*.template` so nginx's envsubst renders `listen ${PORT}` (default `80`,
-  env-overridable). Image `ghcr.io/tkober/trip-planner-web`.
+  env-overridable) and the proxy's upstream. Image `ghcr.io/tkober/trip-planner-web`.
+
+**Same-origin API (why `API_BASE_URL` defaults to `/api`):** nginx reverse-proxies
+`/api/` to the backend over the internal compose network (upstream from
+`API_UPSTREAM`, default `trip-planner-server:8000`). The SPA therefore calls the API
+on **whatever origin the browser loaded the page from** — LAN IP, mDNS `*.local` name,
+WireGuard/DynDNS address, reverse-proxy domain — so one deployment works from all of
+them, **no CORS is involved**, and the backend port needn't be published at all. An
+absolute `API_BASE_URL` still works (bypasses the proxy) but re-introduces CORS and
+pins the deployment to one address: reaching the app by any other name then fails with
+`ERR_NAME_NOT_RESOLVED` or a CORS block, both of which surface in Angular as the
+same opaque `status: 0, "Unknown Error"`. Two envsubst gotchas the template depends on:
+`PORT`/`API_UPSTREAM` need `ENV` defaults in the [Dockerfile](Dockerfile) (envsubst
+only replaces variables that are *set* — an unset one is left verbatim and nginx
+refuses to start), and it rewrites **comments** too, so the template's comments avoid
+spelling those names out. The upstream goes through a `set` variable + Docker's
+embedded `resolver`, which defers DNS to request time so recreating the backend
+container (new IP) doesn't strand nginx on a stale address.
 
 Two workflows ([publish-server.yml](.github/workflows/publish-server.yml),
 [publish-frontend.yml](.github/workflows/publish-frontend.yml)) build/push on push to
