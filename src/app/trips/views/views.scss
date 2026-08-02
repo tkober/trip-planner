@@ -1,6 +1,8 @@
 // Shared styling for the trip-page section views (overview / accommodations /
 // transport). Imported by each view's own stylesheet.
 
+@use '../../shared/breakpoints' as bp;
+
 .view {
   display: block;
 }
@@ -116,5 +118,64 @@
     display: flex;
     align-items: flex-start;
     gap: 0.25rem;
+  }
+}
+
+// ---- Mobile ---------------------------------------------------------------
+@include bp.mobile {
+  .view-header {
+    margin-bottom: 0.75rem;
+
+    h2 {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+@include bp.mobile-wide {
+  .detail-card {
+    gap: 0.6rem;
+    padding: 0.75rem 0.6rem;
+    border-radius: 12px;
+
+    .card-icon {
+      width: 32px;
+      height: 32px;
+
+      mat-icon {
+        font-size: 1.15rem;
+        width: 1.15rem;
+        height: 1.15rem;
+      }
+    }
+
+    .card-body {
+      .card-title {
+        font-size: 1rem;
+      }
+
+      .card-sub,
+      .links a,
+      .notes {
+        font-size: 0.85rem;
+      }
+
+      dl {
+        // Long values (addresses) need the full width; a `max-content` label
+        // column would leave them wrapping in a ~120px gutter.
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+        font-size: 0.85rem;
+
+        dt {
+          margin-top: 0.4rem;
+          font-size: 0.75rem;
+        }
+
+        dt:first-of-type {
+          margin-top: 0;
+        }
+      }
+    }
   }
 }

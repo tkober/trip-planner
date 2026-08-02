@@ -1,0 +1,42 @@
+// Shared responsive breakpoints.
+//
+// Everything keyed off these is *mobile-only* — the layout above the breakpoint
+// is the untouched desktop one. Two thresholds, because the same card is not
+// equally cramped everywhere:
+
+// The trip shell reflows to a single column (side panel on top) and, more
+// importantly, the timeline's content column — what is left of the viewport
+// after the day marker plus the hotel/car lanes — gets too narrow for the
+// horizontal `FROM → TO` route layout.
+$mobile: 720px;
+
+// Full-width surfaces (the shared transport card, the section detail cards, the
+// trip dashboard) keep their desktop layout much longer: they own the whole
+// content width, so they only run out of room at phone widths.
+$mobile-wide: 560px;
+
+// The mixins below are for the surfaces the **plan export** reuses (timeline,
+// section views, transport card). That document is rendered off-screen at a
+// fixed 1024px width, but a media query still sees the *viewport* — so on a
+// phone the mobile rules would leak into the exported PNG. Guarding on the
+// class ExportHost sets for the duration of an export keeps the output the
+// deterministic desktop layout no matter which device triggered it. (`screen`
+// keeps them out of the printed PDF for the same reason.)
+//
+// Surfaces the export never renders (the trip shell, the dashboard) can just
+// use `@media (max-width: bp.$mobile)` with the variables above.
+@mixin mobile {
+  @media screen and (max-width: $mobile) {
+    :host-context(html:not(.exporting-plan)) {
+      @content;
+    }
+  }
+}
+
+@mixin mobile-wide {
+  @media screen and (max-width: $mobile-wide) {
+    :host-context(html:not(.exporting-plan)) {
+      @content;
+    }
+  }
+}

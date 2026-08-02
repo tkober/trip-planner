@@ -125,8 +125,11 @@ export class TimelineView {
    */
   readonly gridTemplateColumns = computed(() => {
     const exp = this.exportMode();
-    const marker = exp ? '88px' : 'clamp(72px, 16vw, 96px)';
-    const lane = exp ? '48px' : 'clamp(40px, 9vw, 52px)';
+    // On screen the widths are overridable via CSS vars so the stylesheet's
+    // mobile block can shrink the marker/lanes (see timeline.scss); export mode
+    // pins them to fixed px for deterministic output.
+    const marker = exp ? '88px' : 'var(--tl-marker, clamp(72px, 16vw, 96px))';
+    const lane = exp ? '48px' : 'var(--tl-lane, clamp(40px, 9vw, 52px))';
     const hotel = this.hasAccommodations() ? lane : '0px';
     const car = this.hasCarReservations() ? lane : '0px';
     return `${marker} ${hotel} ${car} minmax(0, 1fr)`;

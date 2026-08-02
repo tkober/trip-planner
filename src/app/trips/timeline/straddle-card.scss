@@ -1,3 +1,5 @@
+@use '../../shared/breakpoints' as bp;
+
 :host {
   // grid-column / grid-row set via host bindings.
   align-self: start;
@@ -152,4 +154,95 @@
 .straddle-menu {
   flex-shrink: 0;
   align-self: flex-start;
+}
+
+// ---- Mobile ---------------------------------------------------------------
+// Same idea as the entry card: shrink the fixed-width furniture (bullet, kebab)
+// so the place names — the whole point of the card — keep real estate, and let
+// the mode detail wrap onto its own line rather than fighting the title for it.
+@include bp.mobile {
+  .half {
+    gap: 0.4rem;
+    padding: 0.3rem 0.25rem 0.3rem 0.5rem;
+    min-height: 2.1rem;
+    // The detail moves under the info instead of squeezing it; the halves stay
+    // 1fr/1fr so the day divider is still dead centre.
+    flex-wrap: wrap;
+  }
+
+  .bullet {
+    width: 1.65rem;
+    height: 1.65rem;
+
+    mat-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  .info {
+    // Same reason as the entry card: a content-sized basis would wrap the kebab
+    // onto its own line rather than narrowing the text.
+    flex: 1 1 0;
+
+    .title {
+      font-size: 0.88rem;
+    }
+
+    .time {
+      font-size: 0.72rem;
+
+      // Inline rather than flex, so "Thu, 2 Apr · 13:30" and its zone reflow as
+      // one run of text instead of competing as fixed flex items.
+      &.depart,
+      &.arrival {
+        display: block;
+      }
+
+      .zone {
+        font-size: 0.62rem;
+      }
+
+      .leg-icon {
+        font-size: 0.85rem;
+        width: 0.85rem;
+        height: 0.85rem;
+        vertical-align: -0.2rem;
+      }
+    }
+
+    .subtitle {
+      font-size: 0.72rem;
+    }
+  }
+
+  .bottom .info {
+    padding-left: 2.05rem;
+  }
+
+  .detail {
+    flex: 1 0 100%;
+    order: 3;
+    text-align: left;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.1rem 0.6rem;
+    padding: 0.1rem 0 0 2.05rem;
+
+    .line {
+      font-size: 0.68rem;
+    }
+  }
+
+  .duration {
+    font-size: 0.58rem;
+  }
+
+  .straddle-menu {
+    --mdc-icon-button-state-layer-size: 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0.25rem;
+  }
 }

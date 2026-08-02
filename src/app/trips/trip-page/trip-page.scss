@@ -1,3 +1,5 @@
+@use '../../shared/breakpoints' as bp;
+
 :host {
   display: block;
 }
@@ -101,21 +103,61 @@
   }
 }
 
-@media (max-width: 720px) {
+// ---- Mobile ---------------------------------------------------------------
+// The side panel becomes a header above the content, so it has to earn its
+// vertical space: tighter padding and smaller type keep it from pushing the
+// actual section (usually the timeline) off the first screen.
+@media (max-width: bp.$mobile) {
   .trip-layout {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem 3rem;
   }
 
   .side-panel {
     position: static;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem 0.5rem;
+    border-radius: 14px;
+
+    .panel-top {
+      margin-bottom: -0.25rem;
+    }
+
+    .trip-meta {
+      padding: 0 0.25rem;
+
+      h1 {
+        font-size: 1.05rem;
+      }
+
+      p {
+        font-size: 0.78rem;
+      }
+
+      .dates {
+        margin-top: 0.25rem;
+      }
+    }
   }
 
   .section-nav {
     flex-direction: row;
-    flex-wrap: wrap;
+    // Five icon-only tabs sharing the row evenly.
+    gap: 0.15rem;
 
-    .nav-item span {
-      display: none;
+    .nav-item {
+      flex: 1;
+      justify-content: center;
+      padding: 0.5rem 0;
+
+      span {
+        display: none;
+      }
     }
+  }
+
+  .not-found {
+    padding: 3rem 1rem;
   }
 }

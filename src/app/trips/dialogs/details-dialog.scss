@@ -1,3 +1,5 @@
+@use '../../shared/breakpoints' as bp;
+
 .details-title {
   display: flex;
   align-items: center;
@@ -53,4 +55,28 @@
   gap: 0.5rem;
   margin-top: 1rem;
   flex-wrap: wrap;
+}
+
+// ---- Mobile ---------------------------------------------------------------
+// Labels move above their values: a dual-timezone line ("Fri, 3 Apr 2026 ·
+// 15:00 GMT+9 (08:00 GMT+2)") has nothing left to wrap into once the label
+// column has taken its share of a phone-width dialog.
+@media (max-width: bp.$mobile-wide) {
+  .details-title {
+    font-size: 1.15rem;
+  }
+
+  .details {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+
+    dt {
+      margin-top: 0.6rem;
+      font-size: 0.78rem;
+    }
+
+    dt:first-of-type {
+      margin-top: 0;
+    }
+  }
 }

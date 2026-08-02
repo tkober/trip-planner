@@ -1,3 +1,5 @@
+@use '../../shared/breakpoints' as bp;
+
 :host {
   display: block;
 }
@@ -123,5 +125,78 @@
     color: #1c2733;
     white-space: nowrap;
     overflow: hidden;
+  }
+}
+
+// ---- Mobile ---------------------------------------------------------------
+// The grid keeps all four columns (the lanes are the timeline's point), but the
+// marker and lanes shrink so the content column keeps a usable width.
+@include bp.mobile {
+  .view-header {
+    margin-bottom: 0.5rem;
+
+    h2 {
+      font-size: 1.25rem;
+    }
+  }
+
+  .days-grid {
+    // Consumed by the inline grid-template-columns binding (see the component's
+    // gridTemplateColumns).
+    --tl-marker: 3.4rem;
+    --tl-lane: 1.7rem;
+    column-gap: 0.45rem;
+  }
+
+  .day-marker.virtual {
+    padding: 0.6rem 0.35rem 0.6rem 0;
+
+    .day-date {
+      font-size: 0.65rem;
+    }
+
+    .day-date-num {
+      font-size: 0.8rem;
+    }
+
+    .day-zone {
+      font-size: 0.55rem;
+
+      .zone-icon {
+        font-size: 0.7rem;
+        width: 0.7rem;
+        height: 0.7rem;
+      }
+    }
+
+    .virtual-label {
+      font-size: 0.68rem;
+      line-height: 1.15;
+    }
+  }
+
+  // Matches the real day rows' straddle clearance (see day-section.scss).
+  .day-content.virtual {
+    &.pad-top {
+      padding-top: 6.5rem;
+    }
+    &.pad-bottom {
+      padding-bottom: 6.5rem;
+    }
+  }
+
+  .stay-label {
+    padding: 0.35rem 0;
+
+    .stay-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .stay-name {
+      margin-top: 0.15rem;
+      font-size: 0.7rem;
+    }
   }
 }
