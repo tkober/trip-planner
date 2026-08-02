@@ -1,3 +1,5 @@
+@use '../../shared/breakpoints' as bp;
+
 :host {
   display: block;
 }
@@ -181,4 +183,151 @@
 
 .entry-menu {
   flex-shrink: 0;
+}
+
+// ---- Mobile ---------------------------------------------------------------
+// The content column is only ~200px wide here, which the horizontal three-block
+// route cannot survive (the fixed-width arrow alone overflowed it, squeezing
+// both places down to a single ellipsed letter). Everything therefore stacks:
+// the route becomes [time][place] rows joined by a downward connector, and the
+// mode detail moves from a right-hand column to a full-width footer row.
+@include bp.mobile {
+  .entry {
+    gap: 0.45rem;
+    padding: 0.5rem 0.25rem 0.5rem 0.5rem;
+    // Lets the detail footer below claim its own row.
+    flex-wrap: wrap;
+  }
+
+  .bullet {
+    width: 1.65rem;
+    height: 1.65rem;
+
+    mat-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  .body {
+    // The route/detail split is gone, so the body owns the row — but keep the
+    // 0 basis: with `flex-wrap` on, an `auto` basis would push the kebab onto a
+    // line of its own instead of just narrowing the body.
+    flex: 1 1 0;
+
+    .time {
+      font-size: 0.72rem;
+    }
+
+    .title {
+      font-size: 0.88rem;
+      line-height: 1.25;
+    }
+
+    .subtitle {
+      font-size: 0.75rem;
+    }
+  }
+
+  .body.route {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.05rem;
+
+    .leg {
+      // [departure time][place stacked over its per-leg detail].
+      display: grid;
+      grid-template-columns: 2.85rem minmax(0, 1fr);
+      column-gap: 0.4rem;
+      align-items: baseline;
+
+      // The desktop mirror-image (arrival right-aligned) makes no sense once
+      // both legs are rows in the same left-aligned stack.
+      &.to {
+        text-align: left;
+      }
+
+      .time {
+        grid-column: 1;
+        grid-row: 1;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .place {
+        grid-column: 2;
+        grid-row: 1;
+        font-size: 0.88rem;
+        // The column is the card's full width now, so a long station name is
+        // better wrapped over two lines than ellipsed away.
+        white-space: normal;
+      }
+
+      .detail {
+        grid-column: 2;
+        grid-row: 2;
+        font-size: 0.72rem;
+      }
+    }
+
+    .connector {
+      // The arrow turns to point down the stack, with the duration beside it.
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.3rem;
+      padding: 0.1rem 0 0.1rem 0.7rem;
+
+      .duration {
+        order: 2;
+        font-size: 0.7rem;
+      }
+
+      .track {
+        order: 1;
+
+        // Only the arrowhead survives; a horizontal shaft would point the wrong
+        // way now that the legs are stacked.
+        .line {
+          display: none;
+        }
+
+        mat-icon {
+          margin-left: 0;
+          transform: rotate(90deg);
+          font-size: 1rem;
+          width: 1rem;
+          height: 1rem;
+        }
+      }
+    }
+  }
+
+  // Direct child only — the per-leg `.detail` above is a different element.
+  .entry > .detail {
+    flex: 1 0 100%;
+    order: 3;
+    align-self: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.1rem 0.6rem;
+    margin-top: 0.15rem;
+    padding: 0.3rem 0 0 2.1rem;
+    border-left: none;
+    border-top: 1px solid var(--mat-sys-outline-variant);
+
+    .line {
+      font-size: 0.72rem;
+    }
+  }
+
+  .entry-menu {
+    // Keeps a sane touch target while giving the content ~8px back.
+    --mdc-icon-button-state-layer-size: 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0.25rem;
+  }
 }

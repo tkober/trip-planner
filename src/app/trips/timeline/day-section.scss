@@ -1,3 +1,5 @@
+@use '../../shared/breakpoints' as bp;
+
 :host {
   display: contents;
 }
@@ -175,4 +177,72 @@
 
 .cdk-drag-animating {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+// ---- Mobile ---------------------------------------------------------------
+@include bp.mobile {
+  .day-marker {
+    padding: 0.6rem 0.35rem 0.6rem 0;
+
+    .day-index {
+      font-size: 0.85rem;
+    }
+
+    .day-date {
+      font-size: 0.65rem;
+    }
+
+    .day-date-num {
+      font-size: 0.8rem;
+    }
+
+    .day-zone {
+      font-size: 0.55rem;
+
+      .zone-icon {
+        font-size: 0.7rem;
+        width: 0.7rem;
+        height: 0.7rem;
+      }
+    }
+  }
+
+  .day-content {
+    gap: 0.4rem;
+    padding: 0.6rem 0;
+
+    // A straddle card overhangs half its height into this day, and the mobile
+    // card is *taller* than the desktop one (its detail wraps onto its own
+    // line), so the clearance has to grow rather than shrink with the layout.
+    &.pad-top {
+      padding-top: 6.5rem;
+    }
+    &.pad-bottom {
+      padding-bottom: 6.5rem;
+    }
+  }
+
+  .no-entries {
+    font-size: 0.8rem;
+  }
+
+  // The pill can no longer keep name/company/station on one line — let it wrap
+  // instead of ellipsing everything down to a single letter.
+  .car-pill {
+    flex-wrap: wrap;
+    row-gap: 0;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.72rem;
+
+    .pill-label {
+      font-size: 0.66rem;
+    }
+
+    .pill-company,
+    .pill-station,
+    .pill-name {
+      white-space: normal;
+      overflow: visible;
+    }
+  }
 }

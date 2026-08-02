@@ -45,6 +45,10 @@ export class ExportHost {
   }
 
   private async process(target: ExportTarget, docEl: HTMLElement): Promise<void> {
+    // Opts the off-screen document out of the app's mobile media queries (see
+    // shared/_breakpoints.scss): it is laid out at a fixed 1024px, so a phone
+    // viewport must not restyle it.
+    document.documentElement.classList.add('exporting-plan');
     try {
       await this.waitForLayout();
       if (target.mode === 'png') await this.capturePng(target, docEl);
@@ -52,6 +56,7 @@ export class ExportHost {
     } catch (err) {
       console.error('Export failed', err);
     } finally {
+      document.documentElement.classList.remove('exporting-plan');
       this.exportService.done();
     }
   }

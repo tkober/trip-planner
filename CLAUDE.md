@@ -75,6 +75,9 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   dialog) blacks out sensitive fields for public sharing — categories: flight
   numbers, addresses/map links, notes/remarks, precise locations, and **prices &
   costs** (cost fields are dropped, exchange rates cleared). See "Plan export" below.
+- **Mobile layout**: every surface is usable on a phone (no horizontal
+  overflow, no text ellipsed down to a single letter). Desktop is unchanged —
+  all mobile rules live behind max-width breakpoints. See "Responsive layout".
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -210,6 +213,32 @@ Plan export ([src/app/trips/export/](src/app/trips/export/) +
   activity/transport leg in chronological order (times printed in their own IANA zone so
   day/zone crossings are unambiguous). `exportPlan()` calls it directly and downloads the
   `.md` via `download.ts`; no `ExportService`/`ExportHost` round-trip.
+
+Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoints.scss)):
+- Two **max-width-only** breakpoints, so the desktop presentation is untouched:
+  `$mobile` (720px) — where the trip shell collapses to a single column and the
+  timeline's content column (viewport minus day marker and the hotel/car lanes)
+  gets too narrow for the horizontal `FROM → TO` route; `$mobile-wide` (560px) —
+  where the full-width surfaces (shared `TransportCard`, section detail cards,
+  details dialog, dashboard) run out of room. They live in one partial so the
+  two numbers aren't scattered across stylesheets.
+- On mobile the **route layouts stack**: each leg becomes a `[time][place]` row
+  (place over its per-leg detail), the arrow rotates to point down the stack
+  with the duration beside it, and the per-mode **detail column moves from a
+  right-hand column to a full-width footer row** (`.entry > .detail` etc. — the
+  `>` matters, a bare `.detail` would also hit the per-leg one). The day marker
+  and lanes shrink via `--tl-marker` / `--tl-lane`, read by the inline
+  `TimelineView.gridTemplateColumns` binding (export mode still pins fixed px).
+  Straddle cards need *more* clearance than on desktop
+  (`.day-content.pad-top/.pad-bottom` 6.5rem vs 4.25rem) because the mobile card
+  is taller — the clearance must always exceed half the tallest straddle.
+- The `bp.mobile` / `bp.mobile-wide` **mixins** also exclude the plan-export
+  document (`html.exporting-plan`, set by [ExportHost](src/app/trips/export/export-host.ts)
+  for the duration of an export): it is rendered off-screen at a fixed 1024px,
+  but a media query still sees the *viewport*, so without the guard exporting a
+  PNG from a phone would bake the mobile layout into it. Surfaces the export
+  never renders (trip shell, dashboard) skip the mixins and use
+  `@media (max-width: bp.$mobile)` with the same variables.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,
@@ -440,4 +469,7 @@ No compose file — images are deployed by the cluster.
   a matching `MIGRATIONS[<new version>]` step in
   [migrations.ts](src/app/models/migrations.ts) (applied everywhere a trip loads).
 - Every delete or trip-duration change must go through the confirm dialog.
+- New styling is **desktop-first**: put phone adjustments in a `bp.mobile` /
+  `bp.mobile-wide` block at the end of the stylesheet rather than changing the
+  shared rules, so the desktop layout stays byte-identical.
 - **Keep this file updated** as features land or the architecture shifts.
