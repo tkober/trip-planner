@@ -81,10 +81,11 @@
   }
 }
 
-// Status of a train's booking window ("Bookable now" / "Opens in 12 days"),
-// shown next to the dual-zone time the window opens at.
+// Status of a train's booking window ("Bookable now" / "Booking opens in 12
+// days"), shown right under the dialog title.
 .reservation-status {
-  margin-left: 0.5rem;
+  width: fit-content;
+  margin: 0 0 0.75rem;
   padding: 0.05rem 0.45rem;
   border-radius: 999px;
   background: var(--mat-sys-secondary-container);

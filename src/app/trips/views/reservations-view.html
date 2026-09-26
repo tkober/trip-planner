@@ -7,7 +7,7 @@
         [disabled]="!rows().length"
         (click)="downloadAll()"
       >
-        <mat-icon>event</mat-icon> Download all (.ics)
+        <mat-icon>event</mat-icon> All reservation reminders (.ics)
       </button>
     </header>
 
@@ -40,9 +40,6 @@
                     >)
                   </span>
                 }
-                <span class="status" [class.open]="row.status === 'open'">
-                  {{ row.statusLabel }}
-                </span>
               </dd>
               <dt>Departure</dt>
               <dd>{{ row.departure }}</dd>
@@ -70,11 +67,15 @@
           <div class="card-actions">
             <button
               matIconButton
-              aria-label="Download calendar file"
+              aria-label="Download reservation reminder (.ics)"
+              title="Download reservation reminder (.ics)"
               (click)="download(row)"
             >
               <mat-icon>event</mat-icon>
             </button>
+            <span class="status" [class.open]="row.status === 'open'">
+              {{ row.statusLabel }}
+            </span>
           </div>
         </article>
       }

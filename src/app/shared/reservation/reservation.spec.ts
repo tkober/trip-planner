@@ -5,6 +5,7 @@ import {
   isReservable,
   reservationOpensAt,
   reservationStatus,
+  reservationStatusLabel,
   reservationWindows,
   timetableSearchUrl,
 } from './reservation';
@@ -177,6 +178,22 @@ describe('reservationStatus / daysUntilOpening', () => {
   it('is departed once the train has left', () => {
     const now = DateTime.fromISO('2026-11-21T06:16', { zone: 'Asia/Tokyo' });
     expect(reservationStatus(window, now)).toBe('departed');
+  });
+
+  it('labels each status', () => {
+    const at = (iso: string) => DateTime.fromISO(iso, { zone: 'Asia/Tokyo' });
+    expect(reservationStatusLabel(window, at('2026-10-09T10:00'))).toBe(
+      'Booking opens in 12 days',
+    );
+    expect(reservationStatusLabel(window, at('2026-10-20T23:59'))).toBe(
+      'Booking opens in 1 day',
+    );
+    expect(reservationStatusLabel(window, at('2026-10-21T10:00'))).toBe(
+      'Bookable now',
+    );
+    expect(reservationStatusLabel(window, at('2026-11-21T06:16'))).toBe(
+      'Departed',
+    );
   });
 });
 
