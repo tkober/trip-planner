@@ -17,6 +17,10 @@
  *   CURRENCIES            Comma-separated currency codes for the cost picker.
  *                         EUR is the base currency; when set, replaces the
  *                         built-in defaults ("EUR,USD,JPY").
+ *   RESERVABLE_TRAIN_KINDS Comma-separated train kinds that get a reservation
+ *                         window (booking opens one month before departure).
+ *                         When set, replaces the default
+ *                         ("Shinkansen,Limited express").
  *
  * These can be set on the command line (e.g. `STORAGE_BACKEND=http npm start`)
  * or placed in a `.env` file at the repo root (see `.env.example`). Variables
@@ -76,6 +80,8 @@ const DEFAULT_BUS_KINDS = [
   'Hop on/off',
 ];
 const DEFAULT_CURRENCIES = ['EUR', 'USD', 'JPY'];
+// Kinds of train that can be seat-reserved, and therefore get a booking window.
+const DEFAULT_RESERVABLE_TRAIN_KINDS = ['Shinkansen', 'Limited express'];
 
 /** Parse a comma-separated env var into a trimmed list, or fall back. */
 function parseList(value, fallback) {
@@ -94,6 +100,10 @@ const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
 const trainKinds = parseList(process.env.TRAIN_KINDS, DEFAULT_TRAIN_KINDS);
 const busKinds = parseList(process.env.BUS_KINDS, DEFAULT_BUS_KINDS);
 const currencies = parseList(process.env.CURRENCIES, DEFAULT_CURRENCIES);
+const reservableTrainKinds = parseList(
+  process.env.RESERVABLE_TRAIN_KINDS,
+  DEFAULT_RESERVABLE_TRAIN_KINDS,
+);
 
 const literal = (value) => JSON.stringify(value);
 
@@ -151,6 +161,9 @@ export const environment = {
   busKinds: splitList(runtime.busKinds) ?? ${literal(busKinds)},
   /** Selectable currency codes for the cost picker (free typing still allowed). */
   currencies: splitList(runtime.currencies) ?? ${literal(currencies)},
+  /** Train kinds that can be seat-reserved, i.e. that get a booking window. */
+  reservableTrainKinds:
+    splitList(runtime.reservableTrainKinds) ?? ${literal(reservableTrainKinds)},
 };
 `;
 
@@ -161,5 +174,6 @@ console.log(
   `[generate-env] departure="${departure || '(device zone)'}" trip="${trip}" ` +
     `backend="${storageBackend}"${storageBackend === 'http' ? ` api="${apiBaseUrl}"` : ''} ` +
     `trainKinds=${trainKinds.length} busKinds=${busKinds.length} ` +
-    `currencies=${currencies.length}`,
+    `currencies=${currencies.length} ` +
+    `reservable=${reservableTrainKinds.join('/')}`,
 );

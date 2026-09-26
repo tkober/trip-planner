@@ -1,5 +1,10 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -18,7 +23,8 @@ interface NavItem {
 /**
  * The trip page shell: a fixed left side panel (back button, trip name + compact
  * details, and the section nav) plus a `<router-outlet>` that hosts the active
- * section view (overview / timeline / accommodations / car rentals / transport).
+ * section view (overview / timeline / accommodations / car rentals / transport /
+ * reservations).
  */
 @Component({
   selector: 'app-trip-page',
@@ -54,6 +60,11 @@ export class TripPage {
     { path: 'accommodations', label: 'Accommodations', icon: 'hotel' },
     { path: 'car-reservations', label: 'Car Rentals', icon: 'directions_car' },
     { path: 'transport', label: 'Transport', icon: 'commute' },
+    {
+      path: 'reservations',
+      label: 'Reservations',
+      icon: 'confirmation_number',
+    },
   ];
 
   /** Trip length as "N days · M nights". */

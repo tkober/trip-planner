@@ -52,4 +52,7 @@ export const environment = {
   busKinds: splitList(runtime.busKinds) ?? ["City bus","Long-distance coach","Overnight","Hop on/off"],
   /** Selectable currency codes for the cost picker (free typing still allowed). */
   currencies: splitList(runtime.currencies) ?? ["EUR","USD","JPY"],
+  /** Train kinds that can be seat-reserved, i.e. that get a booking window. */
+  reservableTrainKinds:
+    splitList(runtime.reservableTrainKinds) ?? ["Shinkansen","Limited express"],
 };

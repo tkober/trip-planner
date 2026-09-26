@@ -66,6 +66,17 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
 - Drag-and-drop of activity/transport entries between days (CDK) with a confirm modal;
   the entry keeps its time-of-day, its date shifts to the target day.
 - JSON export/import (schema-version validated).
+- **Reservation windows** for trains whose seats can be booked: JR sells reserved
+  seats from **10:00 local time exactly one calendar month before departure** (and
+  from the **1st of the departure month** when that day does not exist in the
+  previous one, e.g. 31 March). Every such train shows a *Booking opens* row with a
+  dual-tz time and a status chip (*Bookable now* / *Opens in N days* / *Departed*)
+  in its details dialog, and the new **Reservations** section lists them all in
+  opening order. Both offer an **.ics download** (single leg, or the whole trip)
+  whose event sits at the moment booking opens and carries the leg's details plus
+  links to **smartEX** and a prefilled **Jorudan timetable search**. Which train
+  kinds count is configurable (`RESERVABLE_TRAIN_KINDS`, default `Shinkansen,
+  Limited express`). See "Reservations" below.
 - **Plan export** ("Export plan…" in the trip-page menu): a **PNG** of the timeline
   (via `html-to-image`), a **PDF** of the whole plan (timeline + Overview /
   Accommodations / Car Rentals / Transport sections, each on its own page) produced by
@@ -101,7 +112,7 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
 - `/trips/:id` → [TripPage](src/app/trips/trip-page/trip-page.ts) — the trip shell:
   a fixed left **side panel** (back button, trip name + compact details, section
   nav, trip-actions menu) plus a `<router-outlet>` for the active section. It has
-  five child routes (deep-linkable), defaulting to `timeline`:
+  six child routes (deep-linkable), defaulting to `timeline`:
   - `timeline` → [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid.
   - `overview` → [OverviewView](src/app/trips/views/overview-view.ts) — trip facts
     (dates, length, zones, description), a **Trip cost** section (total / paid /
@@ -113,6 +124,8 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
     — all rentals, ordered by pickup, as detail cards.
   - `transport` → [TransportView](src/app/trips/views/transport-view.ts) — all
     transport, ordered by departure, as shared `TransportCard`s (dual-tz times).
+  - `reservations` → [ReservationsView](src/app/trips/views/reservations-view.ts)
+    — every seat-reservable train, ordered by when its booking window opens.
   Child views receive the parent `:id` param via `withComponentInputBinding()` +
   `paramsInheritanceStrategy: 'always'` (set in [app.config.ts](src/app/app.config.ts));
   each derives its trip with `computed(() => trips().find(...))`.
@@ -213,6 +226,27 @@ Plan export ([src/app/trips/export/](src/app/trips/export/) +
   activity/transport leg in chronological order (times printed in their own IANA zone so
   day/zone crossings are unambiguous). `exportPlan()` calls it directly and downloads the
   `.md` via `download.ts`; no `ExportService`/`ExportHost` round-trip.
+
+Reservations ([src/app/shared/reservation/reservation.ts](src/app/shared/reservation/reservation.ts)
++ [src/app/shared/calendar/](src/app/shared/calendar/)):
+- `reservation.ts` is **pure logic**: `reservationOpensAt` (the one-month-before rule,
+  anchored in the *departure's own* zone — Luxon's day clamping is what detects the
+  "that day does not exist" case), `isReservable` (case-insensitive match against
+  `environment.reservableTrainKinds`), `reservationWindows` (a trip's windows, ordered),
+  `reservationStatus` / `daysUntilOpening`, and the outbound links: `SMART_EX_URL` plus
+  `timetableSearchUrl` (a prefilled Jorudan English route search — station names lose
+  their "Station" suffix, since Jorudan does not use it; a common name such as "Kyoto"
+  lands on Jorudan's disambiguation list with date and time preserved).
+- [ics.ts](src/app/shared/calendar/ics.ts) is a minimal RFC 5545 writer (CRLF,
+  75-octet folding that counts *bytes*, TEXT escaping, optional `VALARM`); times are
+  written as **UTC stamps**, so no `VTIMEZONE` is needed and every calendar renders
+  10:00 JST in the reader's own zone.
+  [reservation-ics.ts](src/app/shared/calendar/reservation-ics.ts) maps a window to
+  that event (summary, all leg details in both zones, booking + timetable links,
+  a 15-minute alarm, a stable `UID` so re-imports update in place).
+- Both the details dialog and the Reservations view call these and download via
+  [download.ts](src/app/shared/download.ts) — no service, no store round-trip.
+  The Reservations view is **not** part of the plan export document.
 
 Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoints.scss)):
 - Two **max-width-only** breakpoints, so the desktop presentation is untouched:
@@ -366,6 +400,11 @@ New-trip timezone defaults are build-time configurable.
   Limited express, Shinkansen`; buses: `City bus, Long-distance coach, Overnight,
   Hop on/off`). Surface as `string[]` on `environment` (a runtime override may be
   a comma string or array).
+- `RESERVABLE_TRAIN_KINDS` — comma-separated train kinds that get a reservation
+  window (default `Shinkansen, Limited express`). Matched case-insensitively against
+  a transport's `trainKind`; an empty list switches the feature off. Consumed by
+  [reservation.ts](src/app/shared/reservation/reservation.ts) via
+  `environment.reservableTrainKinds`.
 - `CURRENCIES` — comma-separated currency codes offered in the cost picker
   ([CostFieldset](src/app/shared/cost/cost-fieldset.ts), via the same `SuggestField`
   autocomplete, so any 3-letter code can still be typed). EUR is the base currency;

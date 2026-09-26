@@ -13,7 +13,9 @@
           <span class="zone-tag">{{ row.primaryZone }}</span>
           @if (!row.sameZone) {
             <span class="secondary-time">
-              ({{ row.secondary }} <span class="zone-tag">{{ row.secondaryZone }}</span>)
+              ({{ row.secondary }}
+              <span class="zone-tag">{{ row.secondaryZone }}</span
+              >)
             </span>
           }
         </dd>
@@ -156,6 +158,22 @@
         }
       }
 
+      @if (reservationRow(); as r) {
+        <dt>{{ r.label }}</dt>
+        <dd>
+          <span class="primary-time">{{ r.primary }}</span>
+          <span class="zone-tag">{{ r.primaryZone }}</span>
+          @if (!r.sameZone) {
+            <span class="secondary-time">
+              ({{ r.secondary }}
+              <span class="zone-tag">{{ r.secondaryZone }}</span
+              >)
+            </span>
+          }
+          <span class="reservation-status">{{ reservationStatusLabel() }}</span>
+        </dd>
+      }
+
       @if (t.bookingReference) {
         <dt>Booking ref.</dt>
         <dd>{{ t.bookingReference }}</dd>
@@ -215,6 +233,19 @@
       <a matButton href="{{ station }}" target="_blank" rel="noopener">
         <mat-icon>link</mat-icon> Return station
       </a>
+    }
+    @if (reservation) {
+      <a matButton [href]="smartExUrl" target="_blank" rel="noopener">
+        <mat-icon>confirmation_number</mat-icon> smartEX
+      </a>
+      @if (timetableUrl(); as timetable) {
+        <a matButton [href]="timetable" target="_blank" rel="noopener">
+          <mat-icon>schedule</mat-icon> Timetable
+        </a>
+      }
+      <button matButton (click)="downloadIcs()">
+        <mat-icon>event</mat-icon> Calendar (.ics)
+      </button>
     }
     @if (
       accommodation?.bookingUrl ||

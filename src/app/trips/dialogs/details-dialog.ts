@@ -16,6 +16,22 @@ import {
 import { TimeZoneService } from '../../services/time-zone.service';
 import { transportLabel } from '../../shared/transport-format';
 import { formatMoney } from '../../shared/cost/cost';
+import { environment } from '../../../environments/environment';
+import {
+  daysUntilOpening,
+  isReservable,
+  reservationOpensAt,
+  reservationStatus,
+  ReservationWindow,
+  SMART_EX_URL,
+  timetableSearchUrl,
+} from '../../shared/reservation/reservation';
+import {
+  reservationEvent,
+  reservationIcsFilename,
+} from '../../shared/calendar/reservation-ics';
+import { buildIcs, ICS_MIME_TYPE } from '../../shared/calendar/ics';
+import { downloadBlob } from '../../shared/download';
 
 export type DetailsKind =
   | 'accommodation'
@@ -65,6 +81,64 @@ export class DetailsDialog {
     this.carReservation ??
     this.activity ??
     this.transport;
+
+  /**
+   * The booking window for a seat-reservable train (see `reservation.ts`), or
+   * undefined for every other entity — flights, buses, local trains.
+   */
+  readonly reservation: ReservationWindow | undefined = this.buildReservation();
+
+  /** Dual-zone row for the moment booking opens, rendered like the time rows. */
+  readonly reservationRow = computed<TimeRow | undefined>(() =>
+    this.reservation
+      ? this.timeRow('Booking opens', this.reservation.opensAt)
+      : undefined,
+  );
+
+  /** "Bookable now" / "Opens in 12 days" / "Departed". */
+  readonly reservationStatusLabel = computed<string>(() => {
+    const window = this.reservation;
+    if (!window) return '';
+    switch (reservationStatus(window)) {
+      case 'open':
+        return 'Bookable now';
+      case 'departed':
+        return 'Departed';
+      default: {
+        const days = daysUntilOpening(window);
+        return `Opens in ${days} day${days === 1 ? '' : 's'}`;
+      }
+    }
+  });
+
+  readonly smartExUrl = SMART_EX_URL;
+
+  /** Prefilled timetable search for this leg, when stations are known. */
+  readonly timetableUrl = computed<string | undefined>(() =>
+    this.transport && this.reservation
+      ? timetableSearchUrl(this.transport)
+      : undefined,
+  );
+
+  /** Download this train's booking reminder as a single-event .ics file. */
+  downloadIcs(): void {
+    const window = this.reservation;
+    if (!window) return;
+    const ics = buildIcs([reservationEvent(window, this.data.homeZone)]);
+    downloadBlob(
+      new Blob([ics], { type: ICS_MIME_TYPE }),
+      reservationIcsFilename(window.transport),
+    );
+  }
+
+  private buildReservation(): ReservationWindow | undefined {
+    const t = this.transport;
+    if (!t || !isReservable(t, environment.reservableTrainKinds)) {
+      return undefined;
+    }
+    const opensAt = reservationOpensAt(t.start);
+    return opensAt ? { transport: t, departure: t.start, opensAt } : undefined;
+  }
 
   /** Format an optional amount in its currency, or '' when unset. */
   money(amount?: number, currency?: string): string {

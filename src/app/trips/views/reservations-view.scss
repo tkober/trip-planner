@@ -1,0 +1,61 @@
+@use './views.scss';
+@use '../../shared/breakpoints' as bp;
+
+.rule {
+  margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.9rem;
+  max-width: 70ch;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.zone-tag {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.secondary-time {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// "Opens in 12 days" / "Bookable now" — the latter highlighted, since that is
+// the row you can act on right now.
+.status {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.75rem;
+  white-space: nowrap;
+
+  &.open {
+    background: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+  }
+}
+
+// ---- Mobile ---------------------------------------------------------------
+@include bp.mobile-wide {
+  .rule {
+    font-size: 0.85rem;
+  }
+
+  .status {
+    display: inline-block;
+    margin: 0.25rem 0 0;
+  }
+}
