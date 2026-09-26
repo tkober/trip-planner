@@ -246,7 +246,9 @@ Reservations ([src/app/shared/reservation/reservation.ts](src/app/shared/reserva
   10:00 JST in the reader's own zone.
   [reservation-ics.ts](src/app/shared/calendar/reservation-ics.ts) maps a window to
   that event (summary, all leg details in both zones, booking + timetable links,
-  a 15-minute alarm, a stable `UID` so re-imports update in place).
+  two alarms: 20:00 home time the evening before, at least 3 h ahead, since
+  10:00 JST is the middle of the night in Europe, and 15 minutes before
+  opening; a stable `UID` so re-imports update in place).
 - Both the details dialog and the Reservations view call these and download via
   [download.ts](src/app/shared/download.ts) — no service, no store round-trip.
   The Reservations view is **not** part of the plan export document.
