@@ -31,8 +31,10 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-// The status pill sits right of the reminder download button.
+// The status pill sits right of the reminder download button, both at the
+// top of the card.
 .detail-card .card-actions {
+  align-self: flex-start;
   align-items: center;
 }
 
@@ -52,23 +54,25 @@
   }
 }
 
+// The in-body copy of the pill is for phones only (see below).
+.status-inline {
+  display: none;
+}
+
 // ---- Mobile ---------------------------------------------------------------
 @include bp.mobile-wide {
   .rule {
     font-size: 0.85rem;
   }
 
-  // No room for button + pill side by side next to the card body: stack them.
-  .detail-card .card-actions {
-    flex-direction: column;
-    align-items: flex-end;
+  // No room next to the card body on a phone: the pill moves under the
+  // subtitle instead of crowding the title.
+  .status-aside {
+    display: none;
   }
 
-  // …and let the pill wrap, so it does not squeeze the card body.
-  .status {
-    max-width: 6.5rem;
-    border-radius: 0.75rem;
-    text-align: center;
-    white-space: normal;
+  .status-inline {
+    display: inline-block;
+    margin-top: 0.25rem;
   }
 }

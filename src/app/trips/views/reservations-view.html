@@ -28,6 +28,12 @@
             @if (row.train) {
               <p class="card-sub">{{ row.train }}</p>
             }
+            <span
+              class="status status-inline"
+              [class.open]="row.status === 'open'"
+            >
+              {{ row.statusLabel }}
+            </span>
             <dl>
               <dt>Booking opens</dt>
               <dd>
@@ -73,7 +79,10 @@
             >
               <mat-icon>event</mat-icon>
             </button>
-            <span class="status" [class.open]="row.status === 'open'">
+            <span
+              class="status status-aside"
+              [class.open]="row.status === 'open'"
+            >
               {{ row.statusLabel }}
             </span>
           </div>
