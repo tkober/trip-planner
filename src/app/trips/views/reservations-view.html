@@ -71,6 +71,12 @@
             </div>
           </div>
           <div class="card-actions">
+            <span
+              class="status status-aside"
+              [class.open]="row.status === 'open'"
+            >
+              {{ row.statusLabel }}
+            </span>
             <button
               matIconButton
               aria-label="Download reservation reminder (.ics)"
@@ -79,12 +85,6 @@
             >
               <mat-icon>event</mat-icon>
             </button>
-            <span
-              class="status status-aside"
-              [class.open]="row.status === 'open'"
-            >
-              {{ row.statusLabel }}
-            </span>
           </div>
         </article>
       }
