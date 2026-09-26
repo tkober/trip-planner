@@ -18,7 +18,7 @@ describe('buildIcs', () => {
     durationMinutes: 30,
     summary: 'Book seats: Tokyo → Okayama',
     description: ['Line one', 'Line two'],
-    alarmMinutesBefore: 15,
+    alarmsMinutesBefore: [420, 15],
   };
 
   it('wraps events in a VCALENDAR with CRLF line endings', () => {
@@ -44,9 +44,10 @@ describe('buildIcs', () => {
     expect(ics).toContain('DESCRIPTION:a\; b\\, c\\nsecond\\\\line');
   });
 
-  it('adds a display alarm ahead of the start', () => {
+  it('adds one display alarm per lead time', () => {
     const ics = buildIcs([event], NOW);
-    expect(ics).toContain('BEGIN:VALARM');
+    expect(ics.match(/BEGIN:VALARM/g)?.length).toBe(2);
+    expect(ics).toContain('TRIGGER:-PT420M');
     expect(ics).toContain('TRIGGER:-PT15M');
   });
 
@@ -125,6 +126,26 @@ describe('reservationEvent', () => {
     expect(reservationEvent(window, 'Europe/Berlin').url).toBe(
       'https://smart-ex.jp/en/',
     );
+  });
+
+  it('reminds the evening before at home and shortly before opening', () => {
+    // 10:00 Tokyo is 03:00 in Berlin; 20:00 the evening before is 7h earlier.
+    expect(
+      reservationEvent(window, 'Europe/Berlin').alarmsMinutesBefore,
+    ).toEqual([7 * 60, 15]);
+    // At home in Tokyo the previous 20:00 is 14 hours before.
+    expect(reservationEvent(window, 'Asia/Tokyo').alarmsMinutesBefore).toEqual([
+      14 * 60,
+      15,
+    ]);
+  });
+
+  it('skips an evening too close to the opening', () => {
+    // 10:00 Tokyo is 21:00 the day before in New York (EDT): 20:00 that same
+    // evening is only an hour ahead, so the alarm moves a day earlier.
+    expect(
+      reservationEvent(window, 'America/New_York').alarmsMinutesBefore,
+    ).toEqual([25 * 60, 15]);
   });
 
   it('derives a file name from the route', () => {

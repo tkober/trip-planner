@@ -20,8 +20,8 @@ export interface IcsEvent {
   description?: string[];
   location?: string;
   url?: string;
-  /** When set, a display alarm this many minutes before the start. */
-  alarmMinutesBefore?: number;
+  /** One display alarm per entry, this many minutes before the start. */
+  alarmsMinutesBefore?: readonly number[];
 }
 
 /** Render one or more events as a complete .ics document. */
@@ -63,12 +63,12 @@ function eventLines(event: IcsEvent, now: DateTime): string[] {
   // URL is a property, not text: it must not be escaped (commas in a query
   // string are legal) — only folded.
   if (event.url) lines.push(`URL:${event.url}`);
-  if (event.alarmMinutesBefore != null) {
+  for (const minutes of event.alarmsMinutesBefore ?? []) {
     lines.push(
       'BEGIN:VALARM',
       'ACTION:DISPLAY',
       `DESCRIPTION:${escapeText(event.summary)}`,
-      `TRIGGER:-PT${event.alarmMinutesBefore}M`,
+      `TRIGGER:-PT${minutes}M`,
       'END:VALARM',
     );
   }

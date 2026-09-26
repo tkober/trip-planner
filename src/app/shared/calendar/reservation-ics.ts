@@ -20,8 +20,16 @@ import { buildIcs, IcsEvent } from './ics';
 
 /** How long the reminder blocks in the calendar. */
 const EVENT_MINUTES = 30;
-/** Lead time of the reminder alarm, so you are logged in when booking opens. */
+/** Lead time of the last alarm, so you are logged in when booking opens. */
 const ALARM_MINUTES_BEFORE = 15;
+/**
+ * The heads-up alarm goes off at this hour (home zone) the evening before.
+ * 10:00 in Tokyo is the middle of the night in Europe, so "24 hours before"
+ * would ring at night too.
+ */
+const EVENING_BEFORE_HOUR = 20;
+/** …but never closer to the opening than this. */
+const EVENING_BEFORE_MIN_HOURS = 3;
 
 /** One reservation reminder as a calendar event. */
 export function reservationEvent(
@@ -40,8 +48,28 @@ export function reservationEvent(
     description: descriptionLines(window, homeZone),
     location: t.fromStation || t.fromLocation || undefined,
     url: t.bookingUrl || SMART_EX_URL,
-    alarmMinutesBefore: ALARM_MINUTES_BEFORE,
+    alarmsMinutesBefore: [
+      eveningBeforeMinutes(opens, homeZone),
+      ALARM_MINUTES_BEFORE,
+    ],
   };
+}
+
+/**
+ * Minutes from the last 20:00 at home that lies at least three hours before
+ * booking opens — 03:00 in Berlin → 20:00 the evening before (7 hours).
+ */
+function eveningBeforeMinutes(opens: DateTime, homeZone: string): number {
+  let evening = opens.setZone(homeZone).set({
+    hour: EVENING_BEFORE_HOUR,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+  });
+  while (opens.diff(evening, 'hours').hours < EVENING_BEFORE_MIN_HOURS) {
+    evening = evening.minus({ days: 1 });
+  }
+  return Math.round(opens.diff(evening, 'minutes').minutes);
 }
 
 /** A whole trip's reservation reminders as one .ics document. */
