@@ -31,10 +31,16 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-// "Opens in 12 days" / "Bookable now" — the latter highlighted, since that is
-// the row you can act on right now.
+// The status pill sits left of the reminder download button, both at the
+// top of the card.
+.detail-card .card-actions {
+  align-self: flex-start;
+  align-items: center;
+}
+
+// "Booking opens in 12 days" / "Bookable now" — the latter highlighted, since
+// that is the row you can act on right now.
 .status {
-  margin-left: 0.5rem;
   padding: 0.05rem 0.45rem;
   border-radius: 999px;
   background: var(--mat-sys-surface-container-high);
@@ -48,14 +54,25 @@
   }
 }
 
+// The in-body copy of the pill is for phones only (see below).
+.status-inline {
+  display: none;
+}
+
 // ---- Mobile ---------------------------------------------------------------
 @include bp.mobile-wide {
   .rule {
     font-size: 0.85rem;
   }
 
-  .status {
+  // No room next to the card body on a phone: the pill moves under the
+  // subtitle instead of crowding the title.
+  .status-aside {
+    display: none;
+  }
+
+  .status-inline {
     display: inline-block;
-    margin: 0.25rem 0 0;
+    margin-top: 0.25rem;
   }
 }

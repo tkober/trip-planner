@@ -112,6 +112,23 @@ export function daysUntilOpening(
   return diffMs <= 0 ? 0 : Math.ceil(diffMs / 86_400_000);
 }
 
+/** "Booking opens in 12 days" / "Bookable now" / "Departed". */
+export function reservationStatusLabel(
+  window: ReservationWindow,
+  now: DateTime = DateTime.now(),
+): string {
+  switch (reservationStatus(window, now)) {
+    case 'open':
+      return 'Bookable now';
+    case 'departed':
+      return 'Departed';
+    default: {
+      const days = daysUntilOpening(window, now);
+      return `Booking opens in ${days} day${days === 1 ? '' : 's'}`;
+    }
+  }
+}
+
 /**
  * A prefilled timetable search for the leg on Jorudan's English route planner
  * (station, date and time are query params). Station names are used as typed;

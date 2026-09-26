@@ -18,10 +18,9 @@ import { transportLabel } from '../../shared/transport-format';
 import { formatMoney } from '../../shared/cost/cost';
 import { environment } from '../../../environments/environment';
 import {
-  daysUntilOpening,
   isReservable,
   reservationOpensAt,
-  reservationStatus,
+  reservationStatusLabel,
   ReservationWindow,
   SMART_EX_URL,
   timetableSearchUrl,
@@ -95,21 +94,10 @@ export class DetailsDialog {
       : undefined,
   );
 
-  /** "Bookable now" / "Opens in 12 days" / "Departed". */
-  readonly reservationStatusLabel = computed<string>(() => {
-    const window = this.reservation;
-    if (!window) return '';
-    switch (reservationStatus(window)) {
-      case 'open':
-        return 'Bookable now';
-      case 'departed':
-        return 'Departed';
-      default: {
-        const days = daysUntilOpening(window);
-        return `Opens in ${days} day${days === 1 ? '' : 's'}`;
-      }
-    }
-  });
+  /** "Booking opens in 12 days" / "Bookable now" / "Departed", under the title. */
+  readonly reservationStatusLabel = computed<string>(() =>
+    this.reservation ? reservationStatusLabel(this.reservation) : '',
+  );
 
   readonly smartExUrl = SMART_EX_URL;
 

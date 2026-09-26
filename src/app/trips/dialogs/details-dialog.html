@@ -4,6 +4,10 @@
 </h2>
 
 <mat-dialog-content>
+  @if (reservationStatusLabel(); as status) {
+    <p class="reservation-status">{{ status }}</p>
+  }
+
   <dl class="details">
     @if (timeRows().length) {
       @for (row of timeRows(); track row.label) {
@@ -170,7 +174,6 @@
               >)
             </span>
           }
-          <span class="reservation-status">{{ reservationStatusLabel() }}</span>
         </dd>
       }
 
@@ -244,7 +247,7 @@
         </a>
       }
       <button matButton (click)="downloadIcs()">
-        <mat-icon>event</mat-icon> Calendar (.ics)
+        <mat-icon>event</mat-icon> Reservation reminder (.ics)
       </button>
     }
     @if (

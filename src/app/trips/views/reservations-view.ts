@@ -7,11 +7,11 @@ import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { environment } from '../../../environments/environment';
 import {
-  daysUntilOpening,
   RESERVATION_OPENING_HOUR,
   ReservationStatus,
   ReservationWindow,
   reservationStatus,
+  reservationStatusLabel,
   reservationWindows,
   SMART_EX_URL,
   timetableSearchUrl,
@@ -143,19 +143,9 @@ export class ReservationsView {
       sameZone: dual.sameZone,
       departure: this.tz.format(t.start, "ccc, d LLL yyyy '·' HH:mm"),
       status,
-      statusLabel: this.statusLabel(window, status),
+      statusLabel: reservationStatusLabel(window),
       timetableUrl: timetableSearchUrl(t),
       color: t.color,
     };
-  }
-
-  private statusLabel(
-    window: ReservationWindow,
-    status: ReservationStatus,
-  ): string {
-    if (status === 'departed') return 'Departed';
-    if (status === 'open') return 'Bookable now';
-    const days = daysUntilOpening(window);
-    return `Opens in ${days} day${days === 1 ? '' : 's'}`;
   }
 }
