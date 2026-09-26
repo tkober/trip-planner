@@ -1,0 +1,88 @@
+@if (trip()) {
+  <section class="view">
+    <header class="view-header">
+      <h2>Reservations</h2>
+      <button
+        matButton="filled"
+        [disabled]="!rows().length"
+        (click)="downloadAll()"
+      >
+        <mat-icon>event</mat-icon> Download all (.ics)
+      </button>
+    </header>
+
+    <p class="rule">
+      Seats are sold from {{ openingHour }} local time exactly one month before
+      departure — when that day does not exist in the previous month, from the
+      1st of the departure month. Shown for: {{ reservableKinds }}.
+    </p>
+
+    @if (rows().length) {
+      @for (row of rows(); track row.transport.id) {
+        <article class="detail-card" [style.--accent]="row.color">
+          <div class="card-icon"><mat-icon>confirmation_number</mat-icon></div>
+          <div class="card-body">
+            <button class="card-title link-button" (click)="open(row)">
+              {{ row.route }}
+            </button>
+            @if (row.train) {
+              <p class="card-sub">{{ row.train }}</p>
+            }
+            <dl>
+              <dt>Booking opens</dt>
+              <dd>
+                {{ row.opensDate }} · {{ row.opensPrimary }}
+                <span class="zone-tag">{{ row.opensPrimaryZone }}</span>
+                @if (!row.sameZone) {
+                  <span class="secondary-time">
+                    ({{ row.opensSecondary }}
+                    <span class="zone-tag">{{ row.opensSecondaryZone }}</span
+                    >)
+                  </span>
+                }
+                <span class="status" [class.open]="row.status === 'open'">
+                  {{ row.statusLabel }}
+                </span>
+              </dd>
+              <dt>Departure</dt>
+              <dd>{{ row.departure }}</dd>
+              @if (row.transport.bookingReference) {
+                <dt>Booking ref.</dt>
+                <dd>{{ row.transport.bookingReference }}</dd>
+              }
+            </dl>
+            <div class="links">
+              <a [href]="smartExUrl" target="_blank" rel="noopener">
+                <mat-icon>confirmation_number</mat-icon> smartEX
+              </a>
+              @if (row.timetableUrl; as timetable) {
+                <a [href]="timetable" target="_blank" rel="noopener">
+                  <mat-icon>schedule</mat-icon> Timetable
+                </a>
+              }
+              @if (row.transport.bookingUrl; as booking) {
+                <a [href]="booking" target="_blank" rel="noopener">
+                  <mat-icon>open_in_new</mat-icon> Booking
+                </a>
+              }
+            </div>
+          </div>
+          <div class="card-actions">
+            <button
+              matIconButton
+              aria-label="Download calendar file"
+              (click)="download(row)"
+            >
+              <mat-icon>event</mat-icon>
+            </button>
+          </div>
+        </article>
+      }
+    } @else {
+      <p class="empty">
+        No reservable trains yet. Add a train whose kind is one of:
+        {{ reservableKinds }}.
+      </p>
+    }
+  </section>
+}

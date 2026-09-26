@@ -38,6 +38,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'reservations',
+        loadComponent: () =>
+          import('./trips/views/reservations-view').then(
+            (m) => m.ReservationsView,
+          ),
+      },
+      {
         path: 'transport',
         loadComponent: () =>
           import('./trips/views/transport-view').then((m) => m.TransportView),

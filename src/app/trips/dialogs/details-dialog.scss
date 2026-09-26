@@ -80,3 +80,15 @@
     }
   }
 }
+
+// Status of a train's booking window ("Bookable now" / "Opens in 12 days"),
+// shown next to the dual-zone time the window opens at.
+.reservation-status {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
