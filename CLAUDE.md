@@ -70,10 +70,12 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   seats from **10:00 local time exactly one calendar month before departure** (and
   from the **1st of the departure month** when that day does not exist in the
   previous one, e.g. 31 March). Every such train shows a *Booking opens* row with a
-  dual-tz time and a status chip (*Bookable now* / *Opens in N days* / *Departed*)
-  in its details dialog, and the new **Reservations** section lists them all in
-  opening order. Both offer an **.ics download** (single leg, or the whole trip)
-  whose event sits at the moment booking opens and carries the leg's details plus
+  dual-tz time in its details dialog, plus a status chip (*Bookable now* /
+  *Booking opens in N days* / *Departed*) under the dialog title, and the new
+  **Reservations** section lists them all in opening order, each card carrying
+  the same chip. Both offer a **reservation reminder (.ics) download** (single
+  leg, or the whole trip) whose event sits at the moment booking opens and
+  carries the leg's details plus
   links to **smartEX** and a prefilled **Jorudan timetable search**. Which train
   kinds count is configurable (`RESERVABLE_TRAIN_KINDS`, default `Shinkansen,
   Limited express`). See "Reservations" below.
@@ -233,7 +235,8 @@ Reservations ([src/app/shared/reservation/reservation.ts](src/app/shared/reserva
   anchored in the *departure's own* zone — Luxon's day clamping is what detects the
   "that day does not exist" case), `isReservable` (case-insensitive match against
   `environment.reservableTrainKinds`), `reservationWindows` (a trip's windows, ordered),
-  `reservationStatus` / `daysUntilOpening`, and the outbound links: `SMART_EX_URL` plus
+  `reservationStatus` / `daysUntilOpening` / `reservationStatusLabel` (the chip
+  text), and the outbound links: `SMART_EX_URL` plus
   `timetableSearchUrl` (a prefilled Jorudan English route search — station names lose
   their "Station" suffix, since Jorudan does not use it; a common name such as "Kyoto"
   lands on Jorudan's disambiguation list with date and time preserved).
@@ -277,7 +280,9 @@ Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoint
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,
 activity, transport, a shared read-only **details** dialog (Edit/Delete actions), and
-a generic **confirm** dialog. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`,
+a generic **confirm** dialog. The details dialog opens with focus on its title
+(`autoFocus: 'first-heading'` in `TripActionsService`), so a phone does not
+scroll it down to the first link. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`,
 `DateField`, `SuggestField` (free-text autocomplete used for the train/bus kind).
 
 ## Data Model

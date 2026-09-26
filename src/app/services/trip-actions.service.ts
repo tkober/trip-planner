@@ -57,6 +57,13 @@ import {
 import { transportLabel } from '../shared/transport-format';
 
 /**
+ * Focus the details dialog's title on open. The default focuses the first
+ * link, which on a phone sits below the fold and scrolls the dialog down past
+ * the title and the booking status.
+ */
+const DETAILS_AUTO_FOCUS = 'first-heading';
+
+/**
  * All dialog-driven trip mutations (edit trip, add/edit/delete + open-details for
  * accommodation/activity/transport) live here so every view — the timeline grid,
  * the overview, and the accommodation/transport lists — shares one implementation.
@@ -202,7 +209,7 @@ export class TripActionsService {
       accommodation,
     };
     this.dialog
-      .open(DetailsDialog, { data })
+      .open(DetailsDialog, { data, autoFocus: DETAILS_AUTO_FOCUS })
       .afterClosed()
       .subscribe((action?: DetailsAction) => {
         if (action === 'edit') this.editAccommodation(trip, accommodation);
@@ -269,7 +276,7 @@ export class TripActionsService {
       carReservation: car,
     };
     this.dialog
-      .open(DetailsDialog, { data })
+      .open(DetailsDialog, { data, autoFocus: DETAILS_AUTO_FOCUS })
       .afterClosed()
       .subscribe((action?: DetailsAction) => {
         if (action === 'edit') this.editCarReservation(trip, car);
@@ -405,7 +412,7 @@ export class TripActionsService {
       transport: entry.transport,
     };
     this.dialog
-      .open(DetailsDialog, { data })
+      .open(DetailsDialog, { data, autoFocus: DETAILS_AUTO_FOCUS })
       .afterClosed()
       .subscribe((action?: DetailsAction) => {
         if (action === 'edit') this.editEntry(trip, entry);
