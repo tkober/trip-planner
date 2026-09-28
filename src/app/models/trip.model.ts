@@ -180,6 +180,11 @@ export interface TripDto {
    * convert per-entity costs to the base currency (EUR) for the trip total.
    */
   exchangeRates?: Record<string, number>;
+  /**
+   * When each exchange rate was last set (ISO instant), keyed like
+   * `exchangeRates`. Written by both manual edits and the online refresh.
+   */
+  exchangeRatesUpdatedAt?: Record<string, string>;
   accommodations: AccommodationDto[];
   carReservations: CarReservationDto[];
   activities: ActivityDto[];

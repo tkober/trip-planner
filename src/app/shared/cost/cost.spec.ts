@@ -2,6 +2,8 @@ import { TripDto } from '../../models/trip.model';
 import {
   formatEur,
   formatMoney,
+  formatRateAge,
+  isRateStale,
   toEur,
   tripCostSummary,
 } from './cost';
@@ -49,6 +51,42 @@ describe('toEur', () => {
 
   it('returns undefined for a non-positive rate', () => {
     expect(toEur(100, 'JPY', { JPY: 0 })).toBeUndefined();
+  });
+});
+
+describe('isRateStale', () => {
+  const now = new Date('2026-09-28T12:00:00.000Z');
+
+  it('is false when unset (legacy rate with no timestamp)', () => {
+    expect(isRateStale(undefined, now)).toBe(false);
+  });
+
+  it('is false just under a week old', () => {
+    expect(isRateStale('2026-09-22T12:00:00.000Z', now)).toBe(false);
+  });
+
+  it('is true for a rate older than a week', () => {
+    expect(isRateStale('2026-09-20T00:00:00.000Z', now)).toBe(true);
+  });
+
+  it('is false for a rate set today', () => {
+    expect(isRateStale('2026-09-28T00:00:00.000Z', now)).toBe(false);
+  });
+});
+
+describe('formatRateAge', () => {
+  const now = new Date('2026-09-28T12:00:00.000Z');
+
+  it('renders "today" for the same day', () => {
+    expect(formatRateAge('2026-09-28T00:00:00.000Z', now)).toBe('today');
+  });
+
+  it('renders "yesterday" for one day ago', () => {
+    expect(formatRateAge('2026-09-27T00:00:00.000Z', now)).toBe('yesterday');
+  });
+
+  it('renders "N days ago" beyond that', () => {
+    expect(formatRateAge('2026-09-20T00:00:00.000Z', now)).toBe('8 days ago');
   });
 });
 
