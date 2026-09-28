@@ -296,8 +296,9 @@ string + IANA zone (no offset), so Luxon can render the same instant in any zone
 
 ```
 TripDto { id, schemaVersion, title, startDate, endDate, homeTimeZone,
-          destinationTimeZone, description?, exchangeRates?, accommodations[],
-          carReservations[], activities[], transport[], createdAt, updatedAt }
+          destinationTimeZone, description?, exchangeRates?, exchangeRatesUpdatedAt?,
+          accommodations[], carReservations[], activities[], transport[],
+          createdAt, updatedAt }
 ZonedTime { dateTime: "YYYY-MM-DDTHH:mm", zone: "Asia/Tokyo" }
 CostInfo { totalPrice?, currency?, alreadyPaid?, paymentDate?,
            freeCancellationUntil?, cancellationCost? }   // mixed into every entity
@@ -368,6 +369,9 @@ structured `CostInfo` (mixed into every entity) and the trip `exchangeRates` was
 **schema v7** step: its migration folds any old `price` value into the entity's
 `remarks` (e.g. appends `price: ¥18,000`) and drops the field; the new cost fields
 are additive.
+
+Adding the optional trip `exchangeRatesUpdatedAt` (when each exchange rate was
+last set) was an additive **schema v8** step (no data transform).
 
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations and car reservations each cycle their own distinct tints by

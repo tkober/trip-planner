@@ -6,7 +6,7 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 /**
  * Structured cost / payment information shared by every priced entity
