@@ -51,7 +51,10 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
   const stripCost = (x: CostInfo) => {
     for (const f of COST_FIELDS) (x as Record<string, unknown>)[f] = undefined;
   };
-  if (opts.costs) t.exchangeRates = undefined;
+  if (opts.costs) {
+    t.exchangeRates = undefined;
+    t.exchangeRatesUpdatedAt = undefined;
+  }
 
   for (const a of t.accommodations) {
     if (opts.addresses) {

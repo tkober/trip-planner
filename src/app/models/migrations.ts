@@ -70,6 +70,9 @@ const MIGRATIONS: Record<number, TripMigration> = {
         : old.carReservations,
     };
   },
+  // v8 adds the optional trip `exchangeRatesUpdatedAt` (when each rate was last
+  // set). Absent on older documents, so this is an identity upgrade.
+  [8]: (old) => old,
 };
 
 /**

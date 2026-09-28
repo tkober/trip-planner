@@ -119,7 +119,8 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
   - `overview` → [OverviewView](src/app/trips/views/overview-view.ts) — trip facts
     (dates, length, zones, description), a **Trip cost** section (total / paid /
     outstanding in EUR + per-category breakdown + the per-currency exchange-rate
-    editor) and the departure/return flight cards.
+    editor, with a refresh button that fetches current rates online and flags a
+    rate as stale after a week) and the departure/return flight cards.
   - `accommodations` → [AccommodationsView](src/app/trips/views/accommodations-view.ts)
     — all stays, ordered by check-in, as detail cards.
   - `car-reservations` → [CarReservationsView](src/app/trips/views/car-reservations-view.ts)
@@ -295,8 +296,9 @@ string + IANA zone (no offset), so Luxon can render the same instant in any zone
 
 ```
 TripDto { id, schemaVersion, title, startDate, endDate, homeTimeZone,
-          destinationTimeZone, description?, exchangeRates?, accommodations[],
-          carReservations[], activities[], transport[], createdAt, updatedAt }
+          destinationTimeZone, description?, exchangeRates?, exchangeRatesUpdatedAt?,
+          accommodations[], carReservations[], activities[], transport[],
+          createdAt, updatedAt }
 ZonedTime { dateTime: "YYYY-MM-DDTHH:mm", zone: "Asia/Tokyo" }
 CostInfo { totalPrice?, currency?, alreadyPaid?, paymentDate?,
            freeCancellationUntil?, cancellationCost? }   // mixed into every entity
@@ -326,11 +328,20 @@ units + a 3-letter `currency`, defaulting to **EUR**). The trip's
 1). The Overview "Trip cost" section aggregates everything to EUR (total / already
 paid / outstanding + a per-category breakdown), letting you edit a rate per
 currency in use ("1 EUR = X JPY"); an amount whose rate is unset is excluded from
-the total with a warning. Pure helpers live in
+the total with a warning. Rates can also be **refreshed online**: a small button next
+to the "Exchange rates" title in Overview calls
+[ExchangeRateService](src/app/services/exchange-rate.service.ts) (the free,
+key-less [Frankfurter API](https://frankfurter.dev), ECB reference rates) and
+saves the results via `TripActionsService.refreshExchangeRates`. Each rate's
+`exchangeRatesUpdatedAt` timestamp (set by both manual edits and the refresh) is
+shown under its input; a rate older than `RATE_STALE_AFTER_DAYS` (7 days) — or
+one with no timestamp at all (legacy data) — renders in amber with a warning
+icon. Pure helpers live in
 [src/app/shared/cost/cost.ts](src/app/shared/cost/cost.ts) (`formatMoney` via
-`Intl`, `toEur`, `tripCostSummary`); the reusable cost form is
-[CostFieldset](src/app/shared/cost/cost-fieldset.ts), embedded in every entity
-dialog. The selectable currency codes are env-configurable (see "Configuration").
+`Intl`, `toEur`, `tripCostSummary`, `isRateStale`, `formatRateAge`); the reusable
+cost form is [CostFieldset](src/app/shared/cost/cost-fieldset.ts), embedded in
+every entity dialog. The selectable currency codes are env-configurable (see
+"Configuration").
 
 `fromLocation`/`toLocation` hold the **city**; the per-mode fields add the
 airport/station/stop (and terminal/platform). Mode-specific fields are only
@@ -358,6 +369,9 @@ structured `CostInfo` (mixed into every entity) and the trip `exchangeRates` was
 **schema v7** step: its migration folds any old `price` value into the entity's
 `remarks` (e.g. appends `price: ¥18,000`) and drops the field; the new cost fields
 are additive.
+
+Adding the optional trip `exchangeRatesUpdatedAt` (when each exchange rate was
+last set) was an additive **schema v8** step (no data transform).
 
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations and car reservations each cycle their own distinct tints by

@@ -13,6 +13,7 @@ import {
 import { TripStore } from './trip-store';
 import { TimeZoneService } from './time-zone.service';
 import { ImportExportService } from './import-export.service';
+import { ExchangeRateService } from './exchange-rate.service';
 import { ExportService } from './export.service';
 import {
   ExportDialog,
@@ -77,6 +78,7 @@ export class TripActionsService {
   private readonly store = inject(TripStore);
   private readonly tz = inject(TimeZoneService);
   private readonly importExport = inject(ImportExportService);
+  private readonly exchangeRates = inject(ExchangeRateService);
   private readonly exportService = inject(ExportService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
@@ -121,12 +123,78 @@ export class TripActionsService {
     const code = currency.trim().toUpperCase();
     if (!code) return;
     const rates = { ...(trip.exchangeRates ?? {}) };
+    const updatedAt = { ...(trip.exchangeRatesUpdatedAt ?? {}) };
     if (Number.isFinite(eurPerUnit) && eurPerUnit > 0) {
       rates[code] = eurPerUnit;
+      updatedAt[code] = new Date().toISOString();
     } else {
       delete rates[code];
+      delete updatedAt[code];
     }
-    await this.store.saveTrip({ ...trip, exchangeRates: rates });
+    await this.store.saveTrip({
+      ...trip,
+      exchangeRates: rates,
+      exchangeRatesUpdatedAt: updatedAt,
+    });
+  }
+
+  /**
+   * Merge several EUR-per-unit rates (+ their timestamps) into the trip in one
+   * `saveTrip` call — looping `setExchangeRate` would each save from the same
+   * stale `trip` and overwrite one another's rates.
+   */
+  async setExchangeRates(
+    trip: TripDto,
+    eurPerUnit: Record<string, number>,
+  ): Promise<void> {
+    const codes = Object.keys(eurPerUnit);
+    if (!codes.length) return;
+    const rates = { ...(trip.exchangeRates ?? {}) };
+    const updatedAt = { ...(trip.exchangeRatesUpdatedAt ?? {}) };
+    const now = new Date().toISOString();
+    for (const code of codes) {
+      rates[code] = eurPerUnit[code];
+      updatedAt[code] = now;
+    }
+    await this.store.saveTrip({
+      ...trip,
+      exchangeRates: rates,
+      exchangeRatesUpdatedAt: updatedAt,
+    });
+  }
+
+  /**
+   * Fetch current EUR rates for `codes` online and persist them. Shows a
+   * snackbar summarizing the outcome: full success, partial (some codes have
+   * no online rate — the rest are still saved), or a fetch failure.
+   */
+  async refreshExchangeRates(trip: TripDto, codes: string[]): Promise<void> {
+    let fetched: Record<string, number>;
+    try {
+      fetched = await this.exchangeRates.fetchEurRates(codes);
+    } catch {
+      this.snack.open("Couldn't fetch exchange rates", undefined, {
+        duration: 3000,
+      });
+      return;
+    }
+
+    const requested = [
+      ...new Set(codes.map((c) => c.trim().toUpperCase()).filter(Boolean)),
+    ].filter((c) => c !== 'EUR');
+    const missing = requested.filter((c) => !(c in fetched));
+
+    if (Object.keys(fetched).length) {
+      await this.setExchangeRates(trip, fetched);
+    }
+
+    if (missing.length) {
+      this.snack.open(`No online rate for ${missing.join(', ')}`, undefined, {
+        duration: 3500,
+      });
+    } else {
+      this.snack.open('Exchange rates updated', undefined, { duration: 2000 });
+    }
   }
 
   private countOrphans(trip: TripDto, start: string, end: string): number {

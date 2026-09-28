@@ -78,6 +78,35 @@ export function toEur(
   return amount * rate;
 }
 
+/** An exchange rate older than this (in days) is flagged as stale in the UI. */
+export const RATE_STALE_AFTER_DAYS = 7;
+
+/**
+ * True when `updatedAt` (an ISO instant) is older than {@link RATE_STALE_AFTER_DAYS}.
+ * A missing timestamp (a legacy rate set before this field existed) is *not*
+ * considered stale here — the view distinguishes "unknown update date" from
+ * "known but old" as its own (also-warned) case.
+ */
+export function isRateStale(
+  updatedAt: string | undefined,
+  now: Date = new Date(),
+): boolean {
+  if (!updatedAt) return false;
+  const then = new Date(updatedAt).getTime();
+  if (!Number.isFinite(then)) return false;
+  const days = (now.getTime() - then) / 86_400_000;
+  return days > RATE_STALE_AFTER_DAYS;
+}
+
+/** Render an ISO instant's age as "today" / "yesterday" / "N days ago". */
+export function formatRateAge(updatedAt: string, now = new Date()): string {
+  const then = new Date(updatedAt).getTime();
+  const days = Math.floor((now.getTime() - then) / 86_400_000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  return `${days} days ago`;
+}
+
 export type CostCategory = 'accommodation' | 'car' | 'activity' | 'transport';
 
 const CATEGORY_LABELS: Record<CostCategory, string> = {

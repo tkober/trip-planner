@@ -68,20 +68,50 @@
 
         @if (cost.currenciesInUse.length && !tripOverride()) {
           <div class="rates">
-            <p class="rates-title">Exchange rates</p>
+            <div class="rates-header">
+              <p class="rates-title">Exchange rates</p>
+              <button
+                matIconButton
+                type="button"
+                title="Fetch current rates"
+                [disabled]="refreshing()"
+                (click)="refreshExchangeRates()"
+              >
+                <mat-icon>refresh</mat-icon>
+              </button>
+            </div>
             @for (code of cost.currenciesInUse; track code) {
               <div class="rate-row">
-                <span class="rate-label">1 EUR =</span>
-                <mat-form-field class="rate-input" subscriptSizing="dynamic">
-                  <input
-                    matInput
-                    type="number"
-                    inputmode="decimal"
-                    [value]="rateDisplay(code)"
-                    (change)="onRateChange(code, $any($event.target).value)"
-                  />
-                  <span matTextSuffix>{{ code }}</span>
-                </mat-form-field>
+                <div class="rate-input-row">
+                  <span class="rate-label">1 EUR =</span>
+                  <mat-form-field class="rate-input" subscriptSizing="dynamic">
+                    <input
+                      matInput
+                      type="number"
+                      inputmode="decimal"
+                      [value]="rateDisplay(code)"
+                      (change)="onRateChange(code, $any($event.target).value)"
+                    />
+                    <span matTextSuffix>{{ code }}</span>
+                  </mat-form-field>
+                </div>
+                @if (rateUpdatedAt(code)) {
+                  <span
+                    class="rate-status"
+                    [class.stale]="rateIsStale(code)"
+                    [title]="rateUpdatedAtTitle(code)"
+                  >
+                    @if (rateIsStale(code)) {
+                      <mat-icon class="warn-icon">warning</mat-icon>
+                    }
+                    Updated {{ rateAgeLabel(code) }}
+                  </span>
+                } @else if (rateDisplay(code)) {
+                  <span class="rate-status stale">
+                    <mat-icon class="warn-icon">warning</mat-icon>
+                    Update date unknown
+                  </span>
+                }
               </div>
             }
             @if (cost.missingRates.length) {

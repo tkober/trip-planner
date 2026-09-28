@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,7 +8,12 @@ import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { TransportCard } from '../../shared/transport-card/transport-card';
-import { formatEur, tripCostSummary } from '../../shared/cost/cost';
+import {
+  formatEur,
+  formatRateAge,
+  isRateStale,
+  tripCostSummary,
+} from '../../shared/cost/cost';
 
 /** Trip summary: dates, length, zones, description and the departure/return flights. */
 @Component({
@@ -52,6 +57,9 @@ export class OverviewView {
   /** Expose EUR formatting to the template. */
   protected readonly formatEur = formatEur;
 
+  /** True while the online rate refresh is in flight (disables the button). */
+  readonly refreshing = signal(false);
+
   /** Current "1 EUR = X" units-per-EUR value for a currency, or '' when unset. */
   rateDisplay(code: string): string {
     const rate = this.trip()?.exchangeRates?.[code];
@@ -68,6 +76,47 @@ export class OverviewView {
     const eurPerUnit =
       value.trim() && Number.isFinite(units) && units > 0 ? 1 / units : 0;
     void this.actions.setExchangeRate(trip, code, eurPerUnit);
+  }
+
+  /** ISO instant a rate was last set, or undefined when never set/no timestamp. */
+  rateUpdatedAt(code: string): string | undefined {
+    return this.trip()?.exchangeRatesUpdatedAt?.[code];
+  }
+
+  /** "Updated today/yesterday/N days ago" for a rate with a known timestamp. */
+  rateAgeLabel(code: string): string {
+    const updatedAt = this.rateUpdatedAt(code);
+    return updatedAt ? formatRateAge(updatedAt) : '';
+  }
+
+  /** Full local date/time for a rate's timestamp (used as a `title` tooltip). */
+  rateUpdatedAtTitle(code: string): string {
+    const updatedAt = this.rateUpdatedAt(code);
+    return updatedAt ? new Date(updatedAt).toLocaleString() : '';
+  }
+
+  /**
+   * True when the rate is stale (older than a week) or its rate is set but
+   * its update date is unknown (legacy data, set before this field existed) —
+   * both are shown as a yellow warning.
+   */
+  rateIsStale(code: string): boolean {
+    if (!this.trip()?.exchangeRates?.[code]) return false;
+    const updatedAt = this.rateUpdatedAt(code);
+    return !updatedAt || isRateStale(updatedAt);
+  }
+
+  /** Fetch current EUR rates online for every currency in use on this trip. */
+  async refreshExchangeRates(): Promise<void> {
+    const trip = this.trip();
+    const codes = this.costSummary()?.currenciesInUse;
+    if (!trip || !codes?.length || this.refreshing()) return;
+    this.refreshing.set(true);
+    try {
+      await this.actions.refreshExchangeRates(trip, codes);
+    } finally {
+      this.refreshing.set(false);
+    }
   }
 
   /** Chronologically sorted flights; first = departure, last = return. */
