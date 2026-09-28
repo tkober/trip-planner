@@ -76,10 +76,17 @@ describe('ExchangeRateService', () => {
     expect(await promise).toEqual({ USD: 1 / 1.1403 });
   });
 
-  it('propagates HTTP errors', async () => {
+  it('returns {} when none of the codes is known (404)', async () => {
+    const promise = service.fetchEurRates(['VND']);
+    const req = httpMock.expectOne(`${FRANKFURTER_URL}?base=EUR&symbols=VND`);
+    req.flush({ message: 'not found' }, { status: 404, statusText: 'Not Found' });
+    expect(await promise).toEqual({});
+  });
+
+  it('propagates other HTTP errors', async () => {
     const promise = service.fetchEurRates(['JPY']);
     const req = httpMock.expectOne(`${FRANKFURTER_URL}?base=EUR&symbols=JPY`);
-    req.flush('not found', { status: 404, statusText: 'Not Found' });
+    req.flush('boom', { status: 500, statusText: 'Server Error' });
     await expect(promise).rejects.toBeTruthy();
   });
 });
