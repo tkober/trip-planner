@@ -14,6 +14,14 @@ html {
       density: 0,
     )
   );
+  // Tone 40 of the palette (#275fa0) is a shade lighter than the indigo the
+  // redesign calls for; pin the primary role itself to it. Containers and the
+  // other roles keep coming from the palette.
+  @include mat.theme-overrides(
+    (
+      primary: #24489a,
+    )
+  );
 
   // App colour tokens: a light, neutral surface palette plus one fixed accent
   // per transport mode / activity, consumed by the timeline, lists and cards
