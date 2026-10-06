@@ -32,6 +32,7 @@ import {
   carReservationColors,
 } from '../../shared/color/color';
 import { transportLabel } from '../../shared/transport-format';
+import { formatDay } from '../../shared/format/date-format';
 
 /** An entry that crosses a day boundary, anchored on the separator line. */
 interface StraddleItem {
@@ -622,7 +623,8 @@ export class TimelineView {
       ?? 'item';
     const confirmed = await this.actions.confirm({
       title: 'Move item?',
-      message: `Move "${label}" to ${targetDate}? Its time of day is kept.`,
+      message:
+        `Move "${label}" to ${formatDay(targetDate)}? Its time of day is kept.`,
       confirmLabel: 'Move',
     });
     if (!confirmed) return;

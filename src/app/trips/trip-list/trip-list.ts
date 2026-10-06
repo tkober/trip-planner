@@ -10,6 +10,7 @@ import { TripDto } from '../../models/trip.model';
 import { TripStore } from '../../services/trip-store';
 import { ImportExportService } from '../../services/import-export.service';
 import { TimeZoneService } from '../../services/time-zone.service';
+import { formatRange, zoneCity } from '../../shared/format/date-format';
 import {
   TripFormDialog,
   TripFormResult,
@@ -53,7 +54,12 @@ export class TripList {
   }
 
   dateRange(trip: TripDto): string {
-    return `${trip.startDate} → ${trip.endDate}`;
+    return formatRange(trip.startDate, trip.endDate);
+  }
+
+  /** City label for the destination-timezone chip, e.g. "Tokyo". */
+  destinationCity(trip: TripDto): string {
+    return zoneCity(trip.destinationTimeZone);
   }
 
   createTrip(): void {

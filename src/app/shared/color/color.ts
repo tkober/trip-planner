@@ -38,15 +38,21 @@ export const COLOR_PALETTE: PaletteColor[] = [
   { name: 'Brown', value: '#5d4037' },
 ];
 
-/** Default activity accent — deliberately NOT the flight blue. */
-export const ACTIVITY_COLOR = '#00838f';
+/**
+ * Default activity accent — deliberately NOT the flight blue. Matches the
+ * `--activity` app colour token in styles.scss.
+ */
+export const ACTIVITY_COLOR = '#0f7c7a';
 
-/** Per-transport-mode default colours. */
+/**
+ * Per-transport-mode default colours, matching the `--flight` / `--train` /
+ * `--bus` / `--car` app colour tokens in styles.scss.
+ */
 export const TRANSPORT_MODE_COLOR: Record<TransportMode, string> = {
-  flight: '#1565c0',
+  flight: '#1d5fbf',
   train: '#2e7d32',
-  bus: '#ef6c00',
-  car: '#6a1b9a',
+  bus: '#c05621',
+  car: '#7a45c9',
 };
 
 /** Distinct default tints accommodations cycle through (by storage order). */

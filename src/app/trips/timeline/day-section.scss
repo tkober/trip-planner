@@ -33,7 +33,7 @@
 
   .day-date {
     font-size: 0.8rem;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-ink-2);
     text-transform: uppercase;
   }
 
@@ -51,7 +51,7 @@
     font-weight: 700;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-ink-3);
 
     .zone-icon {
       font-size: 0.85rem;
@@ -95,7 +95,7 @@
 }
 
 .no-entries {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-ink-3);
   font-size: 0.85rem;
   font-style: italic;
   margin: 0;

@@ -1,4 +1,5 @@
 @use '@angular/material' as mat;
+@use './app/shared/palette';
 
 html {
   color-scheme: light;
@@ -6,13 +7,38 @@ html {
     (
       color: (
         theme-type: light,
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
+        primary: palette.$primary-palette,
+        tertiary: palette.$tertiary-palette,
       ),
       typography: Roboto,
       density: 0,
     )
   );
+  // Tone 40 of the palette (#275fa0) is a shade lighter than the indigo the
+  // redesign calls for; pin the primary role itself to it. Containers and the
+  // other roles keep coming from the palette.
+  @include mat.theme-overrides(
+    (
+      primary: #24489a,
+    )
+  );
+
+  // App colour tokens: a light, neutral surface palette plus one fixed accent
+  // per transport mode / activity, consumed by the timeline, lists and cards
+  // (see color.ts for the per-entity default logic). These don't yet drive
+  // `body`'s background (cards are still grey until a later redesign step).
+  --app-bg: #f4f6f9;
+  --app-surface: #ffffff;
+  --app-ink: #0f1720;
+  --app-ink-2: #44505f;
+  --app-ink-3: #66717f;
+  --app-line: #d6dce4;
+  --flight: #1d5fbf;
+  --train: #2e7d32;
+  --bus: #c05621;
+  --activity: #0f7c7a;
+  --car: #7a45c9;
+  --now: #d4373f;
 }
 
 html,

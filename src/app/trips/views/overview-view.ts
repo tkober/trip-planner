@@ -14,6 +14,7 @@ import {
   isRateStale,
   tripCostSummary,
 } from '../../shared/cost/cost';
+import { formatDate, zoneLabel } from '../../shared/format/date-format';
 
 /** Trip summary: dates, length, zones, description and the departure/return flights. */
 @Component({
@@ -56,6 +57,9 @@ export class OverviewView {
 
   /** Expose EUR formatting to the template. */
   protected readonly formatEur = formatEur;
+  /** Expose the date/zone format helpers to the template. */
+  protected readonly formatDate = formatDate;
+  protected readonly zoneLabel = zoneLabel;
 
   /** True while the online rate refresh is in flight (disables the button). */
   readonly refreshing = signal(false);

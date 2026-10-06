@@ -16,6 +16,7 @@ import {
 import { TimeZoneService } from '../../services/time-zone.service';
 import { transportLabel } from '../../shared/transport-format';
 import { formatMoney } from '../../shared/cost/cost';
+import { formatDate } from '../../shared/format/date-format';
 import { environment } from '../../../environments/environment';
 import {
   isReservable,
@@ -132,6 +133,9 @@ export class DetailsDialog {
   money(amount?: number, currency?: string): string {
     return amount != null ? formatMoney(amount, currency) : '';
   }
+
+  /** Expose the date formatter to the template. */
+  readonly date = formatDate;
 
   readonly heading = computed(() => {
     switch (this.data.kind) {

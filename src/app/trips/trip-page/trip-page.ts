@@ -13,6 +13,7 @@ import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { ExportHost } from '../export/export-host';
+import { formatRange, zoneLabel } from '../../shared/format/date-format';
 
 interface NavItem {
   path: string;
@@ -75,6 +76,10 @@ export class TripPage {
     const nights = Math.max(0, days - 1);
     return `${days} day${days === 1 ? '' : 's'} · ${nights} night${nights === 1 ? '' : 's'}`;
   });
+
+  /** Expose the format helpers to the template. */
+  protected readonly formatRange = formatRange;
+  protected readonly zoneLabel = zoneLabel;
 
   back(): void {
     void this.router.navigate(['/trips']);

@@ -14,11 +14,11 @@
     <div class="facts">
       <div class="fact">
         <span class="label">Start</span>
-        <span class="value">{{ t.startDate }}</span>
+        <span class="value">{{ formatDate(t.startDate) }}</span>
       </div>
       <div class="fact">
         <span class="label">End</span>
-        <span class="value">{{ t.endDate }}</span>
+        <span class="value">{{ formatDate(t.endDate) }}</span>
       </div>
       <div class="fact">
         <span class="label">Length</span>
@@ -26,11 +26,11 @@
       </div>
       <div class="fact">
         <span class="label">Destination time zone</span>
-        <span class="value">{{ t.destinationTimeZone }}</span>
+        <span class="value">{{ zoneLabel(t.destinationTimeZone) }}</span>
       </div>
       <div class="fact">
         <span class="label">Home time zone</span>
-        <span class="value">{{ t.homeTimeZone }}</span>
+        <span class="value">{{ zoneLabel(t.homeTimeZone) }}</span>
       </div>
       <div class="fact">
         <span class="label">Accommodations</span>

@@ -2,7 +2,7 @@
   <div class="timeline-capture">
     <header class="export-cover">
       <h1>{{ t.title }}</h1>
-      <p class="cover-dates">{{ t.startDate }} → {{ t.endDate }}</p>
+      <p class="cover-dates">{{ formatRange(t.startDate, t.endDate) }}</p>
       @if (anonymized()) {
         <p class="cover-anon">Shared copy — personal details redacted</p>
       }

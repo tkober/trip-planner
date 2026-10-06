@@ -5,6 +5,7 @@ import { OverviewView } from '../views/overview-view';
 import { AccommodationsView } from '../views/accommodations-view';
 import { CarReservationsView } from '../views/car-reservations-view';
 import { TransportView } from '../views/transport-view';
+import { formatRange } from '../../shared/format/date-format';
 
 /**
  * A self-contained, non-interactive render of a whole trip used for export.
@@ -31,4 +32,6 @@ export class TripExportDocument {
   readonly trip = input.required<TripDto>();
   /** When true, a "shared copy — details redacted" note is shown on the cover. */
   readonly anonymized = input(false);
+  /** Expose the range formatter to the template. */
+  protected readonly formatRange = formatRange;
 }

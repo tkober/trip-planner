@@ -62,7 +62,7 @@
           <p class="dates">{{ dateRange(trip) }}</p>
           <p class="meta">
             <span class="chip">{{ nights(trip) }} nights</span>
-            <span class="chip">{{ trip.destinationTimeZone }}</span>
+            <span class="chip">{{ destinationCity(trip) }}</span>
           </p>
           @if (trip.description) {
             <p class="desc">{{ trip.description }}</p>

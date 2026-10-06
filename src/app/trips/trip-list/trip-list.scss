@@ -41,7 +41,9 @@
   padding: 4rem 1rem;
   color: var(--mat-sys-on-surface-variant);
 
-  mat-icon {
+  // Scoped to the illustration icon only — a bare `mat-icon` also matched the
+  // "New trip" button's own icon below, blowing it up to 3rem.
+  > mat-icon {
     font-size: 3rem;
     width: 3rem;
     height: 3rem;
