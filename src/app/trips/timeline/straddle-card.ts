@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { TimelineEntry, TransportMode } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
+import { EditModeService } from '../../services/edit-mode.service';
 import { activityColor, transportColor } from '../../shared/color/color';
 import {
   transportFrom,
@@ -38,6 +39,7 @@ const MODE_ICON: Record<TransportMode, string> = {
 })
 export class StraddleCard {
   private readonly tz = inject(TimeZoneService);
+  readonly editMode = inject(EditModeService);
 
   readonly entry = input.required<TimelineEntry>();
   /** Grid line to anchor on (the separator between the two days). */
@@ -46,6 +48,7 @@ export class StraddleCard {
   readonly open = output<TimelineEntry>();
   readonly edit = output<TimelineEntry>();
   readonly delete = output<TimelineEntry>();
+  readonly move = output<TimelineEntry>();
 
   readonly gridRow = computed(() => `${this.rowLine()} / span 1`);
 

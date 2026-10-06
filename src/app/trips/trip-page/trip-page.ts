@@ -12,6 +12,7 @@ import { TripDto } from '../../models/trip.model';
 import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
+import { EditModeService } from '../../services/edit-mode.service';
 import { ExportHost } from '../export/export-host';
 import { formatRange, zoneLabel } from '../../shared/format/date-format';
 
@@ -49,6 +50,7 @@ export class TripPage {
   private readonly tz = inject(TimeZoneService);
   private readonly actions = inject(TripActionsService);
   private readonly router = inject(Router);
+  readonly editMode = inject(EditModeService);
 
   readonly loaded = this.store.loaded;
   readonly trip = computed<TripDto | undefined>(() =>

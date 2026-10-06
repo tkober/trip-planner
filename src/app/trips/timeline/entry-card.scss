@@ -185,6 +185,21 @@
   flex-shrink: 0;
 }
 
+// Mobile edit-mode only (see EntryCard.showHandle) — CDK drags from here
+// instead of the whole card, so a scroll gesture over the card body no longer
+// starts a drag by accident.
+.drag-handle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  min-height: 2.5rem;
+  touch-action: none;
+  color: var(--mat-sys-on-surface-variant);
+  cursor: grab;
+}
+
 // ---- Mobile ---------------------------------------------------------------
 // The content column is only ~200px wide here, which the horizontal three-block
 // route cannot survive (the fixed-width arrow alone overflowed it, squeezing

@@ -265,10 +265,14 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button matButton color="warn" (click)="close('delete')">
-    <mat-icon>delete</mat-icon> Delete
-  </button>
-  <button matButton="filled" color="primary" (click)="close('edit')">
-    <mat-icon>edit</mat-icon> Edit
-  </button>
+  @if (editMode.readOnly()) {
+    <button matButton="filled" color="primary" mat-dialog-close>Close</button>
+  } @else {
+    <button matButton color="warn" (click)="close('delete')">
+      <mat-icon>delete</mat-icon> Delete
+    </button>
+    <button matButton="filled" color="primary" (click)="close('edit')">
+      <mat-icon>edit</mat-icon> Edit
+    </button>
+  }
 </mat-dialog-actions>
