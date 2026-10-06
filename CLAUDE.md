@@ -150,6 +150,7 @@ Services (signal-backed, `providedIn: 'root'` unless noted):
 - [TimeZoneService](src/app/services/time-zone.service.ts) — Luxon helpers:
   `toDateTime`, `inZone`, `dualLabel` (highlights the entry's own zone), `enumerateDays`,
   `dayKeyInDestination` (buckets entries into days), `deviceZone`, `supportedZones`.
+  `zoneCity` delegates to [date-format.ts](src/app/shared/format/date-format.ts) (below).
 - [ImportExportService](src/app/services/import-export.service.ts) — JSON download +
   validated import (validates required fields, runs `migrateTrip()`, assigns a fresh id).
 - [TripActionsService](src/app/services/trip-actions.service.ts) — all dialog-driven
@@ -253,6 +254,27 @@ Reservations ([src/app/shared/reservation/reservation.ts](src/app/shared/reserva
 - Both the details dialog and the Reservations view call these and download via
   [download.ts](src/app/shared/download.ts) — no service, no store round-trip.
   The Reservations view is **not** part of the plan export document.
+
+Theming ([src/styles.scss](src/styles.scss) +
+[src/app/shared/_palette.scss](src/app/shared/_palette.scss)):
+- A light Material 3 theme (`mat.theme(...)`) driven by a hand-written custom
+  **primary palette** (indigo, not Material's stock `mat.$azure-palette`) so
+  `--mat-sys-primary` lands close to `#24489A`; `tertiary` uses its own palette kept
+  in the same blue/indigo family rather than the complementary hue M3 picks by
+  default. Both are full M3 tone-0–100 maps in the same shape as
+  `mat.$azure-palette` (see the file for how the primary seed was chosen — Material
+  always derives the light theme's primary role from a palette's *tone 40*, a fixed
+  lightness step, so an exact hex target isn't reachable, only the closest tone-40 match).
+- Separately, a small set of **app colour tokens** (`--app-bg`, `--app-surface`,
+  `--app-ink` / `-ink-2` / `-ink-3`, `--app-line`, plus one fixed accent per entity
+  type: `--flight` / `--train` / `--bus` / `--activity` / `--car` / `--now`) are
+  declared as CSS custom properties on `html`, next to the theme mixin. These aren't
+  yet wired into `body`'s background (cards are still grey, pending a later
+  redesign step) but the per-type colour **defaults** in `color.ts` already match
+  them, and the timeline's secondary/zone text (`.day-zone`, `.day-date`, the
+  virtual day marker, `.no-entries`, the `zone-tag`/GMT labels in entry/straddle/
+  transport cards and the details dialog) uses `--app-ink-2` / `--app-ink-3` instead
+  of a low-opacity variant token, so it stays readable against the light surfaces.
 
 Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoints.scss)):
 - Two **max-width-only** breakpoints, so the desktop presentation is untouched:
@@ -381,10 +403,26 @@ accent (kept distinct from the flight blue). Colour logic + the quick-pick palet
 picker (palette swatches + native colour input) is
 [ColorField](src/app/shared/color/color-field.ts), embedded in each entity
 dialog. Cards bind the resolved colour to a `--accent` CSS var; the hotel lane
-tints it light via `color-mix`.
+tints it light via `color-mix`. The per-mode/activity **defaults** above match the
+fixed `--flight` / `--train` / `--bus` / `--activity` / `--car` app colour tokens
+declared on `html` in [styles.scss](src/styles.scss) (see "Theming" below); the
+quick-pick palette and the accommodation/car tint cycles are independent and
+unaffected.
 
 Entries are bucketed into a day by their `start` converted to the **destination tz**
 date; entries outside the trip range are clamped to the first/last day.
+
+**Date / zone display formatting:** [date-format.ts](src/app/shared/format/date-format.ts)
+is the pure-function counterpart to `cost.ts` for dates — `formatDay` ("Thu, 9 Apr"),
+`formatDate` (same, with year), `formatRange` (a compact "3–18 Apr 2026" /
+"28 Mar – 3 Apr 2026" / "28 Dec 2026 – 3 Jan 2027" span, collapsing a same-day range to
+one date), `zoneCity` ("Asia/Tokyo" → "Tokyo") and `zoneLabel` ("Tokyo · GMT+9", offset
+via Luxon's `ZZZZ` format at a given moment or now). Every UI surface that renders a
+trip date or an IANA zone id (side panel, trip list, Overview, the details dialog,
+the plan-export cover, the timeline's "Move item?" confirm) goes through these instead
+of the raw ISO string; **forms** and the **JSON/Markdown export** keep the raw values
+unchanged. Components expose the needed helper(s) as `protected readonly` fields for
+templates to call, the same pattern `formatMoney` uses.
 
 ## Develop
 
