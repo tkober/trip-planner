@@ -8,6 +8,14 @@
   mat-icon {
     color: var(--mat-sys-primary);
   }
+
+  // The dialog opens with autoFocus: 'first-heading' on this title (so a
+  // phone doesn't scroll down to the first link), which is a programmatic
+  // focus, not a keyboard one — don't draw the browser's default focus
+  // outline box for it.
+  &:focus {
+    outline: none;
+  }
 }
 
 .details {
@@ -41,13 +49,13 @@
 }
 
 .secondary-time {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-ink-3);
   margin-left: 0.4rem;
 }
 
 .zone-tag {
   font-size: 0.72rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-ink-3);
 }
 
 .links {

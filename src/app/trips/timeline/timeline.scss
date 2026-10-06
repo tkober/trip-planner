@@ -37,6 +37,8 @@
 
 // Grayed pseudo-days for the international flights (home-tz departure/arrival
 // day). They mirror the day-section marker/content but sit directly in the grid.
+// Grayed out via colour (not opacity) so the labels stay readable at
+// `--app-ink-3` contrast rather than fading toward illegible.
 .day-marker.virtual {
   grid-column: 1 / 2;
   display: flex;
@@ -44,11 +46,11 @@
   padding: 0.75rem 0.75rem 0.75rem 0;
   border-top: 1px solid var(--mat-sys-outline-variant);
   border-right: 2px solid var(--mat-sys-outline-variant);
-  opacity: 0.5;
+  color: var(--app-ink-3);
 
   .day-date {
     font-size: 0.8rem;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-ink-3);
     text-transform: uppercase;
   }
 
@@ -66,7 +68,7 @@
     font-weight: 700;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-ink-3);
 
     .zone-icon {
       font-size: 0.85rem;
@@ -78,7 +80,7 @@
   .virtual-label {
     font-size: 0.78rem;
     font-weight: 600;
-    color: var(--mat-sys-primary);
+    color: var(--app-ink-3);
   }
 }
 
