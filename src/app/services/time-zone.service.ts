@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DateTime } from 'luxon';
 import { TripDto, ZonedTime } from '../models/trip.model';
+import { zoneCity } from '../shared/format/date-format';
 
 /** A single day of the trip, derived from the trip's date range. */
 export interface TripDay {
@@ -33,7 +34,7 @@ export class TimeZoneService {
 
   /** Friendly city name from an IANA id: "Asia/Tokyo" → "Tokyo". */
   zoneCity(zone: string): string {
-    return (zone.split('/').pop() ?? zone).replace(/_/g, ' ');
+    return zoneCity(zone);
   }
 
   /** All IANA zone ids supported by the runtime (for autocompletes). */
