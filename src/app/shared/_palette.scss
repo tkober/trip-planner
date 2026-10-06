@@ -1,0 +1,150 @@
+@use 'sass:map';
+
+// Custom M3 colour palettes (same shape as mat.$azure-palette /
+// mat.$blue-palette), so the app's primary role lands on a deep indigo
+// instead of Material's stock azure. Material always derives the light
+// theme's `--mat-sys-primary` from a palette's **tone 40** — a fixed
+// perceptual lightness step — while the brief's target #24489A has an
+// intrinsic HCT tone of ~32.6 (noticeably darker than 40). No seed can make
+// tone 40 equal that hex exactly, so the seed below (#0a4e8e) was chosen by
+// brute-forcing the closest tone-40 match in RGB space (~24 of 441 max
+// distance) via
+// `getColorPalettes('<hex>').primary.tone(40)` from
+// `@angular/material`'s own theme-color schematic (the same engine
+// `ng generate @angular/material:m3-theme` drives) — the generated tone 40 is
+// #275fa0, a close, slightly lighter cousin of #24489A. Tertiary uses its own
+// seed (#3a6bc4) picked to land in the same blue/indigo family rather than
+// the complementary purple the schematic defaults to, so accents read as one
+// consistent hue range with the primary.
+$_palettes: (
+  primary: (
+    0: #000000,
+    10: #001c3a,
+    20: #00315e,
+    25: #003c71,
+    30: #004785,
+    35: #155393,
+    40: #275fa0,
+    50: #4579bb,
+    60: #6093d7,
+    70: #7cadf3,
+    80: #a5c8ff,
+    90: #d4e3ff,
+    95: #ebf1ff,
+    98: #f9f9ff,
+    99: #fdfcff,
+    100: #ffffff,
+  ),
+  secondary: (
+    0: #000000,
+    10: #081c34,
+    20: #1f314a,
+    25: #2b3c55,
+    30: #364861,
+    35: #42536e,
+    40: #4e5f7a,
+    50: #677894,
+    60: #8092af,
+    70: #9aacca,
+    80: #b6c7e7,
+    90: #d4e3ff,
+    95: #ebf1ff,
+    98: #f9f9ff,
+    99: #fdfcff,
+    100: #ffffff,
+  ),
+  tertiary: (
+    0: #000000,
+    10: #001a43,
+    20: #002e6b,
+    25: #003880,
+    30: #004397,
+    35: #134fa7,
+    40: #275bb4,
+    50: #4575ce,
+    60: #618fea,
+    70: #82aaff,
+    80: #aec6ff,
+    90: #d8e2ff,
+    95: #edf0ff,
+    98: #faf9ff,
+    99: #fefbff,
+    100: #ffffff,
+  ),
+  neutral: (
+    0: #000000,
+    10: #191c20,
+    20: #2e3035,
+    25: #393b40,
+    30: #45474c,
+    35: #505257,
+    40: #5c5e63,
+    50: #75777c,
+    60: #8f9096,
+    70: #aaabb1,
+    80: #c5c6cc,
+    90: #e1e2e8,
+    95: #f0f0f6,
+    98: #f9f9ff,
+    99: #fdfcff,
+    100: #ffffff,
+    4: #0c0e12,
+    6: #111318,
+    12: #1d2024,
+    17: #282a2f,
+    22: #333539,
+    24: #37393e,
+    87: #d9dae0,
+    92: #e7e8ee,
+    94: #ededf3,
+    96: #f3f3f9,
+  ),
+  neutral-variant: (
+    0: #000000,
+    10: #171c24,
+    20: #2c3139,
+    25: #373c45,
+    30: #424750,
+    35: #4e535c,
+    40: #5a5e68,
+    50: #727781,
+    60: #8c919b,
+    70: #a7abb6,
+    80: #c2c6d2,
+    90: #dee2ee,
+    95: #ecf1fc,
+    98: #f9f9ff,
+    99: #fdfcff,
+    100: #ffffff,
+  ),
+  error: (
+    0: #000000,
+    10: #410002,
+    20: #690005,
+    25: #7e0007,
+    30: #93000a,
+    35: #a80710,
+    40: #ba1a1a,
+    50: #de3730,
+    60: #ff5449,
+    70: #ff897d,
+    80: #ffb4ab,
+    90: #ffdad6,
+    95: #ffedea,
+    98: #fff8f7,
+    99: #fffbff,
+    100: #ffffff,
+  ),
+);
+
+$_rest: (
+  secondary: map.get($_palettes, secondary),
+  neutral: map.get($_palettes, neutral),
+  neutral-variant: map.get($_palettes, neutral-variant),
+  error: map.get($_palettes, error),
+);
+
+// Full M3 palette maps, matching the shape `mat.theme()`'s `primary:` /
+// `tertiary:` options expect (same as mat.$azure-palette / mat.$blue-palette).
+$primary-palette: map.merge(map.get($_palettes, primary), $_rest);
+$tertiary-palette: map.merge(map.get($_palettes, tertiary), $_rest);
