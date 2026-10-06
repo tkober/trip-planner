@@ -1,10 +1,18 @@
-import { Component, input, output, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { CarReservationDto, TimelineEntry } from '../../models/trip.model';
 import { TripDay } from '../../services/time-zone.service';
+import { EditModeService } from '../../services/edit-mode.service';
 import { EntryCard } from './entry-card';
 
 /**
@@ -72,6 +80,8 @@ export interface DayView {
   styleUrl: './day-section.scss',
 })
 export class DaySection {
+  readonly editMode = inject(EditModeService);
+
   readonly view = input.required<DayView>();
   readonly destZone = input.required<string>();
   /** Short city label for the day's reference zone (e.g. "Tokyo"). */
@@ -86,6 +96,7 @@ export class DaySection {
   readonly openEntry = output<TimelineEntry>();
   readonly editEntry = output<TimelineEntry>();
   readonly deleteEntry = output<TimelineEntry>();
+  readonly moveEntry = output<TimelineEntry>();
   readonly openCar = output<CarReservationDto>();
   readonly dropped = output<CdkDragDrop<DayView>>();
 
@@ -94,8 +105,9 @@ export class DaySection {
   readonly menuX = signal(0);
   readonly menuY = signal(0);
 
-  /** Open the add-to-day menu anchored at the cursor. */
+  /** Open the add-to-day menu anchored at the cursor. Disabled in read mode. */
   openDayMenu(event: MouseEvent): void {
+    if (this.editMode.readOnly()) return;
     this.menuX.set(event.clientX);
     this.menuY.set(event.clientY);
     this.menuTrigger().openMenu();

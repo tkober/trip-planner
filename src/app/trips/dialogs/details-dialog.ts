@@ -14,6 +14,7 @@ import {
   ZonedTime,
 } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
+import { EditModeService } from '../../services/edit-mode.service';
 import { transportLabel } from '../../shared/transport-format';
 import { formatMoney } from '../../shared/cost/cost';
 import { environment } from '../../../environments/environment';
@@ -68,6 +69,7 @@ export class DetailsDialog {
   readonly data = inject<DetailsDialogData>(MAT_DIALOG_DATA);
   private readonly tz = inject(TimeZoneService);
   readonly dialogRef = inject(MatDialogRef<DetailsDialog, DetailsAction>);
+  readonly editMode = inject(EditModeService);
 
   readonly accommodation = this.data.accommodation;
   readonly carReservation = this.data.carReservation;

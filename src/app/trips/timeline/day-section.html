@@ -40,12 +40,15 @@
     @if (item.entry; as entry) {
       <app-entry-card
         cdkDrag
+        [cdkDragDisabled]="editMode.readOnly()"
+        [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
         [cdkDragData]="entry"
         [entry]="entry"
         [destZone]="destZone()"
         (open)="openEntry.emit($event)"
         (edit)="editEntry.emit($event)"
         (delete)="deleteEntry.emit($event)"
+        (move)="moveEntry.emit($event)"
       />
     } @else if (item.deadline; as d) {
       <button
@@ -71,20 +74,22 @@
       </button>
     }
   }
-  @if (!view().hasEntries) {
+  @if (!view().hasEntries && editMode.editing()) {
     <p class="no-entries">No activities or transport yet.</p>
   }
 
-  <button matButton class="add-btn" [matMenuTriggerFor]="addMenu">
-    <mat-icon>add</mat-icon>
-    Add
-  </button>
-  <mat-menu #addMenu="matMenu">
-    <button mat-menu-item (click)="addActivity.emit(view().day.date)">
-      <mat-icon>local_activity</mat-icon><span>Activity</span>
+  @if (editMode.editing()) {
+    <button matButton class="add-btn" [matMenuTriggerFor]="addMenu">
+      <mat-icon>add</mat-icon>
+      Add
     </button>
-    <button mat-menu-item (click)="addTransport.emit(view().day.date)">
-      <mat-icon>commute</mat-icon><span>Transport</span>
-    </button>
-  </mat-menu>
+    <mat-menu #addMenu="matMenu">
+      <button mat-menu-item (click)="addActivity.emit(view().day.date)">
+        <mat-icon>local_activity</mat-icon><span>Activity</span>
+      </button>
+      <button mat-menu-item (click)="addTransport.emit(view().day.date)">
+        <mat-icon>commute</mat-icon><span>Transport</span>
+      </button>
+    </mat-menu>
+  }
 </div>

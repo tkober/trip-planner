@@ -10,6 +10,7 @@ import {
 import { DateTime } from 'luxon';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -27,6 +28,8 @@ import { CarDeadline, DayItem, DaySection, DayView } from './day-section';
 import { HotelCell, HotelDayCell } from './hotel-cell';
 import { CarSpan } from './car-span';
 import { StraddleCard } from './straddle-card';
+import { MoveDayDialog, MoveDayDialogData } from './move-day-dialog';
+import { deltaDaysBetween, shiftZonedTime } from './entry-move';
 import {
   accommodationColors,
   carReservationColors,
@@ -94,6 +97,7 @@ export class TimelineView {
   private readonly tz = inject(TimeZoneService);
   private readonly actions = inject(TripActionsService);
   private readonly snack = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   readonly trip = computed<TripDto | undefined>(
     () => this.tripOverride() ?? this.store.trips().find((t) => t.id === this.id()),
@@ -601,20 +605,44 @@ export class TimelineView {
     return DateTime.fromISO(date).plus({ days: delta }).toISODate() ?? date;
   }
 
-  // --- Drag and drop between days ------------------------------------------
+  // --- Moving an entry to another day (drag-drop or the kebab dialog) ------
 
   async onEntryDropped(event: CdkDragDrop<DayView>): Promise<void> {
     if (event.previousContainer === event.container) return; // same-day, ignore
     const entry = event.item.data as TimelineEntry;
     const targetDate = event.container.data.day.date;
+    await this.moveEntryToDay(entry, targetDate);
+  }
+
+  /** "Move to another day…" from the kebab menu: pick a day, then move. */
+  moveEntry(entry: TimelineEntry): void {
+    const data: MoveDayDialogData = {
+      days: this.days(),
+      currentDate: this.tz.dayKeyLocal(entry.start),
+    };
+    this.dialog
+      .open(MoveDayDialog, { data })
+      .afterClosed()
+      .subscribe(async (targetDate?: string) => {
+        if (targetDate) await this.moveEntryToDay(entry, targetDate);
+      });
+  }
+
+  /**
+   * Shift an activity/transport entry to `targetDate` (its destination-tz
+   * day), keeping its time of day. Shared by drag-drop (`onEntryDropped`) and
+   * the "Move to another day…" dialog (`moveEntry`) so both go through the
+   * same confirm dialog, upsert and snackbar.
+   */
+  private async moveEntryToDay(
+    entry: TimelineEntry,
+    targetDate: string,
+  ): Promise<void> {
     const trip = this.trip();
     if (!trip) return;
 
     const currentKey = this.tz.dayKeyLocal(entry.start);
-    const deltaDays = Math.round(
-      DateTime.fromISO(targetDate).diff(DateTime.fromISO(currentKey), 'days')
-        .days,
-    );
+    const deltaDays = deltaDaysBetween(currentKey, targetDate);
     if (deltaDays === 0) return;
 
     const label = entry.activity?.title
@@ -630,28 +658,20 @@ export class TimelineView {
     if (entry.activity) {
       await this.store.upsertActivity(trip, {
         ...entry.activity,
-        start: this.shift(entry.activity.start, deltaDays),
+        start: shiftZonedTime(entry.activity.start, deltaDays),
         end: entry.activity.end
-          ? this.shift(entry.activity.end, deltaDays)
+          ? shiftZonedTime(entry.activity.end, deltaDays)
           : undefined,
       });
     } else if (entry.transport) {
       await this.store.upsertTransport(trip, {
         ...entry.transport,
-        start: this.shift(entry.transport.start, deltaDays),
+        start: shiftZonedTime(entry.transport.start, deltaDays),
         end: entry.transport.end
-          ? this.shift(entry.transport.end, deltaDays)
+          ? shiftZonedTime(entry.transport.end, deltaDays)
           : undefined,
       });
     }
     this.snack.open('Item moved', undefined, { duration: 2000 });
-  }
-
-  /** Shift a ZonedTime's wall-clock by N calendar days, keeping time & zone. */
-  private shift(zt: { dateTime: string; zone: string }, days: number) {
-    const next = DateTime.fromISO(zt.dateTime)
-      .plus({ days })
-      .toFormat("yyyy-MM-dd'T'HH:mm");
-    return { dateTime: next, zone: zt.zone };
   }
 }

@@ -1,9 +1,11 @@
 import { Component, computed, inject, input, output } from '@angular/core';
+import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { TimelineEntry, TransportMode } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
+import { EditModeService } from '../../services/edit-mode.service';
 import { activityColor, transportColor } from '../../shared/color/color';
 import {
   transportFrom,
@@ -22,7 +24,7 @@ const MODE_ICON: Record<TransportMode, string> = {
 /** A single activity or transport entry within a day column. */
 @Component({
   selector: 'app-entry-card',
-  imports: [MatIconModule, MatButtonModule, MatMenuModule],
+  imports: [MatIconModule, MatButtonModule, MatMenuModule, CdkDragHandle],
   host: {
     // Transport gets extra room below so the following entry reads as detached.
     '[class.is-transport]': "entry().kind === 'transport'",
@@ -78,21 +80,35 @@ const MODE_ICON: Record<TransportMode, string> = {
           }
         </div>
       }
-      <button
-        matIconButton
-        class="entry-menu"
-        [matMenuTriggerFor]="menu"
-        (click)="$event.stopPropagation()"
-        aria-label="Entry actions"
-      >
-        <mat-icon>more_vert</mat-icon>
-      </button>
+      @if (showHandle()) {
+        <div
+          class="drag-handle"
+          cdkDragHandle
+          (click)="$event.stopPropagation()"
+        >
+          <mat-icon>drag_indicator</mat-icon>
+        </div>
+      }
+      @if (!editMode.readOnly()) {
+        <button
+          matIconButton
+          class="entry-menu"
+          [matMenuTriggerFor]="menu"
+          (click)="$event.stopPropagation()"
+          aria-label="Entry actions"
+        >
+          <mat-icon>more_vert</mat-icon>
+        </button>
+      }
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="open.emit(entry())">
           <mat-icon>info</mat-icon><span>Details</span>
         </button>
         <button mat-menu-item (click)="edit.emit(entry())">
           <mat-icon>edit</mat-icon><span>Edit</span>
+        </button>
+        <button mat-menu-item (click)="move.emit(entry())">
+          <mat-icon>event</mat-icon><span>Move to another day…</span>
         </button>
         <button mat-menu-item (click)="delete.emit(entry())">
           <mat-icon>delete</mat-icon><span>Delete</span>
@@ -104,12 +120,24 @@ const MODE_ICON: Record<TransportMode, string> = {
 })
 export class EntryCard {
   private readonly tz = inject(TimeZoneService);
+  readonly editMode = inject(EditModeService);
 
   readonly entry = input.required<TimelineEntry>();
   readonly destZone = input.required<string>();
   readonly open = output<TimelineEntry>();
   readonly edit = output<TimelineEntry>();
   readonly delete = output<TimelineEntry>();
+  readonly move = output<TimelineEntry>();
+
+  /**
+   * The drag handle only renders in mobile edit mode. On desktop the whole
+   * card must stay draggable exactly as before — CDK only drags from a
+   * handle once any handle exists, so the handle must not even be in the
+   * DOM there.
+   */
+  readonly showHandle = computed(
+    () => this.editMode.isMobile() && this.editMode.editing(),
+  );
 
   readonly icon = computed(() => {
     const e = this.entry();

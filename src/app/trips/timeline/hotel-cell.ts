@@ -1,5 +1,6 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { AccommodationDto } from '../../models/trip.model';
+import { EditModeService } from '../../services/edit-mode.service';
 
 /** One half (morning or night) of a day's hotel cell. */
 export interface HotelHalf {
@@ -55,6 +56,8 @@ export interface HotelDayCell {
   styleUrl: './hotel-cell.scss',
 })
 export class HotelCell {
+  private readonly editMode = inject(EditModeService);
+
   /** 1-based grid row line for this day. */
   readonly rowIndex = input.required<number>();
   readonly top = input<HotelHalf | undefined>();
@@ -82,6 +85,9 @@ export class HotelCell {
     event: MouseEvent,
   ): void {
     if (!half) return;
+    // On phones a long-press fires contextmenu; in read mode the lane menu
+    // must not open (only preventDefault when we actually emit).
+    if (this.editMode.readOnly()) return;
     event.preventDefault();
     this.context.emit({
       event,

@@ -91,6 +91,18 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
 - **Mobile layout**: every surface is usable on a phone (no horizontal
   overflow, no text ellipsed down to a single letter). Desktop is unchanged —
   all mobile rules live behind max-width breakpoints. See "Responsive layout".
+- **Mobile read/edit mode**: on phones the timeline opens **read-only** so
+  scrolling can no longer start an accidental drag — the Add button/menu, the
+  day-marker menu and every kebab are hidden, and drag is disabled. A pill
+  toggle next to the trip-page back button ("Read" / amber "Editing") and a
+  sticky banner above the active section ("Edit mode · drag by the handle" +
+  "Done") switch into **editing**, where cards grow a dedicated drag handle
+  (CDK only drags from a handle once one exists) and every affordance
+  reappears. The chosen mode persists across reloads (`localStorage`) until
+  the user taps "Done" — there's no auto-lock. Desktop is always editing, so
+  this never changes desktop behaviour. See `EditModeService`. A "Move to
+  another day…" kebab item (desktop and mobile-edit) offers the same move as
+  drag-drop via a small day-picker dialog.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -156,6 +168,13 @@ Services (signal-backed, `providedIn: 'root'` unless noted):
   trip mutations (edit trip, add/edit/delete + open-details for accommodation/
   car-reservation/activity/transport, the `confirm` helper, JSON export). Shared by
   every view so there's one implementation; each method takes the current trip explicitly.
+- [EditModeService](src/app/services/edit-mode.service.ts) — the mobile
+  read/edit mode (see "Mobile read/edit mode" above): `isMobile` tracks the
+  `$mobile` breakpoint via `matchMedia`, `editing`/`readOnly` are computed
+  (`!isMobile() || mobileEditing()` — desktop is always editing), and
+  `startEditing`/`stopEditing` persist the mobile choice to `localStorage`.
+  Injected directly by the timeline components and `DetailsDialog` that need
+  to hide editing affordances in read mode.
 
 Timeline composition:
 - [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid; computes

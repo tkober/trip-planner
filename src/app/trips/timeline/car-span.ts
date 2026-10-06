@@ -1,6 +1,7 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { CarReservationDto } from '../../models/trip.model';
+import { EditModeService } from '../../services/edit-mode.service';
 
 /**
  * One car reservation as a continuous block in the car lane (between the hotel
@@ -32,6 +33,8 @@ import { CarReservationDto } from '../../models/trip.model';
   styleUrl: './car-span.scss',
 })
 export class CarSpan {
+  private readonly editMode = inject(EditModeService);
+
   readonly reservation = input.required<CarReservationDto>();
   /** CSS grid-row span, e.g. "2 / 5". */
   readonly gridRow = input.required<string>();
@@ -50,6 +53,9 @@ export class CarSpan {
   }>();
 
   onContext(event: MouseEvent): void {
+    // On phones a long-press fires contextmenu; in read mode the lane menu
+    // must not open (only preventDefault when we actually emit).
+    if (this.editMode.readOnly()) return;
     event.preventDefault();
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
     const side = event.clientY < rect.top + rect.height / 2 ? 'start' : 'end';
