@@ -30,9 +30,9 @@
 
       <div class="trip-meta">
         <h1>{{ t.title }}</h1>
-        <p class="dates">{{ t.startDate }} → {{ t.endDate }}</p>
+        <p class="dates">{{ formatRange(t.startDate, t.endDate) }}</p>
         <p class="length">{{ lengthLabel() }}</p>
-        <p class="zone">{{ t.destinationTimeZone }}</p>
+        <p class="zone">{{ zoneLabel(t.destinationTimeZone) }}</p>
       </div>
 
       <nav class="section-nav">

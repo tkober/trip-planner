@@ -28,9 +28,9 @@
 
     @if (accommodation; as a) {
       <dt>Check-in</dt>
-      <dd>{{ a.checkInDate }}</dd>
+      <dd>{{ date(a.checkInDate) }}</dd>
       <dt>Check-out</dt>
-      <dd>{{ a.checkOutDate }}</dd>
+      <dd>{{ date(a.checkOutDate) }}</dd>
       @if (a.fullName) {
         <dt>Full name</dt>
         <dd>{{ a.fullName }}</dd>
@@ -48,14 +48,14 @@
     @if (carReservation; as c) {
       <dt>Pickup</dt>
       <dd>
-        {{ c.pickupDate }}{{ c.pickupTime ? ' · ' + c.pickupTime : '' }}
+        {{ date(c.pickupDate) }}{{ c.pickupTime ? ' · ' + c.pickupTime : '' }}
         @if (c.pickupLocation) {
           <span class="secondary-time">— {{ c.pickupLocation }}</span>
         }
       </dd>
       <dt>Return</dt>
       <dd>
-        {{ c.dropoffDate }}{{ c.dropoffTime ? ' · ' + c.dropoffTime : '' }}
+        {{ date(c.dropoffDate) }}{{ c.dropoffTime ? ' · ' + c.dropoffTime : '' }}
         @if (c.dropoffLocation) {
           <span class="secondary-time">— {{ c.dropoffLocation }}</span>
         }
@@ -202,11 +202,11 @@
       }
       @if (c.paymentDate) {
         <dt>Payment date</dt>
-        <dd>{{ c.paymentDate }}</dd>
+        <dd>{{ date(c.paymentDate) }}</dd>
       }
       @if (c.freeCancellationUntil) {
         <dt>Free cancellation until</dt>
-        <dd>{{ c.freeCancellationUntil }}</dd>
+        <dd>{{ date(c.freeCancellationUntil) }}</dd>
       }
     }
   </dl>

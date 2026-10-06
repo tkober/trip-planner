@@ -1,5 +1,4 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { DateTime } from 'luxon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -9,6 +8,7 @@ import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { carReservationColors } from '../../shared/color/color';
 import { formatMoney } from '../../shared/cost/cost';
+import { formatDate } from '../../shared/format/date-format';
 
 interface CarReservationRow {
   car: CarReservationDto;
@@ -57,10 +57,12 @@ export class CarReservationsView {
   });
 
   private formatStamp(date: string, time?: string): string {
-    const dt = DateTime.fromISO(date);
-    const dateStr = dt.isValid ? dt.toFormat('ccc, d LLL yyyy') : date;
+    const dateStr = formatDate(date);
     return time ? `${dateStr} · ${time}` : dateStr;
   }
+
+  /** Expose the date formatter to the template. */
+  protected readonly formatDate = formatDate;
 
   /** Format an optional amount in its currency, or '' when unset. */
   money(amount?: number, currency?: string): string {

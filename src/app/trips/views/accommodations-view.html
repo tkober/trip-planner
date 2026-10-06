@@ -39,11 +39,11 @@
               }
               @if (row.accommodation.paymentDate) {
                 <dt>Payment date</dt>
-                <dd>{{ row.accommodation.paymentDate }}</dd>
+                <dd>{{ formatDate(row.accommodation.paymentDate) }}</dd>
               }
               @if (row.accommodation.freeCancellationUntil) {
                 <dt>Free cancellation until</dt>
-                <dd>{{ row.accommodation.freeCancellationUntil }}</dd>
+                <dd>{{ formatDate(row.accommodation.freeCancellationUntil) }}</dd>
               }
             </dl>
             <div class="links">

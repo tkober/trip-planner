@@ -41,11 +41,11 @@
               }
               @if (row.car.paymentDate) {
                 <dt>Payment date</dt>
-                <dd>{{ row.car.paymentDate }}</dd>
+                <dd>{{ formatDate(row.car.paymentDate) }}</dd>
               }
               @if (row.car.freeCancellationUntil) {
                 <dt>Free cancellation until</dt>
-                <dd>{{ row.car.freeCancellationUntil }}</dd>
+                <dd>{{ formatDate(row.car.freeCancellationUntil) }}</dd>
               }
               @if (row.car.bookingReference) {
                 <dt>Booking ref.</dt>
