@@ -434,8 +434,8 @@ export class TimelineView {
 
     // R5: the mode of a day-crossing transport that *starts* on a given day
     // index, so a night with no stay of its own can explain itself ("Night
-    // on the overnight bus"). Only real (non-boundary) transport straddles
-    // matter here — the leading/trailing legs straddle a virtual day instead.
+    // on the overnight bus"). Real transport straddles, plus the trailing
+    // boundary leg for the last day (see below).
     const straddleModeByIndex = new Map<number, TransportMode>();
 
     // R6: extra per-day items a day-crossing entry contributes besides its
@@ -615,6 +615,11 @@ export class TimelineView {
         bottomRefZone: trailingLeg.end!.zone,
       });
       padBottom.add(days.length - 1); // last real day makes room above the card
+      // The last day's header reads "→ In transit" rather than "No stay
+      // booked": you leave on the trailing flight, not without a hotel.
+      if (!straddleModeByIndex.has(days.length - 1)) {
+        straddleModeByIndex.set(days.length - 1, trailingLeg.mode);
+      }
       const dt = this.tz.toDateTime(trailingLeg.end!);
       const legEntry: TimelineEntry = {
         kind: 'transport',
