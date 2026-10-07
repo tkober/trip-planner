@@ -197,6 +197,17 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   style. The trip pages now show the cards against a `--app-bg` page
   background. Purely presentational — no data/behaviour change. See "Theming"
   below and each card's own bullet.
+- **Details redesign (R8)**: the flat label/value **details dialog** is now a
+  structured view shared by a desktop `MatDialog` and a phone `MatBottomSheet` —
+  header (R7 icon tile, title, a one-line subtitle, the reservation status
+  chip, a Delete kebab), up to a few quick-action tiles (Open in Maps, Open
+  booking, Copy reference, the .ics reminder), a per-type "when/where" block,
+  secondary links (smartEX/Jorudan, car station pages), and grouped facts
+  (Details, Reservation, Notes/Remarks, Cost, Address — only non-empty groups
+  render). "Edit" is the one primary footer action; "Delete" moved into the
+  header's kebab; both are gated by `EditModeService.editing()` (desktop:
+  always), so a phone in read mode shows neither, just a "Close" button. See
+  "Dialogs" below.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -654,11 +665,75 @@ Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoint
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,
-activity, transport, a shared read-only **details** dialog (Edit/Delete actions), and
-a generic **confirm** dialog. The details dialog opens with focus on its title
-(`autoFocus: 'first-heading'` in `TripActionsService`), so a phone does not
-scroll it down to the first link. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`,
+activity, transport, a shared read-only **details** view, and a generic
+**confirm** dialog. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`,
 `DateField`, `SuggestField` (free-text autocomplete used for the train/bus kind).
+
+- **Details (R8: bottom sheet + quick actions)**: the details view is split
+  into a presentation component and two thin hosts, so the desktop dialog and
+  the phone sheet render identically. [DetailsContent](src/app/trips/dialogs/details-content.ts)
+  holds all the layout/logic and takes a `DetailsDialogData` input (`kind`,
+  `homeZone`/`destinationZone`, the resolved `accent` colour, and whichever one
+  of `accommodation`/`carReservation`/`activity`/`transport` is present) plus
+  `action`/`closed` outputs — it knows nothing about `MatDialog` or
+  `MatBottomSheet`. [DetailsDialog](src/app/trips/dialogs/details-dialog.ts)
+  (desktop) and [DetailsSheet](src/app/trips/dialogs/details-sheet.ts) (phones,
+  plus a decorative drag-handle bar `MatBottomSheet` doesn't draw on its own)
+  each just inject their own data token/ref, forward it to `DetailsContent`,
+  and close themselves on `action`/`closed` — both resolve to the same
+  `DetailsAction | undefined` (`dialogRef.close()` / `sheetRef.dismiss()`).
+  [TripActionsService](src/app/services/trip-actions.service.ts)'s private
+  `openDetails()` picks the host by `EditModeService.isMobile()` (same `$mobile`
+  breakpoint as the rest of the app) and returns `afterClosed()`/
+  `afterDismissed()` uniformly, so `openAccommodation`/`openCarReservation`/
+  `openEntry` didn't need their subscribe logic touched — they also now resolve
+  each entity's accent colour (`accommodationColors`/`carReservationColors`/
+  `activityColor`/`transportColor` from `color.ts`) into the data, since the
+  dialog has no trip-wide list to derive the storage-order default from itself.
+  Both hosts keep `autoFocus: 'first-heading'` (on `DetailsContent`'s own
+  `<h2>`, `outline: none` since it's a programmatic, not keyboard, focus); the
+  sheet additionally gets `panelClass: 'details-sheet-panel'` (22px rounded top
+  corners, `max-height: 85vh` — the global rule lives in
+  [styles.scss](src/styles.scss) since the CDK overlay panel is a DOM sibling of
+  the app root, not a `DetailsSheet`-scoped element).
+  - **Layout**, same shape for every entity type: a header (R7 icon tile in the
+    entity's accent, the heading — for transport the route `FROM → TO`, shown
+    once — a one-line subtitle, the reservation status chip, and — only when
+    `EditModeService.editing()` — a kebab menu holding **Delete**); up to a
+    few **quick-action tiles** (Open in Maps — car rentals get a separate
+    pickup/return tile each; Open booking; Copy reference, via
+    `navigator.clipboard.writeText` + a "Reference copied" snackbar, falling
+    back to a snackbar showing the raw reference when the clipboard API is
+    unavailable/denied; the reservable-train .ics reminder — each only when its
+    data exists); a per-type **"when/where" block** (transport: two dual-zone
+    legs with a dashed connector carrying the duration + line/kind; activity:
+    start–end + location; accommodation: check-in/check-out + nights; car:
+    pickup/return date+time+station); **secondary links** (smartEX + the
+    Jorudan timetable search, the car's pickup/return station pages); and
+    **grouped facts** — Details (the mode-specific facts: terminals, platforms,
+    train name, airline, …; route and mode itself are gone, since the header
+    already carries them), Reservation (the existing dual-zone "Booking opens"
+    row), Notes/Remarks, Cost (the existing `CostInfo` rows), Address — each
+    group only rendered when it has rows. The footer is just **Edit**
+    (primary, filled) when editing, or a plain **Close** button in mobile read
+    mode — Delete lives in the header kebab now, both gated by the same
+    `editing()` check (desktop is always editing).
+  - Everything above the Angular wiring is **pure, unit-tested** helpers in
+    [details-view.logic.ts](src/app/trips/dialogs/details-view.logic.ts) (no DI):
+    `detailsHeading`/`detailsIcon`/`detailsSubtitle`, `quickActionsFor`,
+    `secondaryLinksFor`, `detailFactsGroup`/`notesGroup`/`addressGroup`/
+    `costGroup`, and `zonedMoment` (the dual-zone "11:12 GMT+9 … Thu, 9 Apr ·
+    04:12 in Berlin" formatting, self-contained — it re-derives the same
+    "own zone is primary, the other trip zone is secondary" rule
+    `TimeZoneService.dualLabel` uses, but also resolves the secondary zone's
+    *own* date, since a zone crossing can shift it, and names the city). The
+    shared `DetailsDialogData`/`DetailsKind`/`DetailsAction` types live in
+    [details-types.ts](src/app/trips/dialogs/details-types.ts) so the logic
+    module and all three components can import them without a cycle.
+  - Mobile-only CSS in [details-content.scss](src/app/trips/dialogs/details-content.scss)
+    stacks the transport leg-row (desktop: `[leg][connector][leg]` in one row)
+    into `[leg]` / `[connector]` / `[leg]` — the same reflow `TransportCard`
+    does — since the three-column grid has no room on a phone-width sheet.
 
 ## Data Model
 
