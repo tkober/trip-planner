@@ -7,7 +7,30 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
 ## Status
 
 **Implemented (v1):**
-- Multi-trip dashboard: create, open, import, export, delete trips.
+- **Multi-trip dashboard (R11)**: create, open, import, export, delete trips.
+  Trips are split into **current** (running today) / **upcoming** (not
+  started) / **past** (already ended) by the pure, unit-tested
+  [trip-status.ts](src/app/shared/format/trip-status.ts) `classifyTrips`
+  (today resolved per-trip in its own **destination** zone, same rule as
+  `tripContextLabel`). A single **hero card** sits above the grid: the
+  running trip (the one that started last, if several) — title,
+  `tripContextLabel`, date range, destination city, and, while a trip is
+  running, the **next entry today** (title/route + time, the first
+  activity/transport starting after now on today's destination-tz date, via
+  the pure [next-entry.ts](src/app/shared/format/next-entry.ts)
+  `nextEntryToday`; transport's label comes from the existing
+  `transport-format.ts` `transportLabel`) — or else the soonest upcoming trip
+  ("Starts in 12 days" / "Starts tomorrow"), range, city; no hero when there's
+  neither. It's an R7 card surface sized up a bit with an indigo top border
+  and an uppercase "Now travelling" / "Next trip" eyebrow, still carrying the
+  usual Export JSON / Delete kebab; tapping it opens the trip's timeline
+  (auto-scrolls to today, R4). Every other trip renders as the existing
+  compact card (title, `formatRange`, nights/city chips, description excerpt,
+  entity counts) below the hero, upcoming first, then **past trips** under a
+  small "Past trips" label, muted (`--app-ink-2` text, no hover lift) but
+  still clickable. `ClockService` drives "now" so the hero and grouping
+  refresh on its 60s tick without any dashboard-specific timer. See
+  [TripList](src/app/trips/trip-list/trip-list.ts).
 - Trip timeline rendered as a **CSS grid** (one row per day, "Day N" + date in the
   destination tz). Each day marker also shows the **reference city** (the tz the day
   is expressed in, e.g. "Tokyo"). The international flights at the trip's edges get a
