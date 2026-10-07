@@ -103,6 +103,13 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   this never changes desktop behaviour. See `EditModeService`. A "Move to
   another day…" kebab item (desktop and mobile-edit) offers the same move as
   drag-drop via a small day-picker dialog.
+- **Mobile app frame**: on phones the trip shell's side panel is replaced by
+  a sticky app bar (back, title + a "Day 7 of 16 · Thu, 9 Apr" / "Starts in
+  N days" / date-range context line, the Read/Editing toggle, the trip
+  actions kebab) and a fixed bottom nav (Timeline / Overview / Stays /
+  Transport / More) so every section and the R1 edit-mode toggle stay
+  reachable without scrolling back to the top. Desktop is unchanged. See
+  "Responsive layout" below.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -125,7 +132,12 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
 - `/trips` → [TripList](src/app/trips/trip-list/trip-list.ts) (dashboard).
 - `/trips/:id` → [TripPage](src/app/trips/trip-page/trip-page.ts) — the trip shell:
   a fixed left **side panel** (back button, trip name + compact details, section
-  nav, trip-actions menu) plus a `<router-outlet>` for the active section. It has
+  nav, trip-actions menu) plus a `<router-outlet>` for the active section. On
+  mobile the side panel is replaced outright by a **sticky app bar** (back,
+  title + a `tripContextLabel` subtitle, the R1 Read/Editing toggle, the same
+  trip-actions kebab menu) and a **fixed bottom nav** (Timeline / Overview /
+  Stays / Transport / a "More" `mat-menu` for Car rentals, Reservations, and
+  the remaining kebab items) — see "Responsive layout" below. It has
   six child routes (deep-linkable), defaulting to `timeline`:
   - `timeline` → [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid.
   - `overview` → [OverviewView](src/app/trips/views/overview-view.ts) — trip facts
@@ -277,13 +289,13 @@ Reservations ([src/app/shared/reservation/reservation.ts](src/app/shared/reserva
 Theming ([src/styles.scss](src/styles.scss) +
 [src/app/shared/_palette.scss](src/app/shared/_palette.scss)):
 - A light Material 3 theme (`mat.theme(...)`) driven by a hand-written custom
-  **primary palette** (indigo, not Material's stock `mat.$azure-palette`) so
-  `--mat-sys-primary` lands close to `#24489A`; `tertiary` uses its own palette kept
-  in the same blue/indigo family rather than the complementary hue M3 picks by
-  default. Both are full M3 tone-0–100 maps in the same shape as
-  `mat.$azure-palette` (see the file for how the primary seed was chosen — Material
-  always derives the light theme's primary role from a palette's *tone 40*, a fixed
-  lightness step, so an exact hex target isn't reachable, only the closest tone-40 match).
+  **primary palette** (indigo, not Material's stock `mat.$azure-palette`);
+  `tertiary` uses its own palette kept in the same blue/indigo family rather than
+  the complementary hue M3 picks by default. Both are full M3 tone-0–100 maps in the
+  same shape as `mat.$azure-palette`. Material derives the light theme's primary role
+  from a palette's *tone 40* (`#275fa0` here, a shade lighter than the design's
+  indigo), so `mat.theme-overrides` pins `--mat-sys-primary` itself to `#24489A`;
+  containers and the other roles still come from the palette.
 - Separately, a small set of **app colour tokens** (`--app-bg`, `--app-surface`,
   `--app-ink` / `-ink-2` / `-ink-3`, `--app-line`, plus one fixed accent per entity
   type: `--flight` / `--train` / `--bus` / `--activity` / `--car` / `--now`) are
@@ -320,6 +332,37 @@ Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoint
   PNG from a phone would bake the mobile layout into it. Surfaces the export
   never renders (trip shell, dashboard) skip the mixins and use
   `@media (max-width: bp.$mobile)` with the same variables.
+- **Mobile app frame** ([TripPage](src/app/trips/trip-page/trip-page.ts), R3):
+  below `$mobile` the `.side-panel` is hidden outright (`display: none`) and
+  `trip-page.html` instead renders a sticky app bar + a fixed bottom nav,
+  both guarded by `editMode.isMobile()` so neither ever reaches the desktop
+  DOM. The app bar (`.mobile-sticky-stack`, `position: sticky; top: 0`) carries
+  back / title + subtitle / the R1 Read-Editing toggle / the trip-actions
+  kebab — the kebab's `mat-menu` is the **same** `#tripMenu` instance the
+  (now mobile-only) side-panel button used to trigger, just triggered from a
+  second button, so the dialog-opening logic isn't duplicated. The R1 amber
+  edit banner renders as a sibling inside that same sticky block, so it
+  stacks directly under the app bar rather than needing a computed offset.
+  The subtitle is `tripContextLabel(trip, now)` in
+  [trip-context.ts](src/app/shared/format/trip-context.ts) — a pure function
+  ("Day 7 of 16 · Thu, 9 Apr" / "Starts in N days" / the date range after the
+  trip), resolving "today" in the trip's **destination** zone via Luxon
+  `setZone`, not the device's. A commented, empty `.bar-day-strip` div sits
+  below the title row for R4's horizontal day strip. The bottom nav
+  (`position: fixed; bottom: 0`) has five columns — Timeline / Overview /
+  Stays / Transport / a **More** `mat-menu` (Car rentals, Reservations, then
+  the same Export plan / Export JSON / Edit trip handlers as the kebab) —
+  `routerLinkActive` drives the active pill except for More, whose active
+  state is a `computed` over `Router.events` (active on `car-reservations` /
+  `reservations`, the two routes it alone links to). Both bars repeat the
+  `@media print { display: none }` guard the R1 banner uses, on top of
+  already being inside `.trip-layout` (hidden during plan export/print, see
+  "Plan export" above) belt-and-braces. The mobile `.trip-layout` rule uses
+  `grid-template-columns: minmax(0, 1fr)`, not a bare `1fr` — an `fr` track's
+  implicit minimum is `auto` (its widest child's min-content width), so
+  without the explicit floor one non-wrapping row (e.g. a deadline-pill
+  button) would blow the shared single-column track — and every other row in
+  it — out past the viewport.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,

@@ -5,27 +5,6 @@
         <button matIconButton (click)="back()" aria-label="Back to trips">
           <mat-icon>arrow_back</mat-icon>
         </button>
-        @if (editMode.isMobile()) {
-          @if (editMode.readOnly()) {
-            <button
-              type="button"
-              class="edit-mode-toggle"
-              (click)="editMode.startEditing()"
-            >
-              <mat-icon>lock</mat-icon>
-              Read
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="edit-mode-toggle editing"
-              (click)="editMode.stopEditing()"
-            >
-              <mat-icon>edit</mat-icon>
-              Editing
-            </button>
-          }
-        }
         <button
           matIconButton
           [matMenuTriggerFor]="tripMenu"
@@ -33,20 +12,6 @@
         >
           <mat-icon>more_vert</mat-icon>
         </button>
-        <mat-menu #tripMenu="matMenu">
-          <button mat-menu-item (click)="editTrip()">
-            <mat-icon>edit</mat-icon><span>Edit trip</span>
-          </button>
-          <button mat-menu-item (click)="addAccommodation()">
-            <mat-icon>hotel</mat-icon><span>Add accommodation</span>
-          </button>
-          <button mat-menu-item (click)="exportPlan()">
-            <mat-icon>ios_share</mat-icon><span>Export plan…</span>
-          </button>
-          <button mat-menu-item (click)="exportTrip()">
-            <mat-icon>download</mat-icon><span>Export JSON</span>
-          </button>
-        </mat-menu>
       </div>
 
       <div class="trip-meta">
@@ -70,15 +35,137 @@
       </nav>
     </aside>
 
+    <!-- Mobile-only app bar, replacing the side panel (see trip-page.scss). -->
+    @if (editMode.isMobile()) {
+      <div class="mobile-sticky-stack">
+        <header class="mobile-app-bar">
+          <div class="bar-row">
+            <button matIconButton (click)="back()" aria-label="Back to trips">
+              <mat-icon>arrow_back</mat-icon>
+            </button>
+
+            <div class="bar-title">
+              <span class="bar-trip-title">{{ t.title }}</span>
+              <span class="bar-context">{{ contextLabel() }}</span>
+            </div>
+
+            @if (editMode.readOnly()) {
+              <button
+                type="button"
+                class="edit-mode-toggle"
+                (click)="editMode.startEditing()"
+              >
+                <mat-icon>lock</mat-icon>
+                Read
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="edit-mode-toggle editing"
+                (click)="editMode.stopEditing()"
+              >
+                <mat-icon>edit</mat-icon>
+                Editing
+              </button>
+            }
+
+            <button
+              matIconButton
+              [matMenuTriggerFor]="tripMenu"
+              aria-label="Trip actions"
+            >
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </div>
+
+          <!-- R4 slot: a horizontal day strip will render here. Intentionally
+               empty for now — no visual output until that redesign step. -->
+          <div class="bar-day-strip" aria-hidden="true"></div>
+        </header>
+
+        @if (editMode.editing()) {
+          <div class="edit-mode-banner">
+            <span>Edit mode · drag by the handle</span>
+            <button type="button" (click)="editMode.stopEditing()">
+              Done
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <mat-menu #tripMenu="matMenu">
+      <button mat-menu-item (click)="editTrip()">
+        <mat-icon>edit</mat-icon><span>Edit trip</span>
+      </button>
+      <button mat-menu-item (click)="addAccommodation()">
+        <mat-icon>hotel</mat-icon><span>Add accommodation</span>
+      </button>
+      <button mat-menu-item (click)="exportPlan()">
+        <mat-icon>ios_share</mat-icon><span>Export plan…</span>
+      </button>
+      <button mat-menu-item (click)="exportTrip()">
+        <mat-icon>download</mat-icon><span>Export JSON</span>
+      </button>
+    </mat-menu>
+
     <main class="trip-content">
-      @if (editMode.isMobile() && editMode.editing()) {
-        <div class="edit-mode-banner">
-          <span>Edit mode · drag by the handle</span>
-          <button type="button" (click)="editMode.stopEditing()">Done</button>
-        </div>
-      }
       <router-outlet />
     </main>
+
+    <!-- Mobile-only bottom navigation (see trip-page.scss). -->
+    @if (editMode.isMobile()) {
+      <nav class="bottom-nav">
+        <a routerLink="timeline" routerLinkActive="active" class="bn-item">
+          <span class="icon-pill"><mat-icon>calendar_view_day</mat-icon></span>
+          <span>Timeline</span>
+        </a>
+        <a routerLink="overview" routerLinkActive="active" class="bn-item">
+          <span class="icon-pill"><mat-icon>info</mat-icon></span>
+          <span>Overview</span>
+        </a>
+        <a
+          routerLink="accommodations"
+          routerLinkActive="active"
+          class="bn-item"
+        >
+          <span class="icon-pill"><mat-icon>hotel</mat-icon></span>
+          <span>Stays</span>
+        </a>
+        <a routerLink="transport" routerLinkActive="active" class="bn-item">
+          <span class="icon-pill"><mat-icon>commute</mat-icon></span>
+          <span>Transport</span>
+        </a>
+        <button
+          type="button"
+          class="bn-item"
+          [class.active]="moreActive()"
+          [matMenuTriggerFor]="moreMenu"
+        >
+          <span class="icon-pill"><mat-icon>more_horiz</mat-icon></span>
+          <span>More</span>
+        </button>
+      </nav>
+
+      <mat-menu #moreMenu="matMenu" xPosition="before" yPosition="above">
+        <a mat-menu-item routerLink="car-reservations">
+          <mat-icon>directions_car</mat-icon><span>Car rentals</span>
+        </a>
+        <a mat-menu-item routerLink="reservations">
+          <mat-icon>confirmation_number</mat-icon><span>Reservations</span>
+        </a>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="exportPlan()">
+          <mat-icon>ios_share</mat-icon><span>Export plan…</span>
+        </button>
+        <button mat-menu-item (click)="exportTrip()">
+          <mat-icon>download</mat-icon><span>Export JSON</span>
+        </button>
+        <button mat-menu-item (click)="editTrip()">
+          <mat-icon>edit</mat-icon><span>Edit trip</span>
+        </button>
+      </mat-menu>
+    }
   </div>
 
   <app-export-host />
