@@ -36,7 +36,25 @@
   [cdkDropListData]="view()"
   (cdkDropListDropped)="dropped.emit($event)"
 >
-  @for (item of view().items; track item.key) {
+  <!-- R4 mobile sticky day header. Not a cdkDrag item, so it's never a drop
+       target and doesn't interfere with drag-drop between days. Tapping it
+       opens the day menu in edit mode; openDayMenu() no-ops in read mode. -->
+  <div #headerEl class="day-header" (click)="openDayMenu($event)">
+    <div class="header-main">
+      <span class="header-day">Day {{ view().day.index }}</span>
+      <span class="header-date">{{
+        view().day.startOfDay.toFormat('ccc, d LLL')
+      }}</span>
+    </div>
+    <div class="header-zone">{{ view().zoneLabelFull }}</div>
+  </div>
+
+  @for (item of view().items; track item.key; let idx = $index) {
+    @if (idx === view().nowLineInsertIndex) {
+      <div class="now-line" aria-hidden="true">
+        <span class="now-pill">{{ view().nowLineLabel }}</span>
+      </div>
+    }
     @if (item.entry; as entry) {
       <app-entry-card
         cdkDrag
@@ -45,6 +63,7 @@
         [cdkDragData]="entry"
         [entry]="entry"
         [destZone]="destZone()"
+        [upNext]="!!item.upNext"
         (open)="openEntry.emit($event)"
         (edit)="editEntry.emit($event)"
         (delete)="deleteEntry.emit($event)"
@@ -73,6 +92,11 @@
         }
       </button>
     }
+  }
+  @if (view().nowLineInsertIndex === view().items.length) {
+    <div class="now-line" aria-hidden="true">
+      <span class="now-pill">{{ view().nowLineLabel }}</span>
+    </div>
   }
   @if (!view().hasEntries && editMode.editing()) {
     <p class="no-entries">No activities or transport yet.</p>

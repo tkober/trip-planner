@@ -101,6 +101,18 @@
   margin: 0;
 }
 
+// R4 mobile sticky day header (first child of `.day-content`) + now-line.
+// Both are desktop-hidden by default — the day-marker column already carries
+// this info there, and the now-line/"Up next" treatment is mobile-only by
+// spec — and only switched on inside the `bp.mobile` block below.
+.day-header {
+  display: none;
+}
+
+.now-line {
+  display: none;
+}
+
 // Car rental pickup / return deadline pills — lightweight markers interleaved
 // with the entry cards by time, not full entry cards. Tinted with the
 // reservation's accent colour.
@@ -224,6 +236,88 @@
 
   .no-entries {
     font-size: 0.8rem;
+  }
+
+  // R4: the day marker column collapses (see timeline.scss's --tl-marker), so
+  // this sticky header carries the day/date/zone instead.
+  .day-marker {
+    display: none;
+  }
+
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    position: sticky;
+    // Sticks right below the app bar + optional edit banner (TripPage
+    // measures their real height via ResizeObserver); 0 outside that stack.
+    top: var(--app-bar-height, 0px);
+    // So the day strip's scrollIntoView(block:'start') lands the header right
+    // under the sticky stack instead of overshooting by its height (which
+    // would otherwise scroll the day's first item behind it).
+    scroll-margin-top: var(--app-bar-height, 0px);
+    z-index: 3;
+    background: var(--app-surface);
+    border-bottom: 1px solid var(--app-line);
+    padding: 0.4rem 0.1rem;
+    cursor: pointer;
+
+    .header-main {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .header-day {
+      flex-shrink: 0;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--mat-sys-primary);
+    }
+
+    .header-date {
+      font-size: 0.78rem;
+      color: var(--app-ink-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-zone {
+      flex-shrink: 0;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--app-ink-3);
+    }
+  }
+
+  // R4 "now" line: a thin red rule at the current time with a small pill
+  // label, inserted among today's chronologically-sorted items.
+  .now-line {
+    display: block;
+    position: relative;
+    height: 0;
+    margin: 0.5rem 0;
+    border-top: 2px solid var(--now);
+
+    .now-pill {
+      position: absolute;
+      left: 0;
+      top: -0.62rem;
+      background: var(--now);
+      color: #fff;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
   }
 
   // The pill can no longer keep name/company/station on one line — let it wrap

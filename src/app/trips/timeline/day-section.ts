@@ -1,5 +1,8 @@
 import {
   Component,
+  DestroyRef,
+  ElementRef,
+  effect,
   inject,
   input,
   output,
@@ -14,6 +17,7 @@ import { CarReservationDto, TimelineEntry } from '../../models/trip.model';
 import { TripDay } from '../../services/time-zone.service';
 import { EditModeService } from '../../services/edit-mode.service';
 import { EntryCard } from './entry-card';
+import { TimelineNavService } from './timeline-nav.service';
 
 /**
  * A car rental pickup ("Fetch by") or return ("Return by") deadline, shown as a
@@ -48,6 +52,8 @@ export interface DayItem {
   /** Exactly one of `entry` / `deadline` is set. */
   entry?: TimelineEntry;
   deadline?: CarDeadline;
+  /** R4, today only: the first entry whose start is after "now" (see now-line.ts). */
+  upNext?: boolean;
 }
 
 export interface DayView {
@@ -60,6 +66,12 @@ export interface DayView {
   /** Reserve space at the top/bottom for a straddle card on that boundary. */
   padTop: boolean;
   padBottom: boolean;
+  /** "Tokyo · GMT+9" (mobile sticky header's zone label; see `date-format.ts`). */
+  zoneLabelFull: string;
+  /** R4, mobile only: where the now-line sits among `items` (today's day only). */
+  nowLineInsertIndex?: number;
+  /** R4: "Now 14:05" label for the now-line (today's day only). */
+  nowLineLabel?: string;
 }
 
 /**
@@ -81,6 +93,8 @@ export interface DayView {
 })
 export class DaySection {
   readonly editMode = inject(EditModeService);
+  private readonly nav = inject(TimelineNavService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly view = input.required<DayView>();
   readonly destZone = input.required<string>();
@@ -88,6 +102,19 @@ export class DaySection {
   readonly zoneLabel = input.required<string>();
   /** 1-based grid row line for this day. */
   readonly rowIndex = input.required<number>();
+
+  /** The mobile sticky day header (see day-section.html) — registered with
+   * `TimelineNavService` so the day strip can scroll to it and the scroll
+   * spy can tell when it's the one under the app bar. */
+  private readonly headerEl = viewChild<ElementRef<HTMLElement>>('headerEl');
+
+  constructor() {
+    effect(() => {
+      const el = this.headerEl()?.nativeElement;
+      if (el) this.nav.registerHeader(this.view().day.date, el);
+    });
+    this.destroyRef.onDestroy(() => this.nav.unregisterHeader(this.view().day.date));
+  }
 
   readonly addActivity = output<string>();
   readonly addTransport = output<string>();

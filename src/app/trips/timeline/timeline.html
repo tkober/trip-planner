@@ -21,7 +21,15 @@
         [class.pad-top]="v.padTop"
         [class.pad-bottom]="v.padBottom"
         [style.grid-row]="1"
-      ></div>
+      >
+        <div #leadingHeaderEl class="day-header virtual-header">
+          <div class="header-main">
+            <span class="header-day">{{ v.label }}</span>
+            <span class="header-date">{{ v.weekday }}, {{ v.dayNum }}</span>
+          </div>
+          <div class="header-zone">{{ v.zoneLabelFull }}</div>
+        </div>
+      </div>
     }
     @if (trailingDay(); as v) {
       <div
@@ -40,7 +48,15 @@
         [class.pad-top]="v.padTop"
         [class.pad-bottom]="v.padBottom"
         [style.grid-row]="rowOffset() + dayViews().length + 1"
-      ></div>
+      >
+        <div #trailingHeaderEl class="day-header virtual-header">
+          <div class="header-main">
+            <span class="header-day">{{ v.label }}</span>
+            <span class="header-date">{{ v.weekday }}, {{ v.dayNum }}</span>
+          </div>
+          <div class="header-zone">{{ v.zoneLabelFull }}</div>
+        </div>
+      </div>
     }
     @for (dv of dayViews(); track dv.day.date; let i = $index) {
       <app-day-section
