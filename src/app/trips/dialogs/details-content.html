@@ -1,0 +1,186 @@
+<div class="details-content" [style.--accent]="data().accent">
+  <header class="header">
+    <div class="icon-tile"><mat-icon>{{ icon() }}</mat-icon></div>
+    <div class="heading-block">
+      <h2 class="heading" tabindex="-1">{{ heading() }}</h2>
+      @if (subtitle(); as s) {
+        <p class="subtitle">{{ s }}</p>
+      }
+      @if (reservationStatusLabel(); as status) {
+        <p class="reservation-status">{{ status }}</p>
+      }
+    </div>
+    @if (editMode.editing()) {
+      <button
+        matIconButton
+        class="kebab"
+        [matMenuTriggerFor]="menu"
+        aria-label="More actions"
+      >
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="action.emit('delete')">
+          <mat-icon>delete</mat-icon><span>Delete</span>
+        </button>
+      </mat-menu>
+    }
+  </header>
+
+  <div class="scroll-region">
+    @if (quickActions().length) {
+      <div class="quick-actions">
+        @for (qa of quickActions(); track qa.id) {
+          @if (qa.kind === 'link') {
+            <a class="quick-action" [href]="qa.url" target="_blank" rel="noopener">
+              <mat-icon>{{ qa.icon }}</mat-icon>
+              <span>{{ qa.label }}</span>
+            </a>
+          } @else {
+            <button class="quick-action" type="button" (click)="runQuickAction(qa)">
+              <mat-icon>{{ qa.icon }}</mat-icon>
+              <span>{{ qa.label }}</span>
+            </button>
+          }
+        }
+      </div>
+    }
+
+    <div class="when-where">
+      @if (transportLegs(); as tl) {
+        <div class="leg-row">
+          <div class="leg">
+            <div class="time">
+              {{ tl.from.time }} <span class="zone">{{ tl.from.zoneAbbr }}</span>
+            </div>
+            <div class="place">{{ tl.from.place }}</div>
+            <div class="date">{{ tl.from.dateStr }}</div>
+            @if (tl.from.secondaryLine) {
+              <div class="secondary">{{ tl.from.secondaryLine }}</div>
+            }
+            @if (tl.from.detail) {
+              <div class="detail">{{ tl.from.detail }}</div>
+            }
+          </div>
+
+          <div class="connector">
+            @if (tl.duration) {
+              <span class="duration">{{ tl.duration }}</span>
+            }
+            <div class="dash-line"></div>
+            @if (tl.connectorLabel) {
+              <span class="kind">{{ tl.connectorLabel }}</span>
+            }
+          </div>
+
+          @if (tl.to; as to) {
+            <div class="leg to">
+              <div class="time">
+                {{ to.time }} <span class="zone">{{ to.zoneAbbr }}</span>
+              </div>
+              <div class="place">{{ to.place }}</div>
+              <div class="date">{{ to.dateStr }}</div>
+              @if (to.secondaryLine) {
+                <div class="secondary">{{ to.secondaryLine }}</div>
+              }
+              @if (to.detail) {
+                <div class="detail">{{ to.detail }}</div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      @if (activityWhen(); as aw) {
+        <div class="activity-when">
+          <div class="time-range">
+            {{ aw.time }}@if (aw.endTime) {
+              –{{ aw.endTime }}
+            }
+            <span class="zone">{{ aw.zoneAbbr }}</span>
+          </div>
+          <div class="date">{{ aw.dateStr }}</div>
+          @if (aw.secondaryLine) {
+            <div class="secondary">{{ aw.secondaryLine }}</div>
+          }
+          @if (aw.location) {
+            <div class="place">{{ aw.location }}</div>
+          }
+        </div>
+      }
+
+      @if (stayWhen(); as sw) {
+        <div class="stay-when">
+          <div class="stay-row">
+            <span class="label">Check-in</span>
+            <span class="value">{{ sw.checkIn }}</span>
+          </div>
+          <div class="stay-row">
+            <span class="label">Check-out</span>
+            <span class="value">{{ sw.checkOut }}</span>
+          </div>
+          <div class="nights">{{ sw.nights }} night{{ sw.nights === 1 ? '' : 's' }}</div>
+        </div>
+      }
+
+      @if (carWhen(); as cw) {
+        <div class="car-when">
+          <div class="car-row">
+            <span class="label">Pickup</span>
+            <span class="value"
+              >{{ cw.pickupDate }}{{ cw.pickupTime ? ' · ' + cw.pickupTime : '' }}</span
+            >
+            @if (cw.pickupLocation) {
+              <span class="loc">{{ cw.pickupLocation }}</span>
+            }
+          </div>
+          <div class="car-row">
+            <span class="label">Return</span>
+            <span class="value"
+              >{{ cw.dropoffDate }}{{ cw.dropoffTime ? ' · ' + cw.dropoffTime : '' }}</span
+            >
+            @if (cw.dropoffLocation) {
+              <span class="loc">{{ cw.dropoffLocation }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (secondaryLinks().length) {
+      <div class="secondary-links">
+        @for (link of secondaryLinks(); track link.id) {
+          <a matButton [href]="link.url" target="_blank" rel="noopener">
+            <mat-icon>{{ link.icon }}</mat-icon> {{ link.label }}
+          </a>
+        }
+      </div>
+    }
+
+    @for (group of factGroups(); track group.label) {
+      <section class="fact-group">
+        <h3 class="group-label">{{ group.label }}</h3>
+        <dl>
+          @for (row of group.rows; track row.label + '|' + row.value) {
+            @if (row.label) {
+              <dt>{{ row.label }}</dt>
+            }
+            <dd [class.multiline]="row.multiline" [class.full]="!row.label">
+              {{ row.value }}
+            </dd>
+          }
+        </dl>
+      </section>
+    }
+  </div>
+
+  <div class="footer-actions">
+    @if (editMode.editing()) {
+      <button matButton="filled" color="primary" (click)="action.emit('edit')">
+        <mat-icon>edit</mat-icon> Edit
+      </button>
+    } @else {
+      <button matButton (click)="closed.emit()">Close</button>
+    }
+  </div>
+</div>
