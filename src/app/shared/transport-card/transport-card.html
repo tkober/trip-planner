@@ -3,8 +3,6 @@
   [style.--accent]="accent()"
   (click)="open.emit(transport())"
 >
-  <div class="bullet"><mat-icon>{{ icon() }}</mat-icon></div>
-
   <div class="main">
     <div class="eyebrow">{{ eyebrow() }}</div>
 
@@ -62,25 +60,28 @@
         </div>
       }
     </div>
+
+    @if (details().length) {
+      <div class="chips">
+        @for (line of details(); track $index) {
+          <span class="chip">{{ line }}</span>
+        }
+      </div>
+    }
   </div>
 
-  @if (details().length) {
-    <div class="detail">
-      @for (line of details(); track $index) {
-        <div class="line">{{ line }}</div>
-      }
-    </div>
-  }
-
-  <button
-    matIconButton
-    class="card-menu"
-    [matMenuTriggerFor]="menu"
-    (click)="$event.stopPropagation()"
-    aria-label="Transport actions"
-  >
-    <mat-icon>more_vert</mat-icon>
-  </button>
+  <div class="right-cluster">
+    <div class="icon-tile"><mat-icon>{{ icon() }}</mat-icon></div>
+    <button
+      matIconButton
+      class="card-menu"
+      [matMenuTriggerFor]="menu"
+      (click)="$event.stopPropagation()"
+      aria-label="Transport actions"
+    >
+      <mat-icon>more_vert</mat-icon>
+    </button>
+  </div>
   <mat-menu #menu="matMenu">
     <button mat-menu-item (click)="open.emit(transport())">
       <mat-icon>info</mat-icon><span>Details</span>
