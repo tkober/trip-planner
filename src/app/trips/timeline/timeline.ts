@@ -41,6 +41,7 @@ import { computeNowLine } from './now-line';
 import { dayStayInfo } from './day-stay';
 import { computeEntrySpan } from './day-span';
 import { NavDay, TimelineNavService } from './timeline-nav.service';
+import { canShift, shift, StayDates } from '../../shared/stay-nudge';
 import {
   accommodationColors,
   activityColor,
@@ -901,26 +902,23 @@ export class TimelineView {
     this.laneContext()?.side === 'end' ? 'End' : 'Start',
   );
 
-  // A move is blocked only when it would collapse the span. Widening (start −1,
-  // end +1) is always allowed; the guarded direction depends on the active side.
-  // Accommodation needs at least one night (check-in < check-out); a car may be
-  // a single day (pickup <= dropoff), so its bounds are allowed to meet.
+  // A move is blocked only when it would collapse the span — see
+  // `canShift` in `stay-nudge.ts` for the shared rule (also used by the R9
+  // details-view steppers).
   readonly canPlus = computed(() => {
     const c = this.laneContext();
-    if (!c) return false;
-    if (c.side === 'end') return true; // end +1 always widens
-    return c.kind === 'accommodation'
-      ? this.addDays(c.accommodation.checkInDate, 1) < c.accommodation.checkOutDate
-      : this.addDays(c.car.pickupDate, 1) <= c.car.dropoffDate;
+    return c ? canShift(c.kind, c.side, 1, this.laneDates(c)) : false;
   });
   readonly canMinus = computed(() => {
     const c = this.laneContext();
-    if (!c) return false;
-    if (c.side === 'start') return true; // start −1 always widens
-    return c.kind === 'accommodation'
-      ? this.addDays(c.accommodation.checkOutDate, -1) > c.accommodation.checkInDate
-      : this.addDays(c.car.dropoffDate, -1) >= c.car.pickupDate;
+    return c ? canShift(c.kind, c.side, -1, this.laneDates(c)) : false;
   });
+
+  private laneDates(c: LaneContext): StayDates {
+    return c.kind === 'accommodation'
+      ? { start: c.accommodation.checkInDate, end: c.accommodation.checkOutDate }
+      : { start: c.car.pickupDate, end: c.car.dropoffDate };
+  }
 
   onAccommodationContext(e: {
     event: MouseEvent;
@@ -974,33 +972,27 @@ export class TimelineView {
   }
 
   /** Nudge the active side's date (check-in/pickup or check-out/dropoff) by ±1 day. */
-  nudge(delta: number): void {
+  nudge(delta: 1 | -1): void {
     const c = this.laneContext();
     const trip = this.trip();
     if (!c || !trip) return;
+    const next = shift(c.side, delta, this.laneDates(c));
     if (c.kind === 'accommodation') {
       const a = c.accommodation;
-      void this.store.upsertAccommodation(
-        trip,
-        c.side === 'start'
-          ? { ...a, checkInDate: this.addDays(a.checkInDate, delta) }
-          : { ...a, checkOutDate: this.addDays(a.checkOutDate, delta) },
-      );
+      void this.store.upsertAccommodation(trip, {
+        ...a,
+        checkInDate: next.start,
+        checkOutDate: next.end,
+      });
     } else {
       const car = c.car;
-      void this.store.upsertCarReservation(
-        trip,
-        c.side === 'start'
-          ? { ...car, pickupDate: this.addDays(car.pickupDate, delta) }
-          : { ...car, dropoffDate: this.addDays(car.dropoffDate, delta) },
-      );
+      void this.store.upsertCarReservation(trip, {
+        ...car,
+        pickupDate: next.start,
+        dropoffDate: next.end,
+      });
     }
     this.snack.open('Dates updated', undefined, { duration: 2000 });
-  }
-
-  /** Add N calendar days to a "YYYY-MM-DD" date string. */
-  private addDays(date: string, delta: number): string {
-    return DateTime.fromISO(date).plus({ days: delta }).toISODate() ?? date;
   }
 
   // --- Moving an entry to another day (drag-drop or the kebab dialog) ------
