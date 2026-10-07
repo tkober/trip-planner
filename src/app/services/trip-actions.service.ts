@@ -311,6 +311,7 @@ export class TripActionsService {
       destinationZone: trip.destinationTimeZone,
       accent: accommodationColors(trip.accommodations).get(accommodation.id) ?? '',
       accommodation,
+      tripId: trip.id,
     };
     this.openDetails(data).subscribe((action?: DetailsAction) => {
       if (action === 'edit') this.editAccommodation(trip, accommodation);
@@ -375,6 +376,7 @@ export class TripActionsService {
       destinationZone: trip.destinationTimeZone,
       accent: carReservationColors(trip.carReservations).get(car.id) ?? '',
       carReservation: car,
+      tripId: trip.id,
     };
     this.openDetails(data).subscribe((action?: DetailsAction) => {
       if (action === 'edit') this.editCarReservation(trip, car);

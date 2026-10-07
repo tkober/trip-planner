@@ -34,4 +34,12 @@ export interface DetailsDialogData {
   carReservation?: CarReservationDto;
   activity?: ActivityDto;
   transport?: TransportDto;
+  /**
+   * R9: the owning trip's id, so `DetailsContent` can re-derive the live
+   * accommodation/car reservation from `TripStore` (dates may change via the
+   * check-in/out and pickup/return steppers while the view stays open) and
+   * save a nudge immediately. Only set for the `accommodation`/
+   * `car-reservation` kinds — those are the only ones steppers apply to.
+   */
+  tripId?: string;
 }

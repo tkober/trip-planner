@@ -113,11 +113,63 @@
         <div class="stay-when">
           <div class="stay-row">
             <span class="label">Check-in</span>
-            <span class="value">{{ sw.checkIn }}</span>
+            @if (checkInStepper(); as s) {
+              <div class="stepper">
+                <button
+                  matIconButton
+                  class="stepper-btn"
+                  type="button"
+                  [disabled]="!s.canMinus"
+                  aria-label="Check-in one day earlier"
+                  (click)="nudgeAccommodation('start', -1)"
+                >
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="value">{{ s.label }}</span>
+                <button
+                  matIconButton
+                  class="stepper-btn"
+                  type="button"
+                  [disabled]="!s.canPlus"
+                  aria-label="Check-in one day later"
+                  (click)="nudgeAccommodation('start', 1)"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            } @else {
+              <span class="value">{{ sw.checkIn }}</span>
+            }
           </div>
           <div class="stay-row">
             <span class="label">Check-out</span>
-            <span class="value">{{ sw.checkOut }}</span>
+            @if (checkOutStepper(); as s) {
+              <div class="stepper">
+                <button
+                  matIconButton
+                  class="stepper-btn"
+                  type="button"
+                  [disabled]="!s.canMinus"
+                  aria-label="Check-out one day earlier"
+                  (click)="nudgeAccommodation('end', -1)"
+                >
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="value">{{ s.label }}</span>
+                <button
+                  matIconButton
+                  class="stepper-btn"
+                  type="button"
+                  [disabled]="!s.canPlus"
+                  aria-label="Check-out one day later"
+                  (click)="nudgeAccommodation('end', 1)"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            } @else {
+              <span class="value">{{ sw.checkOut }}</span>
+            }
           </div>
           <div class="nights">{{ sw.nights }} night{{ sw.nights === 1 ? '' : 's' }}</div>
         </div>
@@ -127,18 +179,70 @@
         <div class="car-when">
           <div class="car-row">
             <span class="label">Pickup</span>
-            <span class="value"
-              >{{ cw.pickupDate }}{{ cw.pickupTime ? ' · ' + cw.pickupTime : '' }}</span
-            >
+            @if (pickupStepper(); as s) {
+              <div class="stepper">
+                <button
+                  matIconButton
+                  class="stepper-btn"
+                  type="button"
+                  [disabled]="!s.canMinus"
+                  aria-label="Pickup one day earlier"
+                  (click)="nudgeCarReservation('start', -1)"
+                >
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="value">{{ s.label }}</span>
+                <button
+                  matIconButton
+                  class="stepper-btn"
+                  type="button"
+                  [disabled]="!s.canPlus"
+                  aria-label="Pickup one day later"
+                  (click)="nudgeCarReservation('start', 1)"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            } @else {
+              <span class="value"
+                >{{ cw.pickupDate }}{{ cw.pickupTime ? ' · ' + cw.pickupTime : '' }}</span
+              >
+            }
             @if (cw.pickupLocation) {
               <span class="loc">{{ cw.pickupLocation }}</span>
             }
           </div>
           <div class="car-row">
             <span class="label">Return</span>
-            <span class="value"
-              >{{ cw.dropoffDate }}{{ cw.dropoffTime ? ' · ' + cw.dropoffTime : '' }}</span
-            >
+            @if (returnStepper(); as s) {
+              <div class="stepper">
+                <button
+                  matIconButton
+                  class="stepper-btn"
+                  type="button"
+                  [disabled]="!s.canMinus"
+                  aria-label="Return one day earlier"
+                  (click)="nudgeCarReservation('end', -1)"
+                >
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="value">{{ s.label }}</span>
+                <button
+                  matIconButton
+                  class="stepper-btn"
+                  type="button"
+                  [disabled]="!s.canPlus"
+                  aria-label="Return one day later"
+                  (click)="nudgeCarReservation('end', 1)"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            } @else {
+              <span class="value"
+                >{{ cw.dropoffDate }}{{ cw.dropoffTime ? ' · ' + cw.dropoffTime : '' }}</span
+              >
+            }
             @if (cw.dropoffLocation) {
               <span class="loc">{{ cw.dropoffLocation }}</span>
             }

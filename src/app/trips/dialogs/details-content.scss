@@ -283,6 +283,38 @@
   }
 }
 
+// R9: the check-in/out and pickup/return steppers ("− Tue, 14 Apr +"),
+// shown in place of the plain value when editing.
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+
+  .value {
+    min-width: 6.5rem;
+    text-align: center;
+  }
+
+  .stepper-btn {
+    // ≥40px touch target, same family as the R7 icon tile's accent tint.
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    color: var(--app-ink-2);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    &:disabled {
+      color: var(--app-ink-3);
+      opacity: 0.5;
+    }
+  }
+}
+
 .nights {
   margin-top: 0.25rem;
   color: var(--app-ink-2);
