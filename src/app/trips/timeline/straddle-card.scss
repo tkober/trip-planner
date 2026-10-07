@@ -102,6 +102,20 @@
       font-size: 0.68rem;
       color: var(--app-ink-3);
       margin-left: 0.15rem;
+
+      // R6: amber highlight when this time's own zone differs from the
+      // day's reference zone (destination zone, or home zone for a virtual
+      // departure/return day) — same treatment as SplitEntryCard's mobile
+      // split halves.
+      &.zone-highlight {
+        display: inline-block;
+        padding: 0.02rem 0.3rem;
+        border-radius: 4px;
+        background: #fff1d6;
+        color: #7a4f00;
+        font-weight: 700;
+        font-variant-caps: small-caps;
+      }
     }
 
     .leg-icon {
@@ -161,6 +175,12 @@
 // so the place names — the whole point of the card — keep real estate, and let
 // the mode detail wrap onto its own line rather than fighting the title for it.
 @include bp.mobile {
+  // R6: day-crossing entries render as inline split halves in the normal day
+  // flow instead (see SplitEntryCard) — the floating card is desktop-only.
+  :host {
+    display: none;
+  }
+
   .half {
     gap: 0.4rem;
     padding: 0.3rem 0.25rem 0.3rem 0.5rem;

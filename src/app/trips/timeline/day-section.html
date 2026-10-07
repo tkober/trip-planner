@@ -39,7 +39,13 @@
   <!-- R4 mobile sticky day header. Not a cdkDrag item, so it's never a drop
        target and doesn't interfere with drag-drop between days. Tapping it
        opens the day menu in edit mode; openDayMenu() no-ops in read mode. -->
-  <div #headerEl class="day-header" (click)="openDayMenu($event)">
+  <div
+    #headerEl
+    class="day-header"
+    [class.has-connector]="!!view().connectorColor"
+    [style.--connector-accent]="view().connectorColor || null"
+    (click)="openDayMenu($event)"
+  >
     <div class="header-top">
       <div class="header-main">
         <span class="header-day">Day {{ view().day.index }}</span>
@@ -118,6 +124,34 @@
         @if (d.location) {
           <span class="pill-station">– {{ d.location }}</span>
         }
+      </button>
+    } @else if (item.split; as sp) {
+      <app-split-entry-card
+        cdkDrag
+        [cdkDragDisabled]="editMode.readOnly()"
+        [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+        [cdkDragData]="sp.entry"
+        [entry]="sp.entry"
+        [part]="sp.part"
+        [refZone]="sp.refZone"
+        [farDayLabel]="sp.farDayLabel"
+        [homeZone]="sp.homeZone"
+        [upNext]="!!item.upNext"
+        (open)="openEntry.emit($event)"
+        (edit)="editEntry.emit($event)"
+        (delete)="deleteEntry.emit($event)"
+        (move)="moveEntry.emit($event)"
+      />
+    } @else if (item.continues; as c) {
+      <button
+        type="button"
+        class="continues-row"
+        [class.end]="c.part === 'end'"
+        [style.--accent]="c.color"
+        (click)="openEntry.emit(c.entry)"
+      >
+        <mat-icon class="continues-icon">more_horiz</mat-icon>
+        <span>{{ c.label }}</span>
       </button>
     } @else if (item.stay; as s) {
       <button
