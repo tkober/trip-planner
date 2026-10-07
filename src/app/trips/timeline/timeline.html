@@ -1,6 +1,37 @@
 @if (trip(); as t) {
   <header class="view-header">
     <h2>Timeline</h2>
+    <!-- R10, desktop only (bp.mobile hides it; see timeline.scss) — the
+         export document reuses the existing `.timeline-section .view-header
+         { display: none }` rule in styles.scss, so no extra export-doc
+         override is needed here. -->
+    <div class="toolbar-actions">
+      <button
+        type="button"
+        matButton
+        class="jump-day-btn"
+        [matMenuTriggerFor]="jumpDayMenu"
+      >
+        {{ currentDayLabel() }}
+        <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #jumpDayMenu="matMenu">
+        @for (d of toolbarDays(); track d.key) {
+          <button mat-menu-item (click)="jumpToDay(d.key)">
+            {{ d.label }}
+          </button>
+        }
+      </mat-menu>
+      <button
+        type="button"
+        matButton="outlined"
+        class="today-btn"
+        [disabled]="!todayEnabled()"
+        (click)="jumpToToday()"
+      >
+        Today
+      </button>
+    </div>
   </header>
   <div
     class="days-grid"
@@ -8,7 +39,7 @@
     [style.grid-template-columns]="gridTemplateColumns()"
   >
     @if (leadingDay(); as v) {
-      <div class="day-marker virtual" [style.grid-row]="1">
+      <div #leadingMarkerEl class="day-marker virtual" [style.grid-row]="1">
         <div class="day-index virtual-label">{{ v.label }}</div>
         <div class="day-date">{{ v.weekday }}</div>
         <div class="day-date-num">{{ v.dayNum }}</div>
@@ -51,6 +82,7 @@
     }
     @if (trailingDay(); as v) {
       <div
+        #trailingMarkerEl
         class="day-marker virtual"
         [style.grid-row]="rowOffset() + dayViews().length + 1"
       >
@@ -124,8 +156,10 @@
     }
     @for (label of stayLabels(); track label.id) {
       <div class="stay-label" [style.grid-row]="label.gridRow">
-        <mat-icon class="stay-icon">hotel</mat-icon>
-        <span class="stay-name">{{ label.name }}</span>
+        <div class="stay-sticky" [title]="label.name">
+          <mat-icon class="stay-icon">hotel</mat-icon>
+          <span class="stay-name">{{ label.name }}</span>
+        </div>
       </div>
     }
     @for (s of carSpans(); track s.car.id) {

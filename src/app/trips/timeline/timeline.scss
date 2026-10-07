@@ -17,6 +17,23 @@
   }
 }
 
+// R10: desktop-only toolbar (Jump to day / Today) next to the title.
+// `bp.mobile` below hides it on phones — the day strip in the app bar
+// already covers "jump to a day" there, and "today" is the strip's today
+// ring. The plan export reuses the existing rule hiding the whole
+// `.view-header` in `.timeline-section` (see styles.scss), so it needs no
+// export-specific override here.
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.jump-day-btn {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 // Zero-size, invisible anchor the lane context menu opens against; positioned
 // at the cursor (viewport coords) right before openMenu() in the component.
 .lane-menu-anchor {
@@ -103,25 +120,43 @@
   display: none;
 }
 
-// Bed icon + vertical hotel name as one group, centered over the stay in the
-// hotel lane (mirrors the car lane's icon + name). Click-through so the colored
-// half-cells beneath handle taps (details dialog).
+// R10: the stay label is now the full-height grid item spanning the whole
+// run (`align-self: stretch`); the icon+name group inside it is
+// `position: sticky` so it tracks to the top of whichever part of the run is
+// currently scrolled into view, instead of sitting once in the run's
+// vertical middle. Click-through so the colored half-cells beneath handle
+// taps (details dialog).
 .stay-label {
   grid-column: 2 / 3;
+  align-self: stretch;
   pointer-events: none;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 0.5rem 0;
+  min-width: 0;
+  // No `overflow` here — any `overflow` other than `visible` on an ancestor
+  // turns IT into the sticky containing block instead of the viewport (it
+  // never itself scrolls, so `.stay-sticky` would just sit at its static
+  // position and never track the page scroll). Clipping instead happens on
+  // `.stay-sticky`/`.stay-name` below, which are themselves leaves for this
+  // purpose — their own `overflow` only affects their children, not how
+  // they get positioned.
+
+  .stay-sticky {
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+    padding: 0.5rem 0;
+  }
 
   .stay-icon {
     color: var(--app-ink);
     font-size: 1.2rem;
     width: 1.2rem;
     height: 1.2rem;
+    flex-shrink: 0;
   }
 
   .stay-name {
@@ -133,6 +168,10 @@
     color: var(--app-ink);
     white-space: nowrap;
     overflow: hidden;
+    // A run too short for the name ellipsizes; the full name is still
+    // available via the element's `title` tooltip (see timeline.html).
+    text-overflow: ellipsis;
+    max-height: 100%;
   }
 }
 
@@ -146,6 +185,12 @@
     h2 {
       font-size: 1.25rem;
     }
+  }
+
+  // R10 toolbar is desktop-only — the mobile app bar's day strip + today
+  // ring already cover "jump to day" / "today" there (see TripPage).
+  .toolbar-actions {
+    display: none;
   }
 
   .days-grid {

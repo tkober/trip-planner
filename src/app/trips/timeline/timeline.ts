@@ -158,6 +158,11 @@ export class TimelineView {
     viewChild<ElementRef<HTMLElement>>('leadingHeaderEl');
   private readonly trailingHeaderEl =
     viewChild<ElementRef<HTMLElement>>('trailingHeaderEl');
+  /** R10: the desktop virtual-day markers — the scroll target there. */
+  private readonly leadingMarkerEl =
+    viewChild<ElementRef<HTMLElement>>('leadingMarkerEl');
+  private readonly trailingMarkerEl =
+    viewChild<ElementRef<HTMLElement>>('trailingMarkerEl');
 
   constructor() {
     // Publish the day list (incl. virtual days) for the mobile day strip —
@@ -208,6 +213,16 @@ export class TimelineView {
       const el = this.trailingHeaderEl()?.nativeElement;
       if (el) this.nav.registerHeader('virtual-trailing', el);
       else this.nav.unregisterHeader('virtual-trailing');
+    });
+    effect(() => {
+      const el = this.leadingMarkerEl()?.nativeElement;
+      if (el) this.nav.registerMarker('virtual-leading', el);
+      else this.nav.unregisterMarker('virtual-leading');
+    });
+    effect(() => {
+      const el = this.trailingMarkerEl()?.nativeElement;
+      if (el) this.nav.registerMarker('virtual-trailing', el);
+      else this.nav.unregisterMarker('virtual-trailing');
     });
 
     inject(DestroyRef).onDestroy(() => this.nav.clear());
@@ -830,6 +845,61 @@ export class TimelineView {
     const t = this.trip();
     return t ? this.tz.zoneCity(t.destinationTimeZone) : '';
   });
+
+  // --- R10 desktop toolbar: "Jump to day" menu + "Today" ------------------
+
+  /** Every day the "Jump to day" menu lists, incl. virtual departure/return. */
+  readonly toolbarDays = computed(() => {
+    const list: { key: string; label: string }[] = [];
+    const leading = this.leadingDay();
+    if (leading) {
+      list.push({
+        key: 'virtual-leading',
+        label: `${leading.label} · ${leading.weekday}, ${leading.dayNum}`,
+      });
+    }
+    for (const dv of this.dayViews()) {
+      list.push({
+        key: dv.day.date,
+        label: `Day ${dv.day.index} · ${dv.day.startOfDay.toFormat('ccc, d LLL')}`,
+      });
+    }
+    const trailing = this.trailingDay();
+    if (trailing) {
+      list.push({
+        key: 'virtual-trailing',
+        label: `${trailing.label} · ${trailing.weekday}, ${trailing.dayNum}`,
+      });
+    }
+    return list;
+  });
+
+  /**
+   * The toolbar button's label follows scrolling via the shared scroll spy
+   * (`TimelineNavService.activeKey`, fed by the desktop day markers — see
+   * `DaySection`/`registerMarker`); falls back to the first day until a
+   * scroll position is known.
+   */
+  readonly currentDayLabel = computed(() => {
+    const days = this.toolbarDays();
+    const found = days.find((d) => d.key === this.nav.activeKey());
+    return (found ?? days[0])?.label ?? 'Timeline';
+  });
+
+  /** "Today" is only enabled while the trip is actually running. */
+  readonly todayEnabled = computed(() => {
+    const key = this.todayKey();
+    return !!key && this.days().some((d) => d.date === key);
+  });
+
+  jumpToDay(key: string): void {
+    this.nav.scrollTo(key);
+  }
+
+  jumpToToday(): void {
+    const key = this.todayKey();
+    if (key) this.nav.scrollTo(key);
+  }
 
   /** Resolve a date to its 0-based day position, clamped to the trip range. */
   private clampIndex(date: string): number {
