@@ -39,71 +39,80 @@ const MODE_ICON: Record<TransportMode, string> = {
       @if (upNext()) {
         <div class="up-next-label">Up next</div>
       }
-      <div class="bullet">
-        <mat-icon>{{ icon() }}</mat-icon>
-      </div>
       @if (route(); as r) {
-        <div class="body route">
-          <div class="leg from">
-            <div class="time">{{ r.depTime }}</div>
-            <div class="place">{{ r.from }}</div>
-            @if (r.fromDetail) {
-              <div class="detail">{{ r.fromDetail }}</div>
-            }
-          </div>
-          <div class="connector">
-            @if (r.duration) {
-              <span class="duration">{{ r.duration }}</span>
-            }
-            <div class="track">
-              <span class="line"></span>
-              <mat-icon>arrow_forward</mat-icon>
+        <div class="main">
+          <div class="body route">
+            <div class="leg from">
+              <div class="time">{{ r.depTime }}</div>
+              <div class="place">{{ r.from }}</div>
+              @if (r.fromDetail) {
+                <div class="detail-line">{{ r.fromDetail }}</div>
+              }
+            </div>
+            <div class="connector">
+              @if (r.duration) {
+                <span class="duration">{{ r.duration }}</span>
+              }
+              <div class="track">
+                <span class="line"></span>
+                <mat-icon>arrow_forward</mat-icon>
+              </div>
+            </div>
+            <div class="leg to">
+              <div class="time">{{ r.arrTime }}</div>
+              <div class="place">{{ r.to }}</div>
+              @if (r.toDetail) {
+                <div class="detail-line">{{ r.toDetail }}</div>
+              }
             </div>
           </div>
-          <div class="leg to">
-            <div class="time">{{ r.arrTime }}</div>
-            <div class="place">{{ r.to }}</div>
-            @if (r.toDetail) {
-              <div class="detail">{{ r.toDetail }}</div>
-            }
-          </div>
+          @if (details().length) {
+            <div class="chips">
+              @for (line of details(); track $index) {
+                <span class="chip">{{ line }}</span>
+              }
+            </div>
+          }
         </div>
       } @else {
+        <div class="time-col">
+          <div class="start">{{ startTime() }}</div>
+          @if (endTime(); as end) {
+            <div class="end">{{ end }}</div>
+          }
+        </div>
         <div class="body">
-          <div class="time">{{ timeLabel() }}</div>
           <div class="title">{{ title() }}</div>
           @if (subtitle(); as sub) {
             <div class="subtitle">{{ sub }}</div>
           }
         </div>
       }
-      @if (details().length) {
-        <div class="detail">
-          @for (line of details(); track $index) {
-            <div class="line">{{ line }}</div>
-          }
+      <div class="right-cluster">
+        <div class="icon-tile">
+          <mat-icon>{{ icon() }}</mat-icon>
         </div>
-      }
-      @if (showHandle()) {
-        <div
-          class="drag-handle"
-          cdkDragHandle
-          (click)="$event.stopPropagation()"
-        >
-          <mat-icon>drag_indicator</mat-icon>
-        </div>
-      }
-      @if (!editMode.readOnly()) {
-        <button
-          matIconButton
-          class="entry-menu"
-          [matMenuTriggerFor]="menu"
-          (click)="$event.stopPropagation()"
-          aria-label="Entry actions"
-        >
-          <mat-icon>more_vert</mat-icon>
-        </button>
-      }
+        @if (showHandle()) {
+          <div
+            class="drag-handle"
+            cdkDragHandle
+            (click)="$event.stopPropagation()"
+          >
+            <mat-icon>drag_indicator</mat-icon>
+          </div>
+        }
+        @if (!editMode.readOnly()) {
+          <button
+            matIconButton
+            class="entry-menu"
+            [matMenuTriggerFor]="menu"
+            (click)="$event.stopPropagation()"
+            aria-label="Entry actions"
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+        }
+      </div>
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="open.emit(entry())">
           <mat-icon>info</mat-icon><span>Details</span>
@@ -213,16 +222,17 @@ export class EntryCard {
     }
   });
 
-  /** Start time in the destination tz (the timeline's primary reference). */
-  readonly timeLabel = computed(() => {
-    const start = this.entry().start;
-    const startStr = this.tz.inZone(start, this.destZone()).toFormat('HH:mm');
+  /**
+   * Start/end time in the destination tz (the timeline's primary reference),
+   * rendered in the fixed-width time column — entries without an end show
+   * only the start.
+   */
+  readonly startTime = computed(() =>
+    this.tz.inZone(this.entry().start, this.destZone()).toFormat('HH:mm'),
+  );
+  readonly endTime = computed(() => {
     const end = this.entry().activity?.end ?? this.entry().transport?.end;
-    if (end) {
-      const endStr = this.tz.inZone(end, this.destZone()).toFormat('HH:mm');
-      return `${startStr} – ${endStr}`;
-    }
-    return startStr;
+    return end ? this.tz.inZone(end, this.destZone()).toFormat('HH:mm') : undefined;
   });
 
   /** Activity location subtitle (transport renders per-leg detail in the route). */

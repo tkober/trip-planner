@@ -1,0 +1,55 @@
+// R7 shared visual language for cards: a flat white surface (no grey fill, no
+// shadow, no coloured left bar), a small accent icon tile replacing the round
+// bullet, and a chip row for the per-mode detail facts (flight number, train
+// line/name/operator/kind, bus line/operator/kind). One partial so the card
+// components (EntryCard, StraddleCard, SplitEntryCard, TransportCard, the
+// section detail cards, the trip list cards) share the same tokens instead of
+// repeating them. Shadows stay reserved for floating things — dialogs/sheets,
+// the FAB, a card being dragged (CDK `.cdk-drag-preview`) — never the resting
+// card surface below.
+
+@mixin surface {
+  background: var(--app-surface);
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+// 22px icon tile: the entity's accent colour on a light tint of itself,
+// replacing the round bullet. `--accent` must be set on an ancestor; callers
+// position it (top-right of the card alongside the kebab/drag handle).
+@mixin icon-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 14%, white);
+  color: var(--accent, var(--mat-sys-primary));
+
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+// Small pill chip for a transport detail fact, replacing the stacked-line /
+// right-hand column layout.
+@mixin detail-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #eef1f5;
+  color: var(--app-ink-2);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}

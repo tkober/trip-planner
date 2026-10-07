@@ -2,9 +2,6 @@
   @if (upNext()) {
     <div class="up-next-label">Up next</div>
   }
-  @if (part() === 'top') {
-    <div class="bullet"><mat-icon>{{ icon() }}</mat-icon></div>
-  }
   <div class="info">
     @if (part() === 'top') {
       <div class="title">{{ topTitle() }}</div>
@@ -43,28 +40,33 @@
     }
   </div>
   @if (part() === 'top' && details().length) {
-    <div class="detail">
+    <div class="chips">
       @for (line of details(); track $index) {
-        <div class="line">{{ line }}</div>
+        <span class="chip">{{ line }}</span>
       }
     </div>
   }
-  @if (showHandle()) {
-    <div class="drag-handle" cdkDragHandle (click)="$event.stopPropagation()">
-      <mat-icon>drag_indicator</mat-icon>
-    </div>
-  }
-  @if (!editMode.readOnly()) {
-    <button
-      matIconButton
-      class="split-menu"
-      [matMenuTriggerFor]="menu"
-      (click)="$event.stopPropagation()"
-      aria-label="Entry actions"
-    >
-      <mat-icon>more_vert</mat-icon>
-    </button>
-  }
+  <div class="right-cluster">
+    @if (part() === 'top') {
+      <div class="icon-tile"><mat-icon>{{ icon() }}</mat-icon></div>
+    }
+    @if (showHandle()) {
+      <div class="drag-handle" cdkDragHandle (click)="$event.stopPropagation()">
+        <mat-icon>drag_indicator</mat-icon>
+      </div>
+    }
+    @if (!editMode.readOnly()) {
+      <button
+        matIconButton
+        class="split-menu"
+        [matMenuTriggerFor]="menu"
+        (click)="$event.stopPropagation()"
+        aria-label="Entry actions"
+      >
+        <mat-icon>more_vert</mat-icon>
+      </button>
+    }
+  </div>
   <mat-menu #menu="matMenu">
     <button mat-menu-item (click)="open.emit(entry())">
       <mat-icon>info</mat-icon><span>Details</span>

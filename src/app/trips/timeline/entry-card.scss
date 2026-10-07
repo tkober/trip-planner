@@ -1,4 +1,5 @@
 @use '../../shared/breakpoints' as bp;
+@use '../../shared/card';
 
 :host {
   display: block;
@@ -13,67 +14,73 @@
 
 .entry {
   --accent: var(--mat-sys-primary);
+  @include card.surface;
   display: flex;
   align-items: flex-start;
   gap: 0.6rem;
-  padding: 0.6rem 0.5rem 0.6rem 0.6rem;
-  border-radius: 12px;
-  background: var(--mat-sys-surface-container);
-  border-left: 4px solid var(--accent);
+  padding: 0.6rem 0.6rem;
   cursor: pointer;
   transition: background 0.12s ease;
 
   &:hover {
-    background: var(--mat-sys-surface-container-high);
+    background: var(--app-bg);
   }
 }
 
-.bullet {
+// Fixed-width time column (activities only — transport keeps its own
+// per-leg times in the route, see `.body.route .leg .time` below): start
+// time emphasized, end time (when present) below it in muted ink.
+.time-col {
+  flex: 0 0 52px;
+  width: 52px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--accent);
-  color: #fff;
+  flex-direction: column;
+  font-variant-numeric: tabular-nums;
 
-  mat-icon {
-    font-size: 1.15rem;
-    width: 1.15rem;
-    height: 1.15rem;
+  .start {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--app-ink);
+  }
+
+  .end {
+    font-size: 0.72rem;
+    color: var(--app-ink-3);
+    margin-top: 0.1rem;
   }
 }
 
 .body {
-  // Route region takes ~2/3; the detail column (when present) takes ~1/3. With
-  // no detail sibling (activities, car) the body reclaims the full width.
-  flex: 2;
   min-width: 0;
-
-  .time {
-    font-size: 0.78rem;
-    color: var(--mat-sys-on-surface-variant);
-    font-variant-numeric: tabular-nums;
-  }
+  flex: 1;
 
   .title {
     font-weight: 500;
+    color: var(--app-ink);
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .subtitle {
     font-size: 0.82rem;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-ink-2);
     overflow: hidden;
     text-overflow: ellipsis;
   }
 }
 
+// Transport: the route takes the full width once the mode-detail column is
+// gone (replaced by the chip row below it).
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
 // Transport route: three blocks — [departure][duration/arrow][arrival] — with
-// time / place / detail stacked in each outer block.
+// time / place / per-leg detail stacked in each outer block.
 .body.route {
   display: grid;
   // Legs share the remaining width (departure left, arrival right); the centre
@@ -90,8 +97,9 @@
     }
 
     .time {
-      font-size: 0.78rem;
-      color: var(--mat-sys-on-surface-variant);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--app-ink);
       font-variant-numeric: tabular-nums;
     }
 
@@ -102,9 +110,9 @@
       white-space: nowrap;
     }
 
-    .detail {
+    .detail-line {
       font-size: 0.78rem;
-      color: var(--mat-sys-on-surface-variant);
+      color: var(--app-ink-2);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -125,7 +133,7 @@
       font-size: 0.66rem;
       font-weight: 700;
       letter-spacing: 0.02em;
-      color: var(--mat-sys-on-surface);
+      color: var(--app-ink);
       white-space: nowrap;
     }
 
@@ -137,7 +145,7 @@
       .line {
         width: 5rem;
         height: 1.5px;
-        background: var(--mat-sys-outline);
+        background: var(--app-line);
       }
 
       mat-icon {
@@ -147,38 +155,34 @@
         font-size: 1.1rem;
         width: 1.1rem;
         height: 1.1rem;
-        color: var(--mat-sys-outline);
+        color: var(--app-ink-3);
       }
     }
   }
 }
 
-// Right-hand mode detail (flight number/airline, train/bus line·operator·kind),
-// separated from the route by a full-height divider. Only present for transport
-// with detail fields set; absent for activities and car.
-.detail {
-  flex: 1;
-  min-width: 0;
-  align-self: stretch;
+// Mode-detail facts (flight number/airline, train/bus line·operator·kind) as
+// a wrapped chip row under the route. Absent for activities/car or when no
+// detail fields are set.
+.chips {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.1rem;
-  padding-left: 0.6rem;
-  border-left: 1px solid var(--mat-sys-outline-variant);
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
 
-  .line {
-    font-size: 0.78rem;
-    color: var(--mat-sys-on-surface-variant);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.chip {
+  @include card.detail-chip;
+}
 
-  .line:first-child {
-    font-weight: 600;
-    color: var(--mat-sys-on-surface);
-  }
+.right-cluster {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.icon-tile {
+  @include card.icon-tile;
 }
 
 .entry-menu {
@@ -203,7 +207,7 @@
   width: 2.25rem;
   min-height: 2.5rem;
   touch-action: none;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-ink-3);
   cursor: grab;
 }
 
@@ -212,12 +216,12 @@
 // route cannot survive (the fixed-width arrow alone overflowed it, squeezing
 // both places down to a single ellipsed letter). Everything therefore stacks:
 // the route becomes [time][place] rows joined by a downward connector, and the
-// mode detail moves from a right-hand column to a full-width footer row.
+// mode detail moves from a right-hand column to a full-width chip-row footer.
 @include bp.mobile {
   .entry {
     gap: 0.45rem;
-    padding: 0.5rem 0.25rem 0.5rem 0.5rem;
-    // Lets the detail footer below (and the "Up next" eyebrow above) claim
+    padding: 0.5rem 0.4rem;
+    // Lets the chip footer below (and the "Up next" eyebrow above) claim
     // their own full-width row.
     flex-wrap: wrap;
 
@@ -227,7 +231,7 @@
     }
   }
 
-  // R4 "Up next" eyebrow: a full-width row above the bullet/body, via the
+  // R4 "Up next" eyebrow: a full-width row above the time/body, via the
   // flex-wrap enabled on `.entry` above.
   .up-next-label {
     display: block;
@@ -241,26 +245,24 @@
     margin-bottom: 0.1rem;
   }
 
-  .bullet {
-    width: 1.65rem;
-    height: 1.65rem;
+  .time-col {
+    flex: 0 0 44px;
+    width: 44px;
 
-    mat-icon {
-      font-size: 1rem;
-      width: 1rem;
-      height: 1rem;
+    .start {
+      font-size: 0.75rem;
+    }
+
+    .end {
+      font-size: 0.68rem;
     }
   }
 
   .body {
     // The route/detail split is gone, so the body owns the row — but keep the
-    // 0 basis: with `flex-wrap` on, an `auto` basis would push the kebab onto a
-    // line of its own instead of just narrowing the body.
+    // 0 basis: with `flex-wrap` on, an `auto` basis would push the right
+    // cluster onto a line of its own instead of just narrowing the body.
     flex: 1 1 0;
-
-    .time {
-      font-size: 0.72rem;
-    }
 
     .title {
       font-size: 0.88rem;
@@ -272,6 +274,10 @@
     }
   }
 
+  .main {
+    flex: 1 1 0;
+  }
+
   .body.route {
     grid-template-columns: minmax(0, 1fr);
     row-gap: 0.05rem;
@@ -279,7 +285,7 @@
     .leg {
       // [departure time][place stacked over its per-leg detail].
       display: grid;
-      grid-template-columns: 2.85rem minmax(0, 1fr);
+      grid-template-columns: 2.75rem minmax(0, 1fr);
       column-gap: 0.4rem;
       align-items: baseline;
 
@@ -293,8 +299,6 @@
         grid-column: 1;
         grid-row: 1;
         font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--mat-sys-on-surface);
       }
 
       .place {
@@ -306,7 +310,7 @@
         white-space: normal;
       }
 
-      .detail {
+      .detail-line {
         grid-column: 2;
         grid-row: 2;
         font-size: 0.72rem;
@@ -346,22 +350,25 @@
     }
   }
 
-  // Direct child only — the per-leg `.detail` above is a different element.
-  .entry > .detail {
+  .chips {
     flex: 1 0 100%;
     order: 3;
-    align-self: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 0.1rem 0.6rem;
-    margin-top: 0.15rem;
-    padding: 0.3rem 0 0 2.1rem;
-    border-left: none;
-    border-top: 1px solid var(--mat-sys-outline-variant);
+    margin-top: 0.1rem;
+    padding-left: 0;
+  }
 
-    .line {
-      font-size: 0.72rem;
+  .right-cluster {
+    gap: 0.1rem;
+  }
+
+  .icon-tile {
+    width: 20px;
+    height: 20px;
+
+    mat-icon {
+      font-size: 0.9rem;
+      width: 0.9rem;
+      height: 0.9rem;
     }
   }
 
