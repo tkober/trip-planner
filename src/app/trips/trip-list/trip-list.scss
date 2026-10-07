@@ -1,4 +1,5 @@
 @use '../../shared/breakpoints' as bp;
+@use '../../shared/card';
 
 :host {
   display: block;
@@ -65,12 +66,13 @@
 }
 
 .trip-card {
+  @include card.surface;
   position: relative;
   cursor: pointer;
-  transition: box-shadow 0.15s ease;
+  transition: background 0.12s ease;
 
   &:hover {
-    box-shadow: var(--mat-sys-level2);
+    background: var(--app-bg);
   }
 
   .card-menu {

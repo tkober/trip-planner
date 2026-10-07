@@ -2,6 +2,7 @@
 // transport). Imported by each view's own stylesheet.
 
 @use '../../shared/breakpoints' as bp;
+@use '../../shared/card';
 
 .view {
   display: block;
@@ -27,24 +28,15 @@
 
 // A single detail card used by the accommodation / transport lists.
 .detail-card {
+  @include card.surface;
   display: flex;
   gap: 1rem;
-  background: var(--mat-sys-surface-container-low);
-  border-radius: 14px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
 
   .card-icon {
+    @include card.icon-tile;
     flex: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    // Tinted with the entity's accent colour when provided, else the theme.
-    background: var(--accent, var(--mat-sys-secondary-container));
-    color: #fff;
   }
 
   .card-body {
@@ -55,11 +47,12 @@
       margin: 0;
       font-size: 1.1rem;
       font-weight: 600;
+      color: var(--app-ink);
     }
 
     .card-sub {
       margin: 0.1rem 0 0;
-      color: var(--mat-sys-on-surface-variant);
+      color: var(--app-ink-2);
       font-size: 0.9rem;
     }
 
@@ -71,11 +64,12 @@
       font-size: 0.9rem;
 
       dt {
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-ink-2);
       }
 
       dd {
         margin: 0;
+        color: var(--app-ink);
         font-variant-numeric: tabular-nums;
       }
     }
@@ -139,13 +133,13 @@
     border-radius: 12px;
 
     .card-icon {
-      width: 32px;
-      height: 32px;
+      width: 20px;
+      height: 20px;
 
       mat-icon {
-        font-size: 1.15rem;
-        width: 1.15rem;
-        height: 1.15rem;
+        font-size: 0.9rem;
+        width: 0.9rem;
+        height: 0.9rem;
       }
     }
 
