@@ -53,8 +53,14 @@
 // or name (the car's name moved to the day header's car line). Click /
 // long-press (contextmenu) behaviour is unchanged.
 @include bp.mobile {
+  // Dashed, so the car rail never reads as a second hotel rail when a rental
+  // and a stay happen to share a colour.
   .car-block {
-    background: var(--car, var(--mat-sys-primary));
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--car, var(--mat-sys-primary)) 0 7px,
+      transparent 7px 11px
+    );
     border-radius: 3px;
     padding: 0;
     min-height: 0;
