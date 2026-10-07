@@ -358,8 +358,9 @@ export class TimelineView {
   /**
    * One vertical name label per stay, spanning its day-rows in the hotel lane.
    * Rendered click-through (the colored half-cells beneath handle clicks).
-   * R10.1: a hotel-switch day's row is claimed by the EARLIER (checking-out)
-   * stay only — see `runRowSpan` below for why.
+   * R10.1: a check-in day's row is never claimed by the arriving stay, so on
+   * a switch day only the EARLIER (checking-out) stay owns it — see
+   * `runRowSpan` below for why.
    */
   readonly stayLabels = computed(() => {
     const trip = this.trip();
@@ -369,13 +370,15 @@ export class TimelineView {
     return trip.accommodations.map((a) => {
       const s = this.clampIndex(a.checkInDate);
       const e = this.clampIndex(a.checkOutDate);
-      const switchStart = trip.accommodations.some(
-        (other) => other.id !== a.id && other.checkOutDate === a.checkInDate,
-      );
+      // A stay's colour only fills the bottom half of its check-in day, so
+      // its name always starts on the next row — not just on switch days
+      // (after a night without a stay the name would otherwise float above
+      // the block). A stay that began before the trip fills day 1 fully.
+      const startsInTrip = a.checkInDate >= days[0].date;
       return {
         id: a.id,
         name: a.name,
-        gridRow: runRowSpan(s, e, switchStart, offset),
+        gridRow: runRowSpan(s, e, startsInTrip, offset),
       };
     });
   });
