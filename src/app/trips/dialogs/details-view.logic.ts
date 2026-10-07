@@ -206,6 +206,8 @@ export interface FactRow {
   label: string;
   value: string;
   multiline?: boolean;
+  /** Monospace + user-selectable — the booking reference, read aloud/typed at a counter. */
+  monospace?: boolean;
 }
 
 export interface FactGroup {
@@ -247,6 +249,19 @@ export function detailFactsGroup(data: DetailsDialogData): FactGroup | undefined
 
 function pushPair(rows: FactRow[], label: string, from?: string, to?: string): void {
   if (from || to) rows.push({ label, value: `${from || '?'} → ${to || '?'}` });
+}
+
+/**
+ * "Booking ref." (car rental / transport) — the reference as plain, selectable
+ * text, not just behind the "Copy reference" quick-action tile: it's read
+ * aloud or typed at a rental counter or check-in desk, so it has to stay
+ * visible even without tapping Copy.
+ */
+export function bookingReferenceGroup(data: DetailsDialogData): FactGroup | undefined {
+  const reference = data.carReservation?.bookingReference ?? data.transport?.bookingReference;
+  return reference
+    ? { label: 'Booking ref.', rows: [{ label: '', value: reference, monospace: true }] }
+    : undefined;
 }
 
 /** "Remarks" (accommodation/car) or "Notes" (activity/transport). */

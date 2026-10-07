@@ -31,6 +31,7 @@ import {
 import { DetailsAction, DetailsDialogData } from './details-types';
 import {
   addressGroup,
+  bookingReferenceGroup,
   costGroup,
   detailFactsGroup,
   detailsHeading,
@@ -203,6 +204,7 @@ export class DetailsContent {
     const data = this.data();
     const groups = [
       detailFactsGroup(data),
+      bookingReferenceGroup(data),
       this.reservationGroup(),
       notesGroup(data),
       costGroup(data),

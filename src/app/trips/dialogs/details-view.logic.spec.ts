@@ -6,6 +6,7 @@ import {
 import { DetailsDialogData } from './details-types';
 import {
   addressGroup,
+  bookingReferenceGroup,
   costGroup,
   detailFactsGroup,
   detailsHeading,
@@ -265,6 +266,33 @@ describe('details-view.logic', () => {
     it('returns undefined when the mode has no facts set', () => {
       const data: DetailsDialogData = { ...BASE, kind: 'transport', transport: train() };
       expect(detailFactsGroup(data)).toBeUndefined();
+    });
+  });
+
+  describe('bookingReferenceGroup', () => {
+    it('surfaces a car rental reference as visible, monospace text', () => {
+      const data: DetailsDialogData = {
+        ...BASE,
+        kind: 'car-reservation',
+        carReservation: car({ bookingReference: 'RNT-48213' }),
+      };
+      expect(bookingReferenceGroup(data)).toEqual({
+        label: 'Booking ref.',
+        rows: [{ label: '', value: 'RNT-48213', monospace: true }],
+      });
+    });
+
+    it('surfaces a transport reference', () => {
+      const data: DetailsDialogData = {
+        ...BASE,
+        kind: 'transport',
+        transport: train({ bookingReference: 'ABC123' }),
+      };
+      expect(bookingReferenceGroup(data)?.rows[0].value).toBe('ABC123');
+    });
+
+    it('is undefined with no reference', () => {
+      expect(bookingReferenceGroup({ ...BASE, carReservation: car() })).toBeUndefined();
     });
   });
 

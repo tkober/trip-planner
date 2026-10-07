@@ -165,7 +165,11 @@
             @if (row.label) {
               <dt>{{ row.label }}</dt>
             }
-            <dd [class.multiline]="row.multiline" [class.full]="!row.label">
+            <dd
+              [class.multiline]="row.multiline"
+              [class.full]="!row.label"
+              [class.mono]="row.monospace"
+            >
               {{ row.value }}
             </dd>
           }

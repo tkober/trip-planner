@@ -339,6 +339,17 @@
     &.multiline {
       white-space: pre-wrap;
     }
+
+    // The booking reference — read aloud or typed at a counter/desk, so it
+    // stays as plain, easy-to-scan, selectable text (the "Copy reference"
+    // quick-action tile is the fast path, this is the fallback/verification).
+    &.mono {
+      font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      user-select: all;
+    }
   }
 }
 
@@ -387,6 +398,20 @@
     dt:first-of-type {
       margin-top: 0;
     }
+  }
+
+  // A row of 4 tiles has no room for full labels on a phone-width sheet
+  // ("Pickup m…", "Copy ref…") — wrap into a 2-column grid instead (2×2 for
+  // 4 tiles, 2-then-1 for 3) so every label stays whole. Desktop keeps the
+  // single row (up to 4 tiles fit there).
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .quick-action span {
+    overflow: visible;
+    white-space: normal;
   }
 
   // The [leg][connector][leg] row has no room on a phone-width sheet — stack
