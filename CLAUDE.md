@@ -289,13 +289,13 @@ Reservations ([src/app/shared/reservation/reservation.ts](src/app/shared/reserva
 Theming ([src/styles.scss](src/styles.scss) +
 [src/app/shared/_palette.scss](src/app/shared/_palette.scss)):
 - A light Material 3 theme (`mat.theme(...)`) driven by a hand-written custom
-  **primary palette** (indigo, not Material's stock `mat.$azure-palette`) so
-  `--mat-sys-primary` lands close to `#24489A`; `tertiary` uses its own palette kept
-  in the same blue/indigo family rather than the complementary hue M3 picks by
-  default. Both are full M3 tone-0–100 maps in the same shape as
-  `mat.$azure-palette` (see the file for how the primary seed was chosen — Material
-  always derives the light theme's primary role from a palette's *tone 40*, a fixed
-  lightness step, so an exact hex target isn't reachable, only the closest tone-40 match).
+  **primary palette** (indigo, not Material's stock `mat.$azure-palette`);
+  `tertiary` uses its own palette kept in the same blue/indigo family rather than
+  the complementary hue M3 picks by default. Both are full M3 tone-0–100 maps in the
+  same shape as `mat.$azure-palette`. Material derives the light theme's primary role
+  from a palette's *tone 40* (`#275fa0` here, a shade lighter than the design's
+  indigo), so `mat.theme-overrides` pins `--mat-sys-primary` itself to `#24489A`;
+  containers and the other roles still come from the palette.
 - Separately, a small set of **app colour tokens** (`--app-bg`, `--app-surface`,
   `--app-ink` / `-ink-2` / `-ink-3`, `--app-line`, plus one fixed accent per entity
   type: `--flight` / `--train` / `--bus` / `--activity` / `--car` / `--now`) are

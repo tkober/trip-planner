@@ -242,6 +242,14 @@
     text-decoration: none;
     cursor: pointer;
 
+    // Replace the browser's black default ring (it shows after the More menu
+    // hands focus back to its trigger) with an inset indigo one.
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: -4px;
+      border-radius: 12px;
+    }
+
     mat-icon {
       font-size: 22px;
       width: 22px;
