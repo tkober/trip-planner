@@ -230,6 +230,65 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   pure, unit-tested helper,
   [stay-nudge.ts](src/app/shared/stay-nudge.ts), used by both the lane menu
   and the steppers — see "Timeline composition" and "Dialogs" below.
+- **Desktop timeline redesign (R10)**, desktop only (mobile unchanged):
+  - **Sticky lane names**: the hotel and car lanes' vertical name (`stayLabels`
+    in `TimelineView`, `CarSpan`'s own name) is now `position: sticky` inside
+    the full-height run block instead of sitting once in the run's middle —
+    it tracks to the top of whichever part of the run is scrolled into view,
+    so a multi-night stay's name (or a multi-day rental's) stays legible the
+    whole time you're scrolled through it, not just at the top/middle of the
+    block. The outer block (`.stay-label`/`.car-block`) carries no `overflow`
+    of its own — any value other than `visible` there would make it (not the
+    viewport) the sticky containing block, since it never itself scrolls, so
+    the sticky child would just sit at its static position and never track
+    page scroll; clipping/ellipsis for a run too short for the full name
+    lives on the inner sticky group/name span instead, with the full name in
+    a `title` tooltip. Harmless (and correctly non-sticky, since the export
+    render has no scroll offset) in the plan export.
+  - **Toolbar**: the "Timeline" header grows a **"Jump to day"** `mat-menu`
+    button (`Day 6 · Wed, 8 Apr ▾`, listing every real day plus the virtual
+    Departure/Return days) and a **Today** button, enabled only while "today"
+    (destination tz) falls within the trip. Both call
+    `TimelineNavService.scrollTo`. The button's own label follows scrolling
+    via the same scroll spy the mobile day strip uses (see below) rather than
+    only updating on jump. Hidden on mobile and in the plan export (reuses
+    the existing `.timeline-section .view-header { display: none }` rule in
+    styles.scss, since the toolbar lives inside `.view-header`).
+  - **`TimelineNavService` extended for desktop**: alongside the existing
+    mobile day-header registry (`registerHeader`/`unregisterHeader`), it now
+    also takes `registerMarker`/`unregisterMarker` — `DaySection`'s desktop
+    day marker and `TimelineView`'s virtual-day markers register under the
+    same keys the mobile headers use. Both a day's header and its marker exist
+    in the DOM at every width (only CSS hides one), so `scrollTo`/the scroll
+    spy pick whichever of the two candidates for a key actually has a
+    non-zero `getBoundingClientRect()` right now, instead of assuming one is
+    THE element for that key.
+  - **"+ Add" / empty-day text on hover or focus**: on desktop a day's
+    "+ Add" button and "No activities or transport yet." text are `opacity:
+    0` until `:hover`/`:focus-within` on the day's content cell (or
+    `.add-btn` itself is focused) reveals them — `opacity` only, never
+    `display`/`visibility` (the latter would also stop the button from
+    *receiving* focus, not just hide it, breaking Tab navigation into an
+    empty day). Reverted to always-visible inside `bp.mobile` (no hover
+    there) and always hidden in the plan export (unchanged, pre-existing
+    `display: none !important` rule). Mobile's own Add menu is unaffected.
+  - **Day marker discoverability**: the marker (`.day-marker`, click → the
+    day menu) gets a hover/focus `--app-line`-tinted background and a
+    `title`/`aria-label` of "Add stay or car rental" (desktop only — zeroed
+    out again inside `bp.mobile`, since phones have no hover and a long-press
+    there shouldn't paint a background).
+  - **Now line / "Up next" on desktop**: `.now-line`/`.up-next-label`/
+    `.entry.up-next`'s styling (previously switched on only inside
+    `bp.mobile`) is now the shared default, so today's now-line and the next
+    entry's "Up next" treatment (computed by the existing, platform-agnostic
+    `now-line.ts` `computeNowLine` — R4) render on desktop too, sized/placed
+    for the wider content column. Excluded from the plan export (the
+    existing `.export-doc` chrome-hiding rules in styles.scss gained
+    `.now-line`/`.up-next-label`/`.entry.up-next`'s outline), since a static
+    export has no "right now" to anchor it to.
+  - Purely presentational/interaction — no data model or TypeScript logic
+    change beyond `TimelineNavService`'s marker registry and `TimelineView`'s
+    toolbar computeds (`toolbarDays`, `currentDayLabel`, `todayEnabled`).
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -372,7 +431,15 @@ Timeline composition:
   (`scrollIntoView`, respecting `prefers-reduced-motion`), and a scroll-spy (a single
   passive, rAF-throttled `scroll` listener) that sets `activeKey` to whichever
   registered header sits at/just below the app bar (reading `--app-bar-height`, see
-  "Responsive layout" below).
+  "Responsive layout" below). R10: also takes a second, parallel
+  `registerMarker`/`unregisterMarker` registry — `DaySection`'s desktop day
+  marker and `TimelineView`'s virtual-day markers register under it, using the
+  SAME keys the mobile headers use (both a header and a marker exist in the DOM
+  at every width; only CSS hides one). `scrollTo`/the scroll spy resolve a key
+  to whichever of its header/marker candidates currently has a non-zero
+  `getBoundingClientRect()`, so the desktop toolbar's "Jump to day" (below) and
+  "current day" label reuse this same service and spy rather than a second
+  implementation.
 - [DayStrip](src/app/trips/timeline/day-strip.ts) — the app bar's horizontal day
   strip (one chip per day, incl. virtual days): reads `TimelineNavService` directly,
   renders nothing when it holds no days, and keeps the active chip scrolled into
@@ -585,6 +652,15 @@ Theming ([src/styles.scss](src/styles.scss) +
   tile/chip/pill tints and the hotel/car lane fills intact.
 
 Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoints.scss)):
+- R10's desktop timeline additions (toolbar, sticky lane names, hover-reveal
+  Add/empty-day text, marker hover/tooltip, now-line/"Up next") run the
+  pattern below in reverse from most other bullets here: the new behaviour is
+  the *default* (unguarded) styling, and `bp.mobile` either hides it outright
+  (toolbar, marker hover tint) or restores the prior always-visible mobile
+  behaviour (Add button/empty-day text) — see each timeline component's own
+  "R10" bullet under "Timeline composition" above for specifics. Sticky lane
+  names need no `bp.mobile` override at all: `.stay-label`/`.car-block` are
+  hidden/restyled to rails on mobile by the existing R5 rules regardless.
 - Two **max-width-only** breakpoints, so the desktop presentation is untouched:
   `$mobile` (720px) — where the trip shell collapses to a single column and the
   timeline's content column (viewport minus day marker and the hotel/car lanes)
