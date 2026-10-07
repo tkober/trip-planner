@@ -17,6 +17,10 @@
   @include card.surface;
   display: flex;
   align-items: flex-start;
+  // R10: lets the "Up next" eyebrow (full-width row above the time/body)
+  // claim its own row on desktop too — mobile also needs this for its chip
+  // footer, so it was already set there; hoisted here as the shared default.
+  flex-wrap: wrap;
   gap: 0.6rem;
   padding: 0.6rem 0.6rem;
   cursor: pointer;
@@ -24,6 +28,13 @@
 
   &:hover {
     background: var(--app-bg);
+  }
+
+  // R4/R10: today-only "Up next" highlight (see `.up-next-label` below) — now
+  // enabled on both desktop and mobile; only the outline offset differs.
+  &.up-next {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -1px;
   }
 }
 
@@ -189,11 +200,19 @@
   flex-shrink: 0;
 }
 
-// R4, mobile today only (see bp.mobile below) — desktop never renders this
-// treatment even though `upNext()` may be true (the data doesn't know about
-// the viewport; the styling does).
+// R4/R10 "Up next" eyebrow: a full-width row above the time/body, via the
+// flex-wrap enabled on `.entry` above. Shown on both desktop and mobile now;
+// only the font size differs (see bp.mobile below).
 .up-next-label {
-  display: none;
+  display: block;
+  flex: 0 0 100%;
+  order: -1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--mat-sys-primary);
+  margin-bottom: 0.1rem;
 }
 
 // Mobile edit-mode only (see EntryCard.showHandle) — CDK drags from here
@@ -221,28 +240,11 @@
   .entry {
     gap: 0.45rem;
     padding: 0.5rem 0.4rem;
-    // Lets the chip footer below (and the "Up next" eyebrow above) claim
-    // their own full-width row.
-    flex-wrap: wrap;
-
-    &.up-next {
-      outline: 2px solid var(--mat-sys-primary);
-      outline-offset: -1px;
-    }
   }
 
-  // R4 "Up next" eyebrow: a full-width row above the time/body, via the
-  // flex-wrap enabled on `.entry` above.
+  // Mobile keeps a slightly smaller eyebrow than the desktop default above.
   .up-next-label {
-    display: block;
-    flex: 0 0 100%;
-    order: -1;
     font-size: 0.64rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: var(--mat-sys-primary);
-    margin-bottom: 0.1rem;
   }
 
   .time-col {

@@ -1,9 +1,11 @@
 <button
+  #markerEl
   type="button"
   class="day-marker"
   [style.grid-row]="rowIndex()"
   (click)="openDayMenu($event)"
-  aria-label="Add to this day"
+  aria-label="Add stay or car rental"
+  title="Add stay or car rental"
 >
   <div class="day-index">Day {{ view().day.index }}</div>
   <div class="day-date">{{ view().day.startOfDay.toFormat('ccc') }}</div>

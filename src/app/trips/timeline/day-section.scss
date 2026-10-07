@@ -20,6 +20,15 @@
   border-top: 1px solid var(--mat-sys-outline-variant);
   // The continuous vertical timeline spine.
   border-right: 2px solid var(--mat-sys-outline-variant);
+  transition: background-color 0.12s ease;
+
+  // R10: discoverability for the marker's day-menu click (Add stay or car
+  // rental) — a tinted hover/focus background, in the same family as the
+  // app's hairline colour so it reads as "part of this surface", not an error.
+  &:hover,
+  &:focus-visible {
+    background-color: color-mix(in srgb, var(--app-line) 55%, transparent);
+  }
 
   &:hover .day-index,
   &:focus-visible .day-index {
@@ -101,16 +110,67 @@
   margin: 0;
 }
 
-// R4 mobile sticky day header (first child of `.day-content`) + now-line.
-// Both are desktop-hidden by default — the day-marker column already carries
-// this info there, and the now-line/"Up next" treatment is mobile-only by
-// spec — and only switched on inside the `bp.mobile` block below.
+// R10: on desktop the empty-day text and the "+ Add" button only show up
+// while the pointer is over the day's content cell or keyboard focus is
+// inside it — otherwise a trip with many empty days reads as a wall of
+// invitations to add something. `opacity` only (never `display` or
+// `visibility` — either would drop the button from the tab order, or (for
+// `visibility`) stop it from *receiving* focus at all, defeating "Tab into
+// an empty day still reveals and focuses the button"). `.no-entries` is
+// plain text with nothing to focus, so it can safely also get
+// `pointer-events: none` while hidden; the button keeps pointer events so a
+// click landing on its (invisible but still laid out) box still works the
+// instant hover reveals it. Reverted to always-visible inside `bp.mobile`
+// below, where hover doesn't exist and the Add menu is the primary way in.
+.no-entries {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.add-btn {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.day-content:hover .no-entries,
+.day-content:focus-within .no-entries,
+.day-content:hover .add-btn,
+.day-content:focus-within .add-btn {
+  opacity: 1;
+}
+
+// R4 mobile sticky day header (first child of `.day-content`) — desktop-
+// hidden by default, since the day-marker column already carries this info
+// there — only switched on inside the `bp.mobile` block below.
 .day-header {
   display: none;
 }
 
+// R4/R10: the "now" line — a thin rule at the current time with a small pill
+// label, inserted among today's chronologically-sorted items. Mobile-styled
+// inside `bp.mobile` below; this is the desktop styling (no sticky header to
+// clear, so no extra margin needed beyond the day-content gap).
 .now-line {
-  display: none;
+  display: block;
+  position: relative;
+  height: 0;
+  margin: 0.5rem 0;
+  border-top: 2px solid var(--now);
+
+  .now-pill {
+    position: absolute;
+    left: 0;
+    top: -0.62rem;
+    background: var(--now);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
 }
 
 // R5 mobile-only: the check-out/check-in stay pill and the car pill's short
@@ -284,6 +344,23 @@
     font-size: 0.8rem;
   }
 
+  // R10's hover-reveal is desktop-only — phones have no hover, and the Add
+  // menu/empty-day text must stay exactly as visible as before.
+  .no-entries,
+  .add-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  // R10's hover tint on the marker is desktop-only too (no `:hover` on
+  // phones, and a long-press shouldn't paint the background).
+  .day-marker {
+    &:hover,
+    &:focus-visible {
+      background-color: transparent;
+    }
+  }
+
   // R4: the day marker column collapses (see timeline.scss's --tl-marker), so
   // this sticky header carries the day/date/zone instead.
   .day-marker {
@@ -413,30 +490,6 @@
         bottom: 0;
         border-left: 2px dashed var(--connector-accent, var(--mat-sys-primary));
       }
-    }
-  }
-
-  // R4 "now" line: a thin red rule at the current time with a small pill
-  // label, inserted among today's chronologically-sorted items.
-  .now-line {
-    display: block;
-    position: relative;
-    height: 0;
-    margin: 0.5rem 0;
-    border-top: 2px solid var(--now);
-
-    .now-pill {
-      position: absolute;
-      left: 0;
-      top: -0.62rem;
-      background: var(--now);
-      color: #fff;
-      font-size: 0.66rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      padding: 0.1rem 0.5rem;
-      border-radius: 999px;
-      white-space: nowrap;
     }
   }
 
