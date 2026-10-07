@@ -1,0 +1,82 @@
+<div class="half" [class.up-next]="upNext()" (click)="open.emit(entry())">
+  @if (upNext()) {
+    <div class="up-next-label">Up next</div>
+  }
+  @if (part() === 'top') {
+    <div class="bullet"><mat-icon>{{ icon() }}</mat-icon></div>
+  }
+  <div class="info">
+    @if (part() === 'top') {
+      <div class="title">{{ topTitle() }}</div>
+      <div class="time">
+        {{ topTime().when }}
+        @if (topTime().highlight) {
+          <span class="zone zone-highlight">{{ topTime().zone }}</span>
+        }
+      </div>
+      @if (fromDetail() ?? location(); as sub) {
+        <div class="subtitle">{{ sub }}</div>
+      }
+      @if (durationLine(); as d) {
+        <div class="duration-line">{{ d }}</div>
+      }
+    } @else {
+      @if (bottomTitle(); as to) {
+        <div class="title">{{ to }}</div>
+      } @else if (location(); as loc) {
+        <div class="title">ends · {{ loc }}</div>
+      }
+      @if (bottomTime(); as t) {
+        <div class="time">
+          {{ t.when }}
+          @if (t.highlight) {
+            <span class="zone zone-highlight">{{ t.zone }}</span>
+          }
+        </div>
+      }
+      @if (homeTimeSubtitle(); as home) {
+        <div class="home-time">{{ home }}</div>
+      }
+      @if (toDetail(); as sub) {
+        <div class="subtitle">{{ sub }}</div>
+      }
+    }
+  </div>
+  @if (part() === 'top' && details().length) {
+    <div class="detail">
+      @for (line of details(); track $index) {
+        <div class="line">{{ line }}</div>
+      }
+    </div>
+  }
+  @if (showHandle()) {
+    <div class="drag-handle" cdkDragHandle (click)="$event.stopPropagation()">
+      <mat-icon>drag_indicator</mat-icon>
+    </div>
+  }
+  @if (!editMode.readOnly()) {
+    <button
+      matIconButton
+      class="split-menu"
+      [matMenuTriggerFor]="menu"
+      (click)="$event.stopPropagation()"
+      aria-label="Entry actions"
+    >
+      <mat-icon>more_vert</mat-icon>
+    </button>
+  }
+  <mat-menu #menu="matMenu">
+    <button mat-menu-item (click)="open.emit(entry())">
+      <mat-icon>info</mat-icon><span>Details</span>
+    </button>
+    <button mat-menu-item (click)="edit.emit(entry())">
+      <mat-icon>edit</mat-icon><span>Edit</span>
+    </button>
+    <button mat-menu-item (click)="move.emit(entry())">
+      <mat-icon>event</mat-icon><span>Move to another day…</span>
+    </button>
+    <button mat-menu-item (click)="delete.emit(entry())">
+      <mat-icon>delete</mat-icon><span>Delete</span>
+    </button>
+  </mat-menu>
+</div>
