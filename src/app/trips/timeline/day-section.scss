@@ -268,8 +268,16 @@
 
     // R6: the floating StraddleCard no longer renders on mobile (day-crossing
     // entries render as inline split halves instead — see `.split-entry-card`
-    // via `app-split-entry-card` above), so the clearance it used to need is
-    // gone too.
+    // via `app-split-entry-card` above), so the clearance it used to need
+    // (the unconditional `.pad-top`/`.pad-bottom` rule above) must be zeroed
+    // out here, not just left un-widened — leaving it unset would still
+    // inherit the desktop 4.25rem via that rule's own selector.
+    &.pad-top {
+      padding-top: 0;
+    }
+    &.pad-bottom {
+      padding-bottom: 0;
+    }
   }
 
   .no-entries {
@@ -391,15 +399,20 @@
 
     // R6: when this day opens with a day-crossing entry's bottom half, a
     // dashed vertical line in that entry's accent colour visually continues
-    // the top half's dashed edge through the sticky header, in the marker/
-    // rails column to the left of the header text.
-    &.has-connector::before {
-      content: '';
-      position: absolute;
-      left: 0.1rem;
-      top: 0;
-      bottom: 0;
-      border-left: 2px dashed var(--connector-accent, var(--mat-sys-primary));
+    // the top half's dashed edge through the sticky header. The header's own
+    // left padding widens to make room for it as a dedicated gutter — it must
+    // never sit under the header text (it used to overlap the "D" in "Day").
+    &.has-connector {
+      padding-left: 0.75rem;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0.15rem;
+        top: 0;
+        bottom: 0;
+        border-left: 2px dashed var(--connector-accent, var(--mat-sys-primary));
+      }
     }
   }
 
