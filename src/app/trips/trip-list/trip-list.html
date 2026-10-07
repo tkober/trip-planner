@@ -34,47 +34,108 @@
     </button>
   </div>
 } @else {
-  <div class="grid">
-    @for (trip of trips(); track trip.id) {
-      <mat-card class="trip-card" appearance="outlined">
-        <button
-          class="card-menu"
-          matIconButton
-          [matMenuTriggerFor]="menu"
-          (click)="$event.stopPropagation()"
-          aria-label="Trip actions"
-        >
-          <mat-icon>more_vert</mat-icon>
+  @if (hero(); as h) {
+    <mat-card class="hero-card" appearance="outlined" (click)="open(h.trip)">
+      <button
+        class="card-menu"
+        matIconButton
+        [matMenuTriggerFor]="heroMenu"
+        (click)="$event.stopPropagation()"
+        aria-label="Trip actions"
+      >
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #heroMenu="matMenu">
+        <button mat-menu-item (click)="export(h.trip)">
+          <mat-icon>download</mat-icon>
+          <span>Export JSON</span>
         </button>
-        <mat-menu #menu="matMenu">
-          <button mat-menu-item (click)="export(trip)">
-            <mat-icon>download</mat-icon>
-            <span>Export JSON</span>
-          </button>
-          <button mat-menu-item (click)="confirmDelete(trip)">
-            <mat-icon>delete</mat-icon>
-            <span>Delete</span>
-          </button>
-        </mat-menu>
+        <button mat-menu-item (click)="confirmDelete(h.trip)">
+          <mat-icon>delete</mat-icon>
+          <span>Delete</span>
+        </button>
+      </mat-menu>
 
-        <div class="card-body" (click)="open(trip)">
-          <h3>{{ trip.title }}</h3>
-          <p class="dates">{{ dateRange(trip) }}</p>
-          <p class="meta">
-            <span class="chip">{{ nights(trip) }} nights</span>
-            <span class="chip">{{ destinationCity(trip) }}</span>
-          </p>
-          @if (trip.description) {
-            <p class="desc">{{ trip.description }}</p>
-          }
-          <div class="counts">
-            <span><mat-icon>hotel</mat-icon>{{ trip.accommodations.length }}</span>
-            <span><mat-icon>directions_car</mat-icon>{{ trip.carReservations.length }}</span>
-            <span><mat-icon>local_activity</mat-icon>{{ trip.activities.length }}</span>
-            <span><mat-icon>commute</mat-icon>{{ trip.transport.length }}</span>
-          </div>
-        </div>
-      </mat-card>
+      <p class="eyebrow">{{ heroEyebrow() }}</p>
+      <h2>{{ h.trip.title }}</h2>
+      <p class="context">{{ heroContextLabel() }}</p>
+      <p class="meta">
+        <span class="chip">{{ dateRange(h.trip) }}</span>
+        <span class="chip">{{ destinationCity(h.trip) }}</span>
+      </p>
+      @if (heroNextEntry(); as next) {
+        <p class="next-entry">
+          <mat-icon>schedule</mat-icon>
+          <span>Next: {{ next.label }} at {{ next.time }}</span>
+        </p>
+      }
+    </mat-card>
+  }
+
+  @if (restTrips().length || pastTrips().length) {
+    <div class="grid">
+      @for (trip of restTrips(); track trip.id) {
+        <ng-container
+          *ngTemplateOutlet="tripCard; context: { trip: trip }"
+        ></ng-container>
+      }
+    </div>
+
+    @if (pastTrips().length) {
+      <p class="past-label">Past trips</p>
+      <div class="grid">
+        @for (trip of pastTrips(); track trip.id) {
+          <ng-container
+            *ngTemplateOutlet="tripCard; context: { trip: trip, past: true }"
+          ></ng-container>
+        }
+      </div>
     }
-  </div>
+  }
 }
+
+<ng-template #tripCard let-trip="trip" let-past="past">
+  <mat-card
+    class="trip-card"
+    [class.past]="past"
+    appearance="outlined"
+  >
+    <button
+      class="card-menu"
+      matIconButton
+      [matMenuTriggerFor]="menu"
+      (click)="$event.stopPropagation()"
+      aria-label="Trip actions"
+    >
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="export(trip)">
+        <mat-icon>download</mat-icon>
+        <span>Export JSON</span>
+      </button>
+      <button mat-menu-item (click)="confirmDelete(trip)">
+        <mat-icon>delete</mat-icon>
+        <span>Delete</span>
+      </button>
+    </mat-menu>
+
+    <div class="card-body" (click)="open(trip)">
+      <h3>{{ trip.title }}</h3>
+      <p class="dates">{{ dateRange(trip) }}</p>
+      <p class="meta">
+        <span class="chip">{{ nights(trip) }} nights</span>
+        <span class="chip">{{ destinationCity(trip) }}</span>
+      </p>
+      @if (trip.description) {
+        <p class="desc">{{ trip.description }}</p>
+      }
+      <div class="counts">
+        <span><mat-icon>hotel</mat-icon>{{ trip.accommodations.length }}</span>
+        <span><mat-icon>directions_car</mat-icon>{{ trip.carReservations.length }}</span>
+        <span><mat-icon>local_activity</mat-icon>{{ trip.activities.length }}</span>
+        <span><mat-icon>commute</mat-icon>{{ trip.transport.length }}</span>
+      </div>
+    </div>
+  </mat-card>
+</ng-template>
