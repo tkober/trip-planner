@@ -1,4 +1,5 @@
 @use '../../shared/breakpoints' as bp;
+@use '../../shared/card';
 
 // Desktop keeps the floating StraddleCard instead (see TimelineView.html /
 // day-section.html) — this card only renders once `bp.mobile` switches it on.
@@ -8,17 +9,16 @@
 
 .half {
   --accent: var(--mat-sys-primary);
+  @include card.surface;
   display: flex;
   align-items: flex-start;
   gap: 0.6rem;
-  padding: 0.6rem 0.5rem 0.6rem 0.6rem;
-  background: var(--mat-sys-surface-container);
-  border-left: 4px solid var(--accent);
+  padding: 0.6rem;
   cursor: pointer;
   transition: background 0.12s ease;
 
   &:hover {
-    background: var(--mat-sys-surface-container-high);
+    background: var(--app-bg);
   }
 
   &.up-next {
@@ -40,26 +40,6 @@
 .half.bottom {
   border-radius: 0 0 12px 12px;
   border-top: 2px dashed var(--accent);
-  // Align with the top half's text, past where its bullet sits.
-  padding-left: calc(0.6rem + 2rem + 0.6rem);
-}
-
-.bullet {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--accent);
-  color: #fff;
-
-  mat-icon {
-    font-size: 1.15rem;
-    width: 1.15rem;
-    height: 1.15rem;
-  }
 }
 
 .info {
@@ -68,19 +48,21 @@
 
   .title {
     font-weight: 500;
+    color: var(--app-ink);
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .time {
     font-size: 0.78rem;
-    color: var(--mat-sys-on-surface-variant);
+    font-weight: 500;
+    color: var(--app-ink);
     font-variant-numeric: tabular-nums;
   }
 
   .subtitle {
     font-size: 0.78rem;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-ink-2);
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -89,7 +71,7 @@
     margin-top: 0.15rem;
     font-size: 0.74rem;
     font-weight: 600;
-    color: var(--mat-sys-on-surface);
+    color: var(--app-ink);
   }
 
   .home-time {
@@ -114,29 +96,29 @@
   letter-spacing: 0.02em;
 }
 
-.detail {
-  flex: 1;
+.chips {
+  flex: 0 1 auto;
   min-width: 0;
   align-self: flex-start;
-  text-align: right;
   display: flex;
   flex-direction: column;
-  gap: 0.05rem;
-  padding-left: 0.6rem;
-  border-left: 1px solid var(--mat-sys-outline-variant);
+  align-items: flex-end;
+  gap: 0.2rem;
+}
 
-  .line {
-    font-size: 0.72rem;
-    color: var(--mat-sys-on-surface-variant);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.chip {
+  @include card.detail-chip;
+}
 
-  .line:first-child {
-    font-weight: 600;
-    color: var(--mat-sys-on-surface);
-  }
+.right-cluster {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.icon-tile {
+  @include card.icon-tile;
 }
 
 .split-menu {
@@ -155,7 +137,7 @@
   width: 2.25rem;
   min-height: 2.5rem;
   touch-action: none;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-ink-3);
   cursor: grab;
 }
 
@@ -167,12 +149,8 @@
 
   .half {
     gap: 0.45rem;
-    padding: 0.5rem 0.25rem 0.5rem 0.5rem;
+    padding: 0.5rem;
     flex-wrap: wrap;
-  }
-
-  .half.bottom {
-    padding-left: calc(0.5rem + 1.65rem + 0.45rem);
   }
 
   .up-next-label {
@@ -187,14 +165,14 @@
     margin-bottom: 0.1rem;
   }
 
-  .bullet {
-    width: 1.65rem;
-    height: 1.65rem;
+  .icon-tile {
+    width: 20px;
+    height: 20px;
 
     mat-icon {
-      font-size: 1rem;
-      width: 1rem;
-      height: 1rem;
+      font-size: 0.9rem;
+      width: 0.9rem;
+      height: 0.9rem;
     }
   }
 

@@ -138,7 +138,7 @@
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 45%, white);
   background: color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 16%, white);
-  color: #1c2733;
+  color: var(--app-ink);
   font: inherit;
   font-size: 0.78rem;
   line-height: 1.4;
@@ -483,7 +483,7 @@
     border: 1px solid
       color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 45%, white);
     background: color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 16%, white);
-    color: #1c2733;
+    color: var(--app-ink);
     font: inherit;
     font-size: 0.72rem;
     line-height: 1.4;

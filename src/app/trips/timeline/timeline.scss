@@ -118,7 +118,7 @@
   padding: 0.5rem 0;
 
   .stay-icon {
-    color: #1c2733;
+    color: var(--app-ink);
     font-size: 1.2rem;
     width: 1.2rem;
     height: 1.2rem;
@@ -130,7 +130,7 @@
     margin-top: 0.25rem;
     font-size: 0.82rem;
     font-weight: 500;
-    color: #1c2733;
+    color: var(--app-ink);
     white-space: nowrap;
     overflow: hidden;
   }

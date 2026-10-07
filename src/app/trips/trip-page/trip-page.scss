@@ -12,6 +12,10 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 1rem 1.5rem 4rem;
+  // R7: a flat grey-blue page background so the white cards in the content
+  // column stand out against it.
+  background: var(--app-bg);
+  min-height: 100vh;
 }
 
 .side-panel {
