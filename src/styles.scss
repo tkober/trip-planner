@@ -209,3 +209,12 @@ app-export-host {
     }
   }
 }
+
+// R8: the mobile details bottom sheet (`DetailsSheet`, opened by
+// `MatBottomSheet` via `panelClass: 'details-sheet-panel'`). The panel is
+// appended to the CDK overlay container, a sibling of the app root, so this
+// can't be a `DetailsSheet`-scoped style — it has to live globally.
+.details-sheet-panel {
+  border-radius: 22px 22px 0 0 !important;
+  max-height: 85vh;
+}

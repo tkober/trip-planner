@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  // Full sheet width — DetailsContent's dialog-only `min-width` would just
+  // waste space here (overridden back to 0 under bp.mobile-wide anyway).
+  width: 100%;
+}
+
+.drag-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--app-line);
+  margin: 0.55rem auto 0.1rem;
+}
