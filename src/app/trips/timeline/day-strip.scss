@@ -1,0 +1,81 @@
+// Only ever rendered on mobile (inside trip-page's `.bar-day-strip` slot, see
+// trip-page.html), so no `bp.mobile` guard is needed here — this stylesheet
+// has no desktop audience at all.
+
+:host {
+  display: block;
+}
+
+.strip {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding: 0.1rem 0.5rem 0.45rem;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chip {
+  flex: 0 0 auto;
+  scroll-margin-inline: 1rem;
+  width: 40px;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0.3rem 0.2rem;
+  border-radius: 10px;
+  border: 1px solid var(--app-line);
+  background: var(--app-surface);
+  color: var(--app-ink-2);
+  font: inherit;
+  cursor: pointer;
+
+  .chip-top {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .chip-num {
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // R5 fills this with the day's colour; an empty 3px strip for now.
+  .chip-bar {
+    width: 1.1rem;
+    height: 3px;
+    border-radius: 2px;
+    margin-top: 1px;
+  }
+
+  // Today's chip gets an indigo ring, independent of (and visible alongside)
+  // the active fill below.
+  &.today {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 1px;
+  }
+
+  &.active {
+    background: var(--mat-sys-primary);
+    border-color: var(--mat-sys-primary);
+    color: #fff;
+
+    &.today {
+      outline-color: #fff;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}

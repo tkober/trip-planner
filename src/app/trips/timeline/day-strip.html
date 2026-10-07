@@ -1,0 +1,21 @@
+@if (nav.days().length) {
+  <div class="strip" role="tablist" aria-label="Jump to day">
+    @for (d of nav.days(); track d.key) {
+      <button
+        #chipRef
+        type="button"
+        class="chip"
+        role="tab"
+        [class.active]="nav.activeKey() === d.key"
+        [class.today]="d.isToday"
+        [attr.aria-selected]="nav.activeKey() === d.key"
+        (click)="onTap(d.key)"
+      >
+        <span class="chip-top">{{ d.topLabel }}</span>
+        <span class="chip-num">{{ d.dayNum }}</span>
+        <!-- R5 will fill this with the day's colour; empty placeholder for now. -->
+        <span class="chip-bar" aria-hidden="true"></span>
+      </button>
+    }
+  </div>
+}
