@@ -186,6 +186,17 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   bar crawl entered as "21:00 → 00:00" reads as one evening, not a one-instant
   sliver of the next day. See "Timeline composition" and "Responsive layout"
   below.
+- **Card redesign (R7)**: every card (timeline `EntryCard`/`StraddleCard`/
+  `SplitEntryCard`, the shared `TransportCard`, the section detail cards, the
+  trip-list cards) is now a flat white surface with a thin border and no
+  shadow or coloured left bar; a small accent **icon tile** top-right replaces
+  the round bullet, a fixed time column replaces the inline time on single-day
+  entries, and transport's mode-detail facts render as a chip row under the
+  route instead of a stacked column/footer. The day list's pills (car
+  deadlines, stay check-in/out, continues/arrives) keep their tinted pill
+  style. The trip pages now show the cards against a `--app-bg` page
+  background. Purely presentational — no data/behaviour change. See "Theming"
+  below and each card's own bullet.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -364,30 +375,46 @@ Timeline composition:
   (full accent colour, no icon/name — the car's name moved to the day header's car
   line); click/long-press (contextmenu) behaviour is unchanged.
 - [EntryCard](src/app/trips/timeline/entry-card.ts) — one single-day activity/transport.
-  Transport entries split ~2/3 route · ~1/3 **detail column** (same per-mode facts as
-  `TransportCard`; absent for activities/car or when no detail fields are set). Takes
-  an R4 `upNext` input (set by `DaySection` from `TimelineView.layout()`'s now-line
-  computation) that adds an uppercase "Up next" eyebrow + an indigo outline — mobile,
-  today's day only; the styling (not the data) is what keeps it off desktop.
+  R7: a flat white card (`--app-surface`, 1px `--app-line` border, 12px radius, no
+  shadow, no coloured left bar — see "Theming" below). Activities get a fixed-width
+  **time column** on the left (start time 500-weight `--app-ink`, end time below it
+  in `--app-ink-3`, tabular numbers; no end shows only the start); transport instead
+  keeps its horizontal route (`FROM → TO`) at full width — the route's own per-leg
+  times get the same typography rather than a duplicated column. An **icon tile**
+  (22px, 6px radius, the entity's accent colour on a `color-mix` 14% tint of itself)
+  sits top-right where the round bullet used to be, in a trailing cluster with the
+  drag handle and kebab. Transport's mode-detail facts (same set as `TransportCard`)
+  render as a wrapped **chip row** (`#eef1f5` pill, `--app-ink-2` text) under the
+  route instead of a right-hand column; absent for activities/car or when no detail
+  fields are set. Takes an R4 `upNext` input (set by `DaySection` from
+  `TimelineView.layout()`'s now-line computation) that adds an uppercase "Up next"
+  eyebrow + an indigo outline — mobile, today's day only; the styling (not the data)
+  is what keeps it off desktop.
 - [StraddleCard](src/app/trips/timeline/straddle-card.ts) — a day-crossing entry,
   anchored on the separator line (`grid-row` from `TimelineView.layout`, then
-  `translateY(-50%)`); adjacent days get padding so the card has clear space. The
-  per-mode detail (same set as `EntryCard`) is stacked **in the top half's
-  upper-right corner**, just left of the kebab; the equal-height rows keep the day
-  divider centred even when that makes the top half the taller one. R6:
-  **desktop-only** now (`bp.mobile` hides it outright — mobile renders
-  `SplitEntryCard` instead); its `topRefZone`/`bottomRefZone` inputs (the
-  reference zone of each half's own day) drive an amber `.zone-highlight` on
-  the existing zone tag when an endpoint's own zone differs from it.
-  The grid columns ([marker][hotel][car][content]) are built in
-  `TimelineView.gridTemplateColumns` (hotel and car lanes each collapse to 0px when
-  their entity is absent; content is referenced as the last column via `-2/-1`).
+  `translateY(-50%)`); adjacent days get padding so the card has clear space. R7:
+  same flat white surface as `EntryCard` (no shadow, no left bar); the per-mode
+  detail (same set as `EntryCard`) renders as a stacked column of chips in the top
+  half's upper-right corner, next to the icon tile/kebab cluster that replaces the
+  old round bullet; the equal-height rows keep the day divider centred even when
+  that makes the top half the taller one. The dashed day-boundary divider and the
+  duration pill on it are unchanged. R6: **desktop-only** now (`bp.mobile` hides it
+  outright — mobile renders `SplitEntryCard` instead); its
+  `topRefZone`/`bottomRefZone` inputs (the reference zone of each half's own day)
+  drive an amber `.zone-highlight` on the existing zone tag when an endpoint's own
+  zone differs from it. The grid columns ([marker][hotel][car][content]) are built
+  in `TimelineView.gridTemplateColumns` (hotel and car lanes each collapse to 0px
+  when their entity is absent; content is referenced as the last column via
+  `-2/-1`).
 - [SplitEntryCard](src/app/trips/timeline/split-entry-card.ts) (R6, mobile
   only — `:host` is `display: none` outside `bp.mobile`) — one half (`top` |
   `bottom`) of a day-crossing entry, rendered inline in `DaySection`'s normal
-  item list instead of a floating straddle. The top half (last item of the
-  start day) shows the departure/start time + origin + per-mode detail + a
-  duration line (`↓ 8h 20min · arrives Day 14` for transport, `until Mon
+  item list instead of a floating straddle. R7: same flat white surface as
+  `EntryCard`, no left bar; the icon tile (replacing the old round bullet) only
+  renders on the top half, in a trailing cluster with the drag handle/kebab — the
+  bottom half carries just the handle/kebab. The top half (last item of the
+  start day) shows the departure/start time + origin + per-mode detail (now
+  chips) + a duration line (`↓ 8h 20min · arrives Day 14` for transport, `until Mon
   01:00 · Day 4` for an activity, using its `farDayLabel` input); the bottom
   half (first item of the end day) shows the arrival/end time + destination
   and, when the arrival zone differs from its `homeZone` input, a small
@@ -405,13 +432,14 @@ Timeline composition:
   either moves the whole entry via `TimelineView.moveEntryToDay`) and carry
   the usual drag handle + kebab in edit mode.
 - [TransportCard](src/app/shared/transport-card/transport-card.ts) — a shared,
-  full-width transport card in the **same route style as the timeline** (accent icon
-  bullet, derived `FROM → TO` headline with dual-tz departure/arrival times + dates and
-  the travel duration over the arrow, optional eyebrow `role`, kebab menu). The route
-  occupies ~2/3 of the width; a divider then a ~1/3 **detail column** carries the
-  mode-specific facts (flight: number, airline; train: line, name, operator, kind;
-  bus: line, operator, kind). Car has no detail column, and when no detail fields are
-  set the route reclaims the full width. Used by the
+  full-width transport card in the **same route style as the timeline** (R7: flat
+  white surface, no shadow, no left bar; an accent **icon tile** top-right instead
+  of the round bullet, derived `FROM → TO` headline with dual-tz departure/arrival
+  times + dates and the travel duration over the arrow, optional eyebrow `role`,
+  kebab menu). The route now spans the full width; the mode-specific facts (flight:
+  number, airline; train: line, name, operator, kind; bus: line, operator, kind)
+  render as a wrapped **chip row** underneath it instead of a right-hand detail
+  column. Car and entries with no detail fields just show the route. Used by the
   Overview **Flights** section (departure/return) and the Transport list so every
   surface shares one visual language; route/detail strings come from the same
   [transport-format.ts](src/app/shared/transport-format.ts) helpers the timeline uses.
@@ -481,16 +509,42 @@ Theming ([src/styles.scss](src/styles.scss) +
   from a palette's *tone 40* (`#275fa0` here, a shade lighter than the design's
   indigo), so `mat.theme-overrides` pins `--mat-sys-primary` itself to `#24489A`;
   containers and the other roles still come from the palette.
-- Separately, a small set of **app colour tokens** (`--app-bg`, `--app-surface`,
+- A small set of **app colour tokens** (`--app-bg`, `--app-surface`,
   `--app-ink` / `-ink-2` / `-ink-3`, `--app-line`, plus one fixed accent per entity
   type: `--flight` / `--train` / `--bus` / `--activity` / `--car` / `--now`) are
-  declared as CSS custom properties on `html`, next to the theme mixin. These aren't
-  yet wired into `body`'s background (cards are still grey, pending a later
-  redesign step) but the per-type colour **defaults** in `color.ts` already match
-  them, and the timeline's secondary/zone text (`.day-zone`, `.day-date`, the
-  virtual day marker, `.no-entries`, the `zone-tag`/GMT labels in entry/straddle/
-  transport cards and the details dialog) uses `--app-ink-2` / `--app-ink-3` instead
-  of a low-opacity variant token, so it stays readable against the light surfaces.
+  declared as CSS custom properties on `html`, next to the theme mixin. The
+  per-type colour **defaults** in `color.ts` match them, and the timeline's
+  secondary/zone text (`.day-zone`, `.day-date`, the virtual day marker,
+  `.no-entries`, the `zone-tag`/GMT labels in entry/straddle/transport cards and
+  the details dialog) uses `--app-ink-2` / `--app-ink-3` instead of a low-opacity
+  variant token, so it stays readable against the light surfaces.
+- **R7 card redesign** ("Neuer Kartenstil"): every card is now a flat white
+  surface (`--app-surface` background, 1px `--app-line` border, 12px radius) with
+  **no shadow and no coloured left bar** — shadows are reserved for floating
+  things (dialogs/sheets, the FAB, a dragged card's `.cdk-drag-preview`). The
+  shared mixins live in [_card.scss](src/app/shared/_card.scss) (`@use
+  '.../shared/card'`): `card.surface` (the card shell), `card.icon-tile` (a 22px,
+  6px-radius tile — the entity's accent colour on a `color-mix(... 14%, white)`
+  tint of itself, replacing the old round bullet, positioned top-right next to
+  the kebab/drag handle) and `card.detail-chip` (an `#eef1f5` pill, `--app-ink-2`
+  text, 11px, replacing a transport detail column/footer of stacked lines).
+  Applied to `EntryCard`, `StraddleCard`, `SplitEntryCard`, `TransportCard`, the
+  section detail cards (`.detail-card` in [views.scss](src/app/trips/views/views.scss))
+  and the trip-list cards (`.trip-card`) — see each component's bullet above/below
+  for its specific layout. Non-day-crossing entries also get a fixed-width **time
+  column** on the left (~52px desktop / ~44px mobile, tabular numbers; start time
+  500-weight `--app-ink`, end time below in `--app-ink-3`) instead of an inline
+  time next to the bullet; transport keeps its own route times instead (same
+  typography, no duplicate column). The day list's car-deadline/stay/continues
+  pills keep their tinted, borderless pill style (they're "events", not cards) —
+  unaffected. The trip pages' content background (`.trip-layout` in
+  [trip-page.scss](src/app/trips/trip-page/trip-page.scss)) is `--app-bg` so the
+  white cards stand out; the mobile sticky day header/app bar/bottom nav already
+  used `--app-surface` (R3/R4) and are unchanged. The plan export's print rules
+  ([styles.scss](src/styles.scss)) needed no new overrides — the card border is an
+  ordinary (non-print-only) style, so it already survives `window.print()`/PNG
+  capture, and the existing `-webkit-print-color-adjust: exact` keeps the icon
+  tile/chip/pill tints and the hotel/car lane fills intact.
 
 Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoints.scss)):
 - Two **max-width-only** breakpoints, so the desktop presentation is untouched:
