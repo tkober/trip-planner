@@ -8,18 +8,21 @@
 }
 
 .car-block {
-  // Icon + name sit together as one group, centered over the whole span (the
-  // hotel lane's stay-label matches this), so the two left lanes read alike.
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  // R10: no longer centers its content — the inner `.car-sticky` group
+  // (icon + name) is `position: sticky` so it tracks to the top of
+  // whichever part of the block is currently scrolled into view, instead of
+  // sitting once in the block's vertical middle (mirrors `.stay-label` in
+  // timeline.scss).
   height: 100%;
   min-height: 3rem;
   border-radius: 12px;
   cursor: pointer;
-  overflow: hidden;
-  padding: 0.5rem 0;
+  // No `overflow` here — it would turn this block into the sticky
+  // containing context for `.car-sticky` below instead of the viewport
+  // (it never scrolls itself, so the sticky child would just sit at its
+  // static position and never track page scroll — see the equivalent note
+  // on `.stay-label` in timeline.scss). `border-radius` alone already
+  // clips the flat background fill to the rounded corners.
   // Soft per-reservation tint (light mix of the accent colour), matching the
   // hotel lane so the two left lanes read as a consistent pair.
   background: color-mix(in srgb, var(--car, var(--mat-sys-primary)) 22%, white);
@@ -29,11 +32,23 @@
   }
 }
 
+.car-sticky {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+  padding: 0.5rem 0;
+}
+
 .car-icon {
   color: var(--app-ink);
   font-size: 1.2rem;
   width: 1.2rem;
   height: 1.2rem;
+  flex-shrink: 0;
 }
 
 .car-name {
@@ -45,6 +60,8 @@
   color: var(--app-ink);
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 100%;
 }
 
 // ---- Mobile ---------------------------------------------------------------
@@ -66,8 +83,7 @@
     min-height: 0;
   }
 
-  .car-icon,
-  .car-name {
+  .car-sticky {
     display: none;
   }
 }

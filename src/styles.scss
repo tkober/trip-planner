@@ -127,12 +127,22 @@ app-export-host {
 
   // Hide interactive chrome so the document reads as a static print-out. The
   // day marker is a plain (non-mat) button carrying the day labels, so it stays.
+  // R10: the now-line/"Up next" treatment is a live, "right now" affordance —
+  // it doesn't belong in a static export (today's position would be wrong
+  // the moment the file is reopened), so it's excluded the same way R4/R6
+  // excluded it from the plan export before desktop ever rendered it.
   .mat-mdc-icon-button,
   .view-header button,
   .card-actions,
   .add-btn,
-  .no-entries {
+  .no-entries,
+  .now-line,
+  .up-next-label {
     display: none !important;
+  }
+
+  .entry.up-next {
+    outline: none;
   }
 
   // The cover already carries the trip title; drop the timeline view's header.
@@ -208,4 +218,13 @@ app-export-host {
         color-mix(in srgb, var(--car, var(--mat-sys-primary)) 60%, white);
     }
   }
+}
+
+// R8: the mobile details bottom sheet (`DetailsSheet`, opened by
+// `MatBottomSheet` via `panelClass: 'details-sheet-panel'`). The panel is
+// appended to the CDK overlay container, a sibling of the app root, so this
+// can't be a `DetailsSheet`-scoped style — it has to live globally.
+.details-sheet-panel {
+  border-radius: 22px 22px 0 0 !important;
+  max-height: 85vh;
 }

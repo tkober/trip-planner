@@ -220,6 +220,98 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   style. The trip pages now show the cards against a `--app-bg` page
   background. Purely presentational — no data/behaviour change. See "Theming"
   below and each card's own bullet.
+- **Details redesign (R8)**: the flat label/value **details dialog** is now a
+  structured view shared by a desktop `MatDialog` and a phone `MatBottomSheet` —
+  header (R7 icon tile, title, a one-line subtitle, the reservation status
+  chip, a Delete kebab), up to a few quick-action tiles (Open in Maps, Open
+  booking, Copy reference, the .ics reminder), a per-type "when/where" block,
+  secondary links (smartEX/Jorudan, car station pages), and grouped facts
+  (Details, Reservation, Notes/Remarks, Cost, Address — only non-empty groups
+  render). "Edit" is the one primary footer action; "Delete" moved into the
+  header's kebab; both are gated by `EditModeService.editing()` (desktop:
+  always), so a phone in read mode shows neither, just a "Close" button. See
+  "Dialogs" below.
+- **Date steppers (R9)**: the lane right-click menu's ±1-day nudge (below) is
+  now also available as a compact **stepper** (`− Tue, 14 Apr +`, ≥40px icon
+  buttons) in the details view's when/where block, next to Check-in/Check-out
+  (accommodation) and Pickup/Return (car rental) — the only practical way to
+  move a stay/rental on a phone, where the hotel/car lanes are 6px rails
+  (R5). Shown only when `EditModeService.editing()` (desktop: always; mobile:
+  edit mode only), replacing the plain date text. Each tap saves immediately
+  (`TripStore.upsertAccommodation`/`upsertCarReservation`) and the view
+  updates live — `DetailsContent` re-derives the accommodation/car from
+  `TripStore` by id (`liveAccommodation`/`liveCarReservation`, fed by a new
+  `tripId` on `DetailsDialogData`) rather than the dialog-open snapshot, so
+  the nights count and the stepper's own disabled state track the store.
+  Disabled per the same collapse rule as the lane menu, and a snackbar
+  ("Check-in moved to Tue, 14 Apr") offers **Undo**, restoring the previous
+  dates via the same upsert. Unlike a delete or a trip-duration edit, a
+  single-day nudge is neither, so — like the lane menu it mirrors — it skips
+  the confirm dialog. The shared ±1-day rules (`canShift`/`shift`: an
+  accommodation can't collapse to zero nights, a car rental may be picked up
+  and returned the same day) were extracted out of `TimelineView` into a
+  pure, unit-tested helper,
+  [stay-nudge.ts](src/app/shared/stay-nudge.ts), used by both the lane menu
+  and the steppers — see "Timeline composition" and "Dialogs" below.
+- **Desktop timeline redesign (R10)**, desktop only (mobile unchanged):
+  - **Sticky lane names**: the hotel and car lanes' vertical name (`stayLabels`
+    in `TimelineView`, `CarSpan`'s own name) is now `position: sticky` inside
+    the full-height run block instead of sitting once in the run's middle —
+    it tracks to the top of whichever part of the run is scrolled into view,
+    so a multi-night stay's name (or a multi-day rental's) stays legible the
+    whole time you're scrolled through it, not just at the top/middle of the
+    block. The outer block (`.stay-label`/`.car-block`) carries no `overflow`
+    of its own — any value other than `visible` there would make it (not the
+    viewport) the sticky containing block, since it never itself scrolls, so
+    the sticky child would just sit at its static position and never track
+    page scroll; clipping/ellipsis for a run too short for the full name
+    lives on the inner sticky group/name span instead, with the full name in
+    a `title` tooltip. Harmless (and correctly non-sticky, since the export
+    render has no scroll offset) in the plan export.
+  - **Toolbar**: the "Timeline" header grows a **"Jump to day"** `mat-menu`
+    button (`Day 6 · Wed, 8 Apr ▾`, listing every real day plus the virtual
+    Departure/Return days) and a **Today** button, enabled only while "today"
+    (destination tz) falls within the trip. Both call
+    `TimelineNavService.scrollTo`. The button's own label follows scrolling
+    via the same scroll spy the mobile day strip uses (see below) rather than
+    only updating on jump. Hidden on mobile and in the plan export (reuses
+    the existing `.timeline-section .view-header { display: none }` rule in
+    styles.scss, since the toolbar lives inside `.view-header`).
+  - **`TimelineNavService` extended for desktop**: alongside the existing
+    mobile day-header registry (`registerHeader`/`unregisterHeader`), it now
+    also takes `registerMarker`/`unregisterMarker` — `DaySection`'s desktop
+    day marker and `TimelineView`'s virtual-day markers register under the
+    same keys the mobile headers use. Both a day's header and its marker exist
+    in the DOM at every width (only CSS hides one), so `scrollTo`/the scroll
+    spy pick whichever of the two candidates for a key actually has a
+    non-zero `getBoundingClientRect()` right now, instead of assuming one is
+    THE element for that key.
+  - **"+ Add" / empty-day text on hover or focus**: on desktop a day's
+    "+ Add" button and "No activities or transport yet." text are `opacity:
+    0` until `:hover`/`:focus-within` on the day's content cell (or
+    `.add-btn` itself is focused) reveals them — `opacity` only, never
+    `display`/`visibility` (the latter would also stop the button from
+    *receiving* focus, not just hide it, breaking Tab navigation into an
+    empty day). Reverted to always-visible inside `bp.mobile` (no hover
+    there) and always hidden in the plan export (unchanged, pre-existing
+    `display: none !important` rule). Mobile's own Add menu is unaffected.
+  - **Day marker discoverability**: the marker (`.day-marker`, click → the
+    day menu) gets a hover/focus `--app-line`-tinted background and a
+    `title`/`aria-label` of "Add stay or car rental" (desktop only — zeroed
+    out again inside `bp.mobile`, since phones have no hover and a long-press
+    there shouldn't paint a background).
+  - **Now line / "Up next" on desktop**: `.now-line`/`.up-next-label`/
+    `.entry.up-next`'s styling (previously switched on only inside
+    `bp.mobile`) is now the shared default, so today's now-line and the next
+    entry's "Up next" treatment (computed by the existing, platform-agnostic
+    `now-line.ts` `computeNowLine` — R4) render on desktop too, sized/placed
+    for the wider content column. Excluded from the plan export (the
+    existing `.export-doc` chrome-hiding rules in styles.scss gained
+    `.now-line`/`.up-next-label`/`.entry.up-next`'s outline), since a static
+    export has no "right now" to anchor it to.
+  - Purely presentational/interaction — no data model or TypeScript logic
+    change beyond `TimelineNavService`'s marker registry and `TimelineView`'s
+    toolbar computeds (`toolbarDays`, `currentDayLabel`, `todayEnabled`).
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -307,7 +399,12 @@ Services (signal-backed, `providedIn: 'root'` unless noted):
 Timeline composition:
 - [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid; computes
   `dayViews`, accommodation hotel cells/labels, straddles; owns drag-drop
-  confirmation. Dialog actions are delegated to `TripActionsService`. `layout()` also
+  confirmation. Dialog actions are delegated to `TripActionsService`. The lane
+  right-click menu's `canPlus`/`canMinus`/`nudge` (R9) now just wrap the pure
+  `canShift`/`shift` helpers in
+  [stay-nudge.ts](src/app/shared/stay-nudge.ts) — `laneContext`/`LaneContext`
+  and the `open`/click plumbing are unchanged, only the date math moved out,
+  shared with the R9 details-view steppers (see "Dialogs" below). `layout()` also
   detects the boundary international legs (inbound flight arriving from another zone
   at/before day 1; outbound leaving to another zone at/after the last day), emits a
   leading/trailing `VirtualDay`, and exposes `rowOffset` — the number of prepended
@@ -357,7 +454,15 @@ Timeline composition:
   (`scrollIntoView`, respecting `prefers-reduced-motion`), and a scroll-spy (a single
   passive, rAF-throttled `scroll` listener) that sets `activeKey` to whichever
   registered header sits at/just below the app bar (reading `--app-bar-height`, see
-  "Responsive layout" below).
+  "Responsive layout" below). R10: also takes a second, parallel
+  `registerMarker`/`unregisterMarker` registry — `DaySection`'s desktop day
+  marker and `TimelineView`'s virtual-day markers register under it, using the
+  SAME keys the mobile headers use (both a header and a marker exist in the DOM
+  at every width; only CSS hides one). `scrollTo`/the scroll spy resolve a key
+  to whichever of its header/marker candidates currently has a non-zero
+  `getBoundingClientRect()`, so the desktop toolbar's "Jump to day" (below) and
+  "current day" label reuse this same service and spy rather than a second
+  implementation.
 - [DayStrip](src/app/trips/timeline/day-strip.ts) — the app bar's horizontal day
   strip (one chip per day, incl. virtual days): reads `TimelineNavService` directly,
   renders nothing when it holds no days, and keeps the active chip scrolled into
@@ -570,6 +675,15 @@ Theming ([src/styles.scss](src/styles.scss) +
   tile/chip/pill tints and the hotel/car lane fills intact.
 
 Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoints.scss)):
+- R10's desktop timeline additions (toolbar, sticky lane names, hover-reveal
+  Add/empty-day text, marker hover/tooltip, now-line/"Up next") run the
+  pattern below in reverse from most other bullets here: the new behaviour is
+  the *default* (unguarded) styling, and `bp.mobile` either hides it outright
+  (toolbar, marker hover tint) or restores the prior always-visible mobile
+  behaviour (Add button/empty-day text) — see each timeline component's own
+  "R10" bullet under "Timeline composition" above for specifics. Sticky lane
+  names need no `bp.mobile` override at all: `.stay-label`/`.car-block` are
+  hidden/restyled to rails on mobile by the existing R5 rules regardless.
 - Two **max-width-only** breakpoints, so the desktop presentation is untouched:
   `$mobile` (720px) — where the trip shell collapses to a single column and the
   timeline's content column (viewport minus day marker and the hotel/car lanes)
@@ -677,11 +791,92 @@ Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoint
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,
-activity, transport, a shared read-only **details** dialog (Edit/Delete actions), and
-a generic **confirm** dialog. The details dialog opens with focus on its title
-(`autoFocus: 'first-heading'` in `TripActionsService`), so a phone does not
-scroll it down to the first link. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`,
+activity, transport, a shared read-only **details** view, and a generic
+**confirm** dialog. Reusable inputs: `TimezoneSelect`, `ZonedTimeField`,
 `DateField`, `SuggestField` (free-text autocomplete used for the train/bus kind).
+
+- **Details (R8: bottom sheet + quick actions)**: the details view is split
+  into a presentation component and two thin hosts, so the desktop dialog and
+  the phone sheet render identically. [DetailsContent](src/app/trips/dialogs/details-content.ts)
+  holds all the layout/logic and takes a `DetailsDialogData` input (`kind`,
+  `homeZone`/`destinationZone`, the resolved `accent` colour, and whichever one
+  of `accommodation`/`carReservation`/`activity`/`transport` is present) plus
+  `action`/`closed` outputs — it knows nothing about `MatDialog` or
+  `MatBottomSheet`. [DetailsDialog](src/app/trips/dialogs/details-dialog.ts)
+  (desktop) and [DetailsSheet](src/app/trips/dialogs/details-sheet.ts) (phones,
+  plus a decorative drag-handle bar `MatBottomSheet` doesn't draw on its own)
+  each just inject their own data token/ref, forward it to `DetailsContent`,
+  and close themselves on `action`/`closed` — both resolve to the same
+  `DetailsAction | undefined` (`dialogRef.close()` / `sheetRef.dismiss()`).
+  [TripActionsService](src/app/services/trip-actions.service.ts)'s private
+  `openDetails()` picks the host by `EditModeService.isMobile()` (same `$mobile`
+  breakpoint as the rest of the app) and returns `afterClosed()`/
+  `afterDismissed()` uniformly, so `openAccommodation`/`openCarReservation`/
+  `openEntry` didn't need their subscribe logic touched — they also now resolve
+  each entity's accent colour (`accommodationColors`/`carReservationColors`/
+  `activityColor`/`transportColor` from `color.ts`) into the data, since the
+  dialog has no trip-wide list to derive the storage-order default from itself.
+  Both hosts keep `autoFocus: 'first-heading'` (on `DetailsContent`'s own
+  `<h2>`, `outline: none` since it's a programmatic, not keyboard, focus); the
+  sheet additionally gets `panelClass: 'details-sheet-panel'` (22px rounded top
+  corners, `max-height: 85vh` — the global rule lives in
+  [styles.scss](src/styles.scss) since the CDK overlay panel is a DOM sibling of
+  the app root, not a `DetailsSheet`-scoped element).
+  - **Layout**, same shape for every entity type: a header (R7 icon tile in the
+    entity's accent, the heading — for transport the route `FROM → TO`, shown
+    once — a one-line subtitle, the reservation status chip, and — only when
+    `EditModeService.editing()` — a kebab menu holding **Delete**); up to a
+    few **quick-action tiles** (Open in Maps — car rentals get a separate
+    pickup/return tile each; Open booking; Copy reference, via
+    `navigator.clipboard.writeText` + a "Reference copied" snackbar, falling
+    back to a snackbar showing the raw reference when the clipboard API is
+    unavailable/denied; the reservable-train .ics reminder — each only when its
+    data exists); a per-type **"when/where" block** (transport: two dual-zone
+    legs with a dashed connector carrying the duration + line/kind; activity:
+    start–end + location; accommodation: check-in/check-out + nights; car:
+    pickup/return date+time+station — accommodation/car additionally render
+    as **R9 steppers** instead of plain text when editing, see the R9 Status
+    bullet above and below); **secondary links** (smartEX + the
+    Jorudan timetable search, the car's pickup/return station pages); and
+    **grouped facts** — Details (the mode-specific facts: terminals, platforms,
+    train name, airline, …; route and mode itself are gone, since the header
+    already carries them), Reservation (the existing dual-zone "Booking opens"
+    row), Notes/Remarks, Cost (the existing `CostInfo` rows), Address — each
+    group only rendered when it has rows. The footer is just **Edit**
+    (primary, filled) when editing, or a plain **Close** button in mobile read
+    mode — Delete lives in the header kebab now, both gated by the same
+    `editing()` check (desktop is always editing).
+  - Everything above the Angular wiring is **pure, unit-tested** helpers in
+    [details-view.logic.ts](src/app/trips/dialogs/details-view.logic.ts) (no DI):
+    `detailsHeading`/`detailsIcon`/`detailsSubtitle`, `quickActionsFor`,
+    `secondaryLinksFor`, `detailFactsGroup`/`notesGroup`/`addressGroup`/
+    `costGroup`, and `zonedMoment` (the dual-zone "11:12 GMT+9 … Thu, 9 Apr ·
+    04:12 in Berlin" formatting, self-contained — it re-derives the same
+    "own zone is primary, the other trip zone is secondary" rule
+    `TimeZoneService.dualLabel` uses, but also resolves the secondary zone's
+    *own* date, since a zone crossing can shift it, and names the city). The
+    shared `DetailsDialogData`/`DetailsKind`/`DetailsAction` types live in
+    [details-types.ts](src/app/trips/dialogs/details-types.ts) so the logic
+    module and all three components can import them without a cycle.
+  - Mobile-only CSS in [details-content.scss](src/app/trips/dialogs/details-content.scss)
+    stacks the transport leg-row (desktop: `[leg][connector][leg]` in one row)
+    into `[leg]` / `[connector]` / `[leg]` — the same reflow `TransportCard`
+    does — since the three-column grid has no room on a phone-width sheet.
+  - **R9 check-in/out & pickup/return steppers**: `TripActionsService` adds a
+    `tripId` to `DetailsDialogData` for `openAccommodation`/
+    `openCarReservation`. `DetailsContent` uses it to re-derive a live
+    `liveAccommodation`/`liveCarReservation` from `TripStore` by id on every
+    change (not the data captured when the dialog opened), so a stepper nudge
+    — and the nights count `stayWhen` derives from it — shows up immediately
+    without closing/reopening. `showSteppers` gates rendering on
+    `EditModeService.editing()`; `checkInStepper`/`checkOutStepper`/
+    `pickupStepper`/`returnStepper` each compute a `StepperState` (`label`,
+    `canMinus`, `canPlus`) via `stay-nudge.ts`'s `canShift`. A tap calls
+    `nudgeAccommodation`/`nudgeCarReservation`, which `shift()`s the dates,
+    upserts immediately, and opens a `MatSnackBar` ("Check-in moved to Tue,
+    14 Apr") with an **Undo** action that upserts the pre-nudge dates back.
+    No confirm dialog — a single-day nudge isn't a delete or a
+    trip-duration change, same reasoning as the lane menu it mirrors.
 
 ## Data Model
 

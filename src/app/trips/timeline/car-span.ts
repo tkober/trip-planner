@@ -26,8 +26,10 @@ import { EditModeService } from '../../services/edit-mode.service';
       (click)="open.emit(reservation())"
       (contextmenu)="onContext($event)"
     >
-      <mat-icon class="car-icon">directions_car</mat-icon>
-      <span class="car-name">{{ reservation().name }}</span>
+      <div class="car-sticky" [title]="reservation().name">
+        <mat-icon class="car-icon">directions_car</mat-icon>
+        <span class="car-name">{{ reservation().name }}</span>
+      </div>
     </div>
   `,
   styleUrl: './car-span.scss',

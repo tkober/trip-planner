@@ -1,204 +1,31 @@
-import { Component, computed, inject } from '@angular/core';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import {
-  AccommodationDto,
-  ActivityDto,
-  CarReservationDto,
-  TransportDto,
-  ZonedTime,
-} from '../../models/trip.model';
-import { TimeZoneService } from '../../services/time-zone.service';
-import { EditModeService } from '../../services/edit-mode.service';
-import { transportLabel } from '../../shared/transport-format';
-import { formatMoney } from '../../shared/cost/cost';
-import { formatDate } from '../../shared/format/date-format';
-import { environment } from '../../../environments/environment';
-import {
-  isReservable,
-  reservationOpensAt,
-  reservationStatusLabel,
-  ReservationWindow,
-  SMART_EX_URL,
-  timetableSearchUrl,
-} from '../../shared/reservation/reservation';
-import {
-  reservationEvent,
-  reservationIcsFilename,
-} from '../../shared/calendar/reservation-ics';
-import { buildIcs, ICS_MIME_TYPE } from '../../shared/calendar/ics';
-import { downloadBlob } from '../../shared/download';
+import { Component, inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { DetailsContent } from './details-content';
+import { DetailsAction, DetailsDialogData } from './details-types';
 
-export type DetailsKind =
-  | 'accommodation'
-  | 'car-reservation'
-  | 'activity'
-  | 'transport';
-export type DetailsAction = 'edit' | 'delete';
+export type { DetailsAction, DetailsDialogData, DetailsKind } from './details-types';
 
-export interface DetailsDialogData {
-  kind: DetailsKind;
-  homeZone: string;
-  destinationZone: string;
-  accommodation?: AccommodationDto;
-  carReservation?: CarReservationDto;
-  activity?: ActivityDto;
-  transport?: TransportDto;
-}
-
-interface TimeRow {
-  label: string;
-  primary: string;
-  primaryZone: string;
-  secondary: string;
-  secondaryZone: string;
-  sameZone: boolean;
-}
-
+/**
+ * Desktop host for the shared details content (R8): a plain `MatDialog`
+ * wrapping `DetailsContent`. On phones `TripActionsService` opens
+ * `DetailsSheet` (a `MatBottomSheet`) instead — see "Dialogs" in CLAUDE.md.
+ * Both forward the same `DetailsDialogData` and resolve to the same
+ * `DetailsAction | undefined`.
+ */
 @Component({
   selector: 'app-details-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [MatDialogModule, DetailsContent],
   templateUrl: './details-dialog.html',
-  styleUrl: './details-dialog.scss',
 })
 export class DetailsDialog {
   readonly data = inject<DetailsDialogData>(MAT_DIALOG_DATA);
-  private readonly tz = inject(TimeZoneService);
-  readonly dialogRef = inject(MatDialogRef<DetailsDialog, DetailsAction>);
-  readonly editMode = inject(EditModeService);
+  private readonly dialogRef = inject(MatDialogRef<DetailsDialog, DetailsAction>);
 
-  readonly accommodation = this.data.accommodation;
-  readonly carReservation = this.data.carReservation;
-  readonly activity = this.data.activity;
-  readonly transport = this.data.transport;
-
-  /** The single present entity, as its shared CostInfo (all entities extend it). */
-  readonly cost =
-    this.accommodation ??
-    this.carReservation ??
-    this.activity ??
-    this.transport;
-
-  /**
-   * The booking window for a seat-reservable train (see `reservation.ts`), or
-   * undefined for every other entity — flights, buses, local trains.
-   */
-  readonly reservation: ReservationWindow | undefined = this.buildReservation();
-
-  /** Dual-zone row for the moment booking opens, rendered like the time rows. */
-  readonly reservationRow = computed<TimeRow | undefined>(() =>
-    this.reservation
-      ? this.timeRow('Booking opens', this.reservation.opensAt)
-      : undefined,
-  );
-
-  /** "Booking opens in 12 days" / "Bookable now" / "Departed", under the title. */
-  readonly reservationStatusLabel = computed<string>(() =>
-    this.reservation ? reservationStatusLabel(this.reservation) : '',
-  );
-
-  readonly smartExUrl = SMART_EX_URL;
-
-  /** Prefilled timetable search for this leg, when stations are known. */
-  readonly timetableUrl = computed<string | undefined>(() =>
-    this.transport && this.reservation
-      ? timetableSearchUrl(this.transport)
-      : undefined,
-  );
-
-  /** Download this train's booking reminder as a single-event .ics file. */
-  downloadIcs(): void {
-    const window = this.reservation;
-    if (!window) return;
-    const ics = buildIcs([reservationEvent(window, this.data.homeZone)]);
-    downloadBlob(
-      new Blob([ics], { type: ICS_MIME_TYPE }),
-      reservationIcsFilename(window.transport),
-    );
-  }
-
-  private buildReservation(): ReservationWindow | undefined {
-    const t = this.transport;
-    if (!t || !isReservable(t, environment.reservableTrainKinds)) {
-      return undefined;
-    }
-    const opensAt = reservationOpensAt(t.start);
-    return opensAt ? { transport: t, departure: t.start, opensAt } : undefined;
-  }
-
-  /** Format an optional amount in its currency, or '' when unset. */
-  money(amount?: number, currency?: string): string {
-    return amount != null ? formatMoney(amount, currency) : '';
-  }
-
-  /** Expose the date formatter to the template. */
-  readonly date = formatDate;
-
-  readonly heading = computed(() => {
-    switch (this.data.kind) {
-      case 'accommodation':
-        return this.accommodation?.name ?? 'Accommodation';
-      case 'car-reservation':
-        return this.carReservation?.name ?? 'Car rental';
-      case 'activity':
-        return this.activity?.title ?? 'Activity';
-      case 'transport':
-        return this.transport ? transportLabel(this.transport) : 'Transport';
-    }
-  });
-
-  readonly icon = computed(() => {
-    if (this.data.kind === 'accommodation') return 'hotel';
-    if (this.data.kind === 'car-reservation') return 'directions_car';
-    if (this.data.kind === 'activity') return 'local_activity';
-    const mode = this.transport?.mode;
-    return mode === 'flight'
-      ? 'flight'
-      : mode === 'train'
-        ? 'train'
-        : mode === 'bus'
-          ? 'directions_bus'
-          : 'directions_car';
-  });
-
-  /** Time rows (start/end) with dual-zone labels for activity & transport. */
-  readonly timeRows = computed<TimeRow[]>(() => {
-    const rows: TimeRow[] = [];
-    const entity = this.activity ?? this.transport;
-    if (!entity) return rows;
-    const startLabel = this.data.kind === 'transport' ? 'Departure' : 'Start';
-    const endLabel = this.data.kind === 'transport' ? 'Arrival' : 'End';
-    rows.push(this.timeRow(startLabel, entity.start));
-    if (entity.end) {
-      rows.push(this.timeRow(endLabel, entity.end));
-    }
-    return rows;
-  });
-
-  private timeRow(label: string, zt: ZonedTime): TimeRow {
-    const dt = this.tz.toDateTime(zt);
-    const dateStr = dt.toFormat('ccc, d LLL yyyy');
-    const dual = this.tz.dualLabel(
-      zt,
-      this.data.homeZone,
-      this.data.destinationZone,
-    );
-    return {
-      label,
-      primary: `${dateStr} · ${dual.primary}`,
-      primaryZone: dual.primaryZoneAbbr,
-      secondary: dual.secondary,
-      secondaryZone: dual.secondaryZoneAbbr,
-      sameZone: dual.sameZone,
-    };
-  }
-
-  close(action: DetailsAction): void {
+  onAction(action: DetailsAction): void {
     this.dialogRef.close(action);
+  }
+
+  onClose(): void {
+    this.dialogRef.close();
   }
 }

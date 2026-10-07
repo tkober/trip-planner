@@ -1,7 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { DateTime } from 'luxon';
 import { MatDialog } from '@angular/material/dialog';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Observable } from 'rxjs';
 import {
   AccommodationDto,
   ActivityDto,
@@ -51,18 +53,27 @@ import {
   DetailsDialog,
   DetailsDialogData,
 } from '../trips/dialogs/details-dialog';
+import { DetailsSheet } from '../trips/dialogs/details-sheet';
 import {
+  accommodationColors,
   accommodationDefaultColor,
+  activityColor,
+  carReservationColors,
   carReservationDefaultColor,
+  transportColor,
 } from '../shared/color/color';
 import { transportLabel } from '../shared/transport-format';
+import { EditModeService } from './edit-mode.service';
 
 /**
- * Focus the details dialog's title on open. The default focuses the first
- * link, which on a phone sits below the fold and scrolls the dialog down past
- * the title and the booking status.
+ * Focus the details dialog/sheet's title on open. The default focuses the
+ * first link, which on a phone sits below the fold and scrolls past the
+ * title and the booking status.
  */
 const DETAILS_AUTO_FOCUS = 'first-heading';
+
+/** The mobile details sheet's panel class — see the global rule in styles.scss. */
+const DETAILS_SHEET_PANEL_CLASS = 'details-sheet-panel';
 
 /**
  * All dialog-driven trip mutations (edit trip, add/edit/delete + open-details for
@@ -81,6 +92,8 @@ export class TripActionsService {
   private readonly exchangeRates = inject(ExchangeRateService);
   private readonly exportService = inject(ExportService);
   private readonly dialog = inject(MatDialog);
+  private readonly bottomSheet = inject(MatBottomSheet);
+  private readonly editMode = inject(EditModeService);
   private readonly snack = inject(MatSnackBar);
 
   // --- Trip-level ----------------------------------------------------------
@@ -250,6 +263,28 @@ export class TripActionsService {
     this.snack.open('Markdown plan downloaded', undefined, { duration: 2500 });
   }
 
+  /**
+   * Open the shared details content (R8): a `MatDialog` on desktop, a
+   * `MatBottomSheet` on phones (`EditModeService.isMobile()`), both resolving
+   * to the same `DetailsAction | undefined`. Callers subscribe exactly as
+   * they did when this always opened `DetailsDialog`.
+   */
+  private openDetails(data: DetailsDialogData): Observable<DetailsAction | undefined> {
+    if (this.editMode.isMobile()) {
+      return this.bottomSheet
+        .open(DetailsSheet, {
+          data,
+          autoFocus: DETAILS_AUTO_FOCUS,
+          panelClass: DETAILS_SHEET_PANEL_CLASS,
+          maxHeight: '85vh',
+        })
+        .afterDismissed();
+    }
+    return this.dialog
+      .open(DetailsDialog, { data, autoFocus: DETAILS_AUTO_FOCUS })
+      .afterClosed();
+  }
+
   // --- Accommodation -------------------------------------------------------
 
   addAccommodation(trip: TripDto, date?: string): void {
@@ -274,16 +309,14 @@ export class TripActionsService {
       kind: 'accommodation',
       homeZone: trip.homeTimeZone,
       destinationZone: trip.destinationTimeZone,
+      accent: accommodationColors(trip.accommodations).get(accommodation.id) ?? '',
       accommodation,
+      tripId: trip.id,
     };
-    this.dialog
-      .open(DetailsDialog, { data, autoFocus: DETAILS_AUTO_FOCUS })
-      .afterClosed()
-      .subscribe((action?: DetailsAction) => {
-        if (action === 'edit') this.editAccommodation(trip, accommodation);
-        else if (action === 'delete')
-          void this.deleteAccommodation(trip, accommodation);
-      });
+    this.openDetails(data).subscribe((action?: DetailsAction) => {
+      if (action === 'edit') this.editAccommodation(trip, accommodation);
+      else if (action === 'delete') void this.deleteAccommodation(trip, accommodation);
+    });
   }
 
   editAccommodation(trip: TripDto, accommodation: AccommodationDto): void {
@@ -341,16 +374,14 @@ export class TripActionsService {
       kind: 'car-reservation',
       homeZone: trip.homeTimeZone,
       destinationZone: trip.destinationTimeZone,
+      accent: carReservationColors(trip.carReservations).get(car.id) ?? '',
       carReservation: car,
+      tripId: trip.id,
     };
-    this.dialog
-      .open(DetailsDialog, { data, autoFocus: DETAILS_AUTO_FOCUS })
-      .afterClosed()
-      .subscribe((action?: DetailsAction) => {
-        if (action === 'edit') this.editCarReservation(trip, car);
-        else if (action === 'delete')
-          void this.deleteCarReservation(trip, car);
-      });
+    this.openDetails(data).subscribe((action?: DetailsAction) => {
+      if (action === 'edit') this.editCarReservation(trip, car);
+      else if (action === 'delete') void this.deleteCarReservation(trip, car);
+    });
   }
 
   editCarReservation(trip: TripDto, car: CarReservationDto): void {
@@ -472,20 +503,23 @@ export class TripActionsService {
   // --- Generic timeline entry (activity | transport) -----------------------
 
   openEntry(trip: TripDto, entry: TimelineEntry): void {
+    const accent = entry.activity
+      ? activityColor(entry.activity)
+      : entry.transport
+        ? transportColor(entry.transport)
+        : '';
     const data: DetailsDialogData = {
       kind: entry.kind,
       homeZone: trip.homeTimeZone,
       destinationZone: trip.destinationTimeZone,
+      accent,
       activity: entry.activity,
       transport: entry.transport,
     };
-    this.dialog
-      .open(DetailsDialog, { data, autoFocus: DETAILS_AUTO_FOCUS })
-      .afterClosed()
-      .subscribe((action?: DetailsAction) => {
-        if (action === 'edit') this.editEntry(trip, entry);
-        else if (action === 'delete') this.deleteEntry(trip, entry);
-      });
+    this.openDetails(data).subscribe((action?: DetailsAction) => {
+      if (action === 'edit') this.editEntry(trip, entry);
+      else if (action === 'delete') this.deleteEntry(trip, entry);
+    });
   }
 
   openFlight(trip: TripDto, transport: TransportDto): void {

@@ -176,13 +176,23 @@ export class DaySection {
    * `TimelineNavService` so the day strip can scroll to it and the scroll
    * spy can tell when it's the one under the app bar. */
   private readonly headerEl = viewChild<ElementRef<HTMLElement>>('headerEl');
+  /** R10: the desktop day marker — the equivalent scroll target there, since
+   * `.day-header` is mobile-only (`display: none` on desktop). */
+  private readonly markerEl = viewChild<ElementRef<HTMLElement>>('markerEl');
 
   constructor() {
     effect(() => {
       const el = this.headerEl()?.nativeElement;
       if (el) this.nav.registerHeader(this.view().day.date, el);
     });
-    this.destroyRef.onDestroy(() => this.nav.unregisterHeader(this.view().day.date));
+    effect(() => {
+      const el = this.markerEl()?.nativeElement;
+      if (el) this.nav.registerMarker(this.view().day.date, el);
+    });
+    this.destroyRef.onDestroy(() => {
+      this.nav.unregisterHeader(this.view().day.date);
+      this.nav.unregisterMarker(this.view().day.date);
+    });
   }
 
   readonly addActivity = output<string>();

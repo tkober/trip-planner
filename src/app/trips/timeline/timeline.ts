@@ -41,6 +41,7 @@ import { computeNowLine } from './now-line';
 import { dayStayInfo } from './day-stay';
 import { computeEntrySpan } from './day-span';
 import { NavDay, TimelineNavService } from './timeline-nav.service';
+import { canShift, shift, StayDates } from '../../shared/stay-nudge';
 import {
   accommodationColors,
   activityColor,
@@ -52,6 +53,7 @@ import {
   transportTo,
 } from '../../shared/transport-format';
 import { formatDay, zoneLabel } from '../../shared/format/date-format';
+import { runRowSpan } from './lane-run-span';
 
 /** An entry that crosses a day boundary, anchored on the separator line. */
 interface StraddleItem {
@@ -157,6 +159,11 @@ export class TimelineView {
     viewChild<ElementRef<HTMLElement>>('leadingHeaderEl');
   private readonly trailingHeaderEl =
     viewChild<ElementRef<HTMLElement>>('trailingHeaderEl');
+  /** R10: the desktop virtual-day markers — the scroll target there. */
+  private readonly leadingMarkerEl =
+    viewChild<ElementRef<HTMLElement>>('leadingMarkerEl');
+  private readonly trailingMarkerEl =
+    viewChild<ElementRef<HTMLElement>>('trailingMarkerEl');
 
   constructor() {
     // Publish the day list (incl. virtual days) for the mobile day strip —
@@ -207,6 +214,16 @@ export class TimelineView {
       const el = this.trailingHeaderEl()?.nativeElement;
       if (el) this.nav.registerHeader('virtual-trailing', el);
       else this.nav.unregisterHeader('virtual-trailing');
+    });
+    effect(() => {
+      const el = this.leadingMarkerEl()?.nativeElement;
+      if (el) this.nav.registerMarker('virtual-leading', el);
+      else this.nav.unregisterMarker('virtual-leading');
+    });
+    effect(() => {
+      const el = this.trailingMarkerEl()?.nativeElement;
+      if (el) this.nav.registerMarker('virtual-trailing', el);
+      else this.nav.unregisterMarker('virtual-trailing');
     });
 
     inject(DestroyRef).onDestroy(() => this.nav.clear());
@@ -341,6 +358,9 @@ export class TimelineView {
   /**
    * One vertical name label per stay, spanning its day-rows in the hotel lane.
    * Rendered click-through (the colored half-cells beneath handle clicks).
+   * R10.1: a check-in day's row is never claimed by the arriving stay, so on
+   * a switch day only the EARLIER (checking-out) stay owns it — see
+   * `runRowSpan` below for why.
    */
   readonly stayLabels = computed(() => {
     const trip = this.trip();
@@ -350,10 +370,15 @@ export class TimelineView {
     return trip.accommodations.map((a) => {
       const s = this.clampIndex(a.checkInDate);
       const e = this.clampIndex(a.checkOutDate);
+      // A stay's colour only fills the bottom half of its check-in day, so
+      // its name always starts on the next row — not just on switch days
+      // (after a night without a stay the name would otherwise float above
+      // the block). A stay that began before the trip fills day 1 fully.
+      const startsInTrip = a.checkInDate >= days[0].date;
       return {
         id: a.id,
         name: a.name,
-        gridRow: `${Math.min(s, e) + 1 + offset} / ${Math.max(s, e) + 2 + offset}`,
+        gridRow: runRowSpan(s, e, startsInTrip, offset),
       };
     });
   });
@@ -361,7 +386,10 @@ export class TimelineView {
   /**
    * One continuous block per car reservation, spanning its day-rows in the car
    * lane (pickup → return, inclusive). Colour is keyed off storage order so it
-   * stays stable and matches the Car Rentals list.
+   * stays stable and matches the Car Rentals list. R10.1: a back-to-back
+   * pickup/dropoff day's row is likewise claimed by the earlier reservation
+   * only (see `runRowSpan`), defensively mirroring the hotel-lane fix even
+   * though the sample data has no adjacent car reservations to exercise it.
    */
   readonly carSpans = computed(() => {
     const trip = this.trip();
@@ -372,10 +400,13 @@ export class TimelineView {
     return trip.carReservations.map((c) => {
       const s = this.clampIndex(c.pickupDate);
       const e = this.clampIndex(c.dropoffDate);
+      const switchStart = trip.carReservations.some(
+        (other) => other.id !== c.id && other.dropoffDate === c.pickupDate,
+      );
       return {
         car: c,
         color: colorById.get(c.id) ?? '',
-        gridRow: `${Math.min(s, e) + 1 + offset} / ${Math.max(s, e) + 2 + offset}`,
+        gridRow: runRowSpan(s, e, switchStart, offset),
       };
     });
   });
@@ -830,6 +861,61 @@ export class TimelineView {
     return t ? this.tz.zoneCity(t.destinationTimeZone) : '';
   });
 
+  // --- R10 desktop toolbar: "Jump to day" menu + "Today" ------------------
+
+  /** Every day the "Jump to day" menu lists, incl. virtual departure/return. */
+  readonly toolbarDays = computed(() => {
+    const list: { key: string; label: string }[] = [];
+    const leading = this.leadingDay();
+    if (leading) {
+      list.push({
+        key: 'virtual-leading',
+        label: `${leading.label} · ${leading.weekday}, ${leading.dayNum}`,
+      });
+    }
+    for (const dv of this.dayViews()) {
+      list.push({
+        key: dv.day.date,
+        label: `Day ${dv.day.index} · ${dv.day.startOfDay.toFormat('ccc, d LLL')}`,
+      });
+    }
+    const trailing = this.trailingDay();
+    if (trailing) {
+      list.push({
+        key: 'virtual-trailing',
+        label: `${trailing.label} · ${trailing.weekday}, ${trailing.dayNum}`,
+      });
+    }
+    return list;
+  });
+
+  /**
+   * The toolbar button's label follows scrolling via the shared scroll spy
+   * (`TimelineNavService.activeKey`, fed by the desktop day markers — see
+   * `DaySection`/`registerMarker`); falls back to the first day until a
+   * scroll position is known.
+   */
+  readonly currentDayLabel = computed(() => {
+    const days = this.toolbarDays();
+    const found = days.find((d) => d.key === this.nav.activeKey());
+    return (found ?? days[0])?.label ?? 'Timeline';
+  });
+
+  /** "Today" is only enabled while the trip is actually running. */
+  readonly todayEnabled = computed(() => {
+    const key = this.todayKey();
+    return !!key && this.days().some((d) => d.date === key);
+  });
+
+  jumpToDay(key: string): void {
+    this.nav.scrollTo(key);
+  }
+
+  jumpToToday(): void {
+    const key = this.todayKey();
+    if (key) this.nav.scrollTo(key);
+  }
+
   /** Resolve a date to its 0-based day position, clamped to the trip range. */
   private clampIndex(date: string): number {
     const days = this.days();
@@ -901,26 +987,23 @@ export class TimelineView {
     this.laneContext()?.side === 'end' ? 'End' : 'Start',
   );
 
-  // A move is blocked only when it would collapse the span. Widening (start −1,
-  // end +1) is always allowed; the guarded direction depends on the active side.
-  // Accommodation needs at least one night (check-in < check-out); a car may be
-  // a single day (pickup <= dropoff), so its bounds are allowed to meet.
+  // A move is blocked only when it would collapse the span — see
+  // `canShift` in `stay-nudge.ts` for the shared rule (also used by the R9
+  // details-view steppers).
   readonly canPlus = computed(() => {
     const c = this.laneContext();
-    if (!c) return false;
-    if (c.side === 'end') return true; // end +1 always widens
-    return c.kind === 'accommodation'
-      ? this.addDays(c.accommodation.checkInDate, 1) < c.accommodation.checkOutDate
-      : this.addDays(c.car.pickupDate, 1) <= c.car.dropoffDate;
+    return c ? canShift(c.kind, c.side, 1, this.laneDates(c)) : false;
   });
   readonly canMinus = computed(() => {
     const c = this.laneContext();
-    if (!c) return false;
-    if (c.side === 'start') return true; // start −1 always widens
-    return c.kind === 'accommodation'
-      ? this.addDays(c.accommodation.checkOutDate, -1) > c.accommodation.checkInDate
-      : this.addDays(c.car.dropoffDate, -1) >= c.car.pickupDate;
+    return c ? canShift(c.kind, c.side, -1, this.laneDates(c)) : false;
   });
+
+  private laneDates(c: LaneContext): StayDates {
+    return c.kind === 'accommodation'
+      ? { start: c.accommodation.checkInDate, end: c.accommodation.checkOutDate }
+      : { start: c.car.pickupDate, end: c.car.dropoffDate };
+  }
 
   onAccommodationContext(e: {
     event: MouseEvent;
@@ -974,33 +1057,27 @@ export class TimelineView {
   }
 
   /** Nudge the active side's date (check-in/pickup or check-out/dropoff) by ±1 day. */
-  nudge(delta: number): void {
+  nudge(delta: 1 | -1): void {
     const c = this.laneContext();
     const trip = this.trip();
     if (!c || !trip) return;
+    const next = shift(c.side, delta, this.laneDates(c));
     if (c.kind === 'accommodation') {
       const a = c.accommodation;
-      void this.store.upsertAccommodation(
-        trip,
-        c.side === 'start'
-          ? { ...a, checkInDate: this.addDays(a.checkInDate, delta) }
-          : { ...a, checkOutDate: this.addDays(a.checkOutDate, delta) },
-      );
+      void this.store.upsertAccommodation(trip, {
+        ...a,
+        checkInDate: next.start,
+        checkOutDate: next.end,
+      });
     } else {
       const car = c.car;
-      void this.store.upsertCarReservation(
-        trip,
-        c.side === 'start'
-          ? { ...car, pickupDate: this.addDays(car.pickupDate, delta) }
-          : { ...car, dropoffDate: this.addDays(car.dropoffDate, delta) },
-      );
+      void this.store.upsertCarReservation(trip, {
+        ...car,
+        pickupDate: next.start,
+        dropoffDate: next.end,
+      });
     }
     this.snack.open('Dates updated', undefined, { duration: 2000 });
-  }
-
-  /** Add N calendar days to a "YYYY-MM-DD" date string. */
-  private addDays(date: string, delta: number): string {
-    return DateTime.fromISO(date).plus({ days: delta }).toISODate() ?? date;
   }
 
   // --- Moving an entry to another day (drag-drop or the kebab dialog) ------
