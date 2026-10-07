@@ -151,11 +151,13 @@
   .days-grid {
     // Consumed by the inline grid-template-columns binding (see the component's
     // gridTemplateColumns). R4: the marker column collapses outright — the new
-    // sticky day headers (day-section.html / this file) replace it — while
-    // the hotel/car lanes are untouched (R5 will revisit those).
+    // sticky day headers (day-section.html / this file) replace it. R5: the
+    // hotel/car lanes shrink to thin colour rails (see hotel-cell.scss /
+    // car-span.scss) — the hotel name/car name move to the day header
+    // (day-section.html) instead, so the lanes no longer need width for text.
     --tl-marker: 0;
-    --tl-lane: 1.7rem;
-    column-gap: 0.45rem;
+    --tl-lane: 6px;
+    column-gap: 0.3rem;
   }
 
   // Replaced by the R4 sticky day header on mobile (see .day-header.virtual-header
@@ -221,18 +223,9 @@
     }
   }
 
+  // R5: the hotel lane is now a thin colour rail with no room for the
+  // rotated name — it moved to the day header's stay line instead.
   .stay-label {
-    padding: 0.35rem 0;
-
-    .stay-icon {
-      font-size: 1rem;
-      width: 1rem;
-      height: 1rem;
-    }
-
-    .stay-name {
-      margin-top: 0.15rem;
-      font-size: 0.7rem;
-    }
+    display: none;
   }
 }

@@ -1,3 +1,5 @@
+@use '../../shared/breakpoints' as bp;
+
 :host {
   // grid-row / grid-column set via host bindings.
   display: block;
@@ -43,4 +45,23 @@
   color: #1c2733;
   white-space: nowrap;
   overflow: hidden;
+}
+
+// ---- Mobile ---------------------------------------------------------------
+// R5 "Variante C": the lane shrinks to a thin colour rail (--tl-lane: 6px,
+// see timeline.scss) — full accent colour instead of a light tint, no icon
+// or name (the car's name moved to the day header's car line). Click /
+// long-press (contextmenu) behaviour is unchanged.
+@include bp.mobile {
+  .car-block {
+    background: var(--car, var(--mat-sys-primary));
+    border-radius: 3px;
+    padding: 0;
+    min-height: 0;
+  }
+
+  .car-icon,
+  .car-name {
+    display: none;
+  }
 }

@@ -1,3 +1,5 @@
+@use '../../shared/breakpoints' as bp;
+
 :host {
   // grid-row / grid-column set via host bindings.
   display: block;
@@ -40,4 +42,36 @@
 
 .half.filled:hover {
   filter: brightness(0.97);
+}
+
+// ---- Mobile ---------------------------------------------------------------
+// R5 "Variante C": the lane shrinks to a thin colour rail (--tl-lane: 6px, see
+// timeline.scss) — full accent colour instead of a light tint so a 6px bar
+// stays visible, rounded ends instead of the desktop's 12px corners. No text
+// ever rendered here (the hotel name moved to the day header's stay line),
+// so the half-day handoff reads as a plain colour change on a switch day and
+// a gap on a night with no stay — exactly what the rail is for.
+@include bp.mobile {
+  .hotel-cell {
+    min-height: 2rem;
+  }
+
+  .half {
+    min-height: 0.7rem;
+  }
+
+  .half.filled {
+    background: var(--hotel, var(--mat-sys-primary));
+  }
+
+  .half.round-top {
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    margin-top: 2px;
+  }
+  .half.round-bottom {
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    margin-bottom: 2px;
+  }
 }
