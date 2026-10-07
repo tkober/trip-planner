@@ -22,13 +22,31 @@
         [class.pad-bottom]="v.padBottom"
         [style.grid-row]="1"
       >
-        <div #leadingHeaderEl class="day-header virtual-header">
+        <div
+          #leadingHeaderEl
+          class="day-header virtual-header"
+          [class.has-connector]="!!v.connectorColor"
+          [style.--connector-accent]="v.connectorColor || null"
+        >
           <div class="header-main">
             <span class="header-day">{{ v.label }}</span>
             <span class="header-date">{{ v.weekday }}, {{ v.dayNum }}</span>
           </div>
           <div class="header-zone">{{ v.zoneLabelFull }}</div>
         </div>
+        @if (v.split; as sp) {
+          <app-split-entry-card
+            [entry]="sp.entry"
+            [part]="sp.part"
+            [refZone]="sp.refZone"
+            [farDayLabel]="sp.farDayLabel"
+            [homeZone]="sp.homeZone"
+            (open)="openEntry($event)"
+            (edit)="editEntry($event)"
+            (delete)="deleteEntry($event)"
+            (move)="moveEntry($event)"
+          />
+        }
       </div>
     }
     @if (trailingDay(); as v) {
@@ -49,13 +67,31 @@
         [class.pad-bottom]="v.padBottom"
         [style.grid-row]="rowOffset() + dayViews().length + 1"
       >
-        <div #trailingHeaderEl class="day-header virtual-header">
+        <div
+          #trailingHeaderEl
+          class="day-header virtual-header"
+          [class.has-connector]="!!v.connectorColor"
+          [style.--connector-accent]="v.connectorColor || null"
+        >
           <div class="header-main">
             <span class="header-day">{{ v.label }}</span>
             <span class="header-date">{{ v.weekday }}, {{ v.dayNum }}</span>
           </div>
           <div class="header-zone">{{ v.zoneLabelFull }}</div>
         </div>
+        @if (v.split; as sp) {
+          <app-split-entry-card
+            [entry]="sp.entry"
+            [part]="sp.part"
+            [refZone]="sp.refZone"
+            [farDayLabel]="sp.farDayLabel"
+            [homeZone]="sp.homeZone"
+            (open)="openEntry($event)"
+            (edit)="editEntry($event)"
+            (delete)="deleteEntry($event)"
+            (move)="moveEntry($event)"
+          />
+        }
       </div>
     }
     @for (dv of dayViews(); track dv.day.date; let i = $index) {
@@ -101,10 +137,17 @@
         (context)="onCarContext($event)"
       />
     }
+    <!-- R6: mobile renders day-crossing entries as split halves inline in
+         the day flow instead (see app-split-entry-card above / in
+         DaySection) — the floating straddle stays desktop-only (hidden via
+         CSS, see straddle-card.scss's bp.mobile block, which — like every
+         other bp.mobile rule — never applies to the plan export). -->
     @for (s of straddles(); track s.entry.activity?.id ?? s.entry.transport?.id) {
       <app-straddle-card
         [entry]="s.entry"
         [rowLine]="s.rowLine"
+        [topRefZone]="s.topRefZone"
+        [bottomRefZone]="s.bottomRefZone"
         (open)="openEntry($event)"
         (edit)="editEntry($event)"
         (delete)="deleteEntry($event)"

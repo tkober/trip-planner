@@ -35,8 +35,12 @@ export function computeNowLine(
       break;
     }
   }
-  // "Up next" only ever marks an entry card, never a deadline pill.
-  const upNext = items.slice(insertIndex).find((it) => it.entry);
+  // "Up next" only ever marks an entry card or a split top half (R6), never a
+  // deadline pill, a continues row, or a split bottom half (its entry already
+  // started on an earlier day).
+  const upNext = items
+    .slice(insertIndex)
+    .find((it) => it.entry || it.split?.part === 'top');
   const label = `Now ${DateTime.fromMillis(nowMillis, { zone: destZone }).toFormat('HH:mm')}`;
   return { insertIndex, label, upNextKey: upNext?.key };
 }

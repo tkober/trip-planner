@@ -21,6 +21,7 @@ import {
 import { TripDay } from '../../services/time-zone.service';
 import { EditModeService } from '../../services/edit-mode.service';
 import { EntryCard } from './entry-card';
+import { SplitEntryCard } from './split-entry-card';
 import { TimelineNavService } from './timeline-nav.service';
 
 /**
@@ -59,21 +60,57 @@ export interface StayEvent {
 }
 
 /**
+ * R6, mobile only: one half of a day-crossing entry, rendered in the normal
+ * day flow instead of a floating straddle card. `refZone` is the reference
+ * zone of the day THIS half sits on (destination zone for a real day, home
+ * zone for a virtual departure/return day) — drives the highlighted zone tag
+ * when the entry's own zone differs from it. `farDayLabel` (top half only) is
+ * the end day's label ("Day 14" / "Return Day"), for the "arrives Day 14"
+ * duration line; `homeZone` (bottom half only) is the trip's home zone, for
+ * the "01:55 in Berlin" subtitle when the arrival zone differs from it.
+ */
+export interface SplitHalf {
+  entry: TimelineEntry;
+  part: 'top' | 'bottom';
+  refZone: string;
+  farDayLabel?: string;
+  homeZone?: string;
+}
+
+/**
+ * R6: a slim, non-draggable row for a day strictly covered by a
+ * multi-boundary entry (neither its start nor its end day). `part: 'middle'`
+ * reads "continues · until <end day>"; `part: 'end'` (desktop only — mobile
+ * shows the bottom split half there instead) reads "arrives <time> · <TO>".
+ */
+export interface ContinuesRow {
+  entry: TimelineEntry;
+  part: 'middle' | 'end';
+  /** Pre-formatted: "continues · until Thu, 16 Apr" / "arrives 06:50 · Tokyo". */
+  label: string;
+  /** Resolved accent colour of the entry. */
+  color: string;
+}
+
+/**
  * One row in a day's content column: an activity/transport entry card, a car
- * deadline pill, or (R5, mobile only) a check-out/check-in stay pill. All
- * carry a `sortMillis` so they interleave by time — e.g. a "Return by 14:00"
- * pill sits between the activities before and after it; a stay pill's
- * ±Infinity always keeps it at the very start/end of the day.
+ * deadline pill, (R5, mobile only) a check-out/check-in stay pill, or (R6) a
+ * day-crossing entry's split half / continues row. All carry a `sortMillis`
+ * so they interleave by time — e.g. a "Return by 14:00" pill sits between the
+ * activities before and after it; a stay pill's ±Infinity always keeps it at
+ * the very start/end of the day.
  */
 export interface DayItem {
   /** Stable track key. */
   key: string;
   /** Absolute instant used to order items within the day. */
   sortMillis: number;
-  /** Exactly one of `entry` / `deadline` / `stay` is set. */
+  /** Exactly one of `entry` / `deadline` / `stay` / `split` / `continues` is set. */
   entry?: TimelineEntry;
   deadline?: CarDeadline;
   stay?: StayEvent;
+  split?: SplitHalf;
+  continues?: ContinuesRow;
   /** R4, today only: the first entry whose start is after "now" (see now-line.ts). */
   upNext?: boolean;
 }
@@ -97,6 +134,12 @@ export interface DayView {
   /** R5, mobile only: the day header's second line (see `day-stay.ts`). */
   stay?: { text: string; color: string; accommodation?: AccommodationDto };
   car?: { text: string; color: string; reservation: CarReservationDto };
+  /**
+   * R6, mobile only: accent colour of a day-crossing entry whose bottom half
+   * opens this day — draws the dashed connector through the sticky header
+   * that visually continues from the previous day's top half.
+   */
+  connectorColor?: string;
 }
 
 /**
@@ -112,6 +155,7 @@ export interface DayView {
     MatButtonModule,
     MatMenuModule,
     EntryCard,
+    SplitEntryCard,
   ],
   templateUrl: './day-section.html',
   styleUrl: './day-section.scss',

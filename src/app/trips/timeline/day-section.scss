@@ -184,6 +184,38 @@
   }
 }
 
+// R6: a slim, non-draggable row for a day strictly covered by a
+// multi-boundary entry (`continues · until <end day>`) or, on desktop only,
+// the small "arrives <time> · <TO>" row on such an entry's end day (mobile
+// shows the richer split bottom half there instead — see `.end` below).
+.continues-row {
+  align-self: flex-start;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px dashed var(--accent, var(--mat-sys-outline));
+  background: color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 10%, white);
+  color: var(--mat-sys-on-surface-variant);
+  font: inherit;
+  font-size: 0.76rem;
+  font-style: italic;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(0.97);
+  }
+
+  .continues-icon {
+    color: var(--accent, var(--mat-sys-primary));
+    font-size: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+}
+
 .add-btn {
   align-self: flex-start;
 }
@@ -234,14 +266,17 @@
     gap: 0.4rem;
     padding: 0.6rem 0;
 
-    // A straddle card overhangs half its height into this day, and the mobile
-    // card is *taller* than the desktop one (its detail wraps onto its own
-    // line), so the clearance has to grow rather than shrink with the layout.
+    // R6: the floating StraddleCard no longer renders on mobile (day-crossing
+    // entries render as inline split halves instead — see `.split-entry-card`
+    // via `app-split-entry-card` above), so the clearance it used to need
+    // (the unconditional `.pad-top`/`.pad-bottom` rule above) must be zeroed
+    // out here, not just left un-widened — leaving it unset would still
+    // inherit the desktop 4.25rem via that rule's own selector.
     &.pad-top {
-      padding-top: 6.5rem;
+      padding-top: 0;
     }
     &.pad-bottom {
-      padding-bottom: 6.5rem;
+      padding-bottom: 0;
     }
   }
 
@@ -361,6 +396,24 @@
       flex: 0 1 auto;
       max-width: 40%;
     }
+
+    // R6: when this day opens with a day-crossing entry's bottom half, a
+    // dashed vertical line in that entry's accent colour visually continues
+    // the top half's dashed edge through the sticky header. The header's own
+    // left padding widens to make room for it as a dedicated gutter — it must
+    // never sit under the header text (it used to overlap the "D" in "Day").
+    &.has-connector {
+      padding-left: 0.75rem;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0.15rem;
+        top: 0;
+        bottom: 0;
+        border-left: 2px dashed var(--connector-accent, var(--mat-sys-primary));
+      }
+    }
   }
 
   // R4 "now" line: a thin red rule at the current time with a small pill
@@ -463,5 +516,12 @@
     .pill-nights {
       color: var(--mat-sys-on-surface-variant);
     }
+  }
+
+  // R6: the end-day "arrives" row is desktop-only — mobile shows the richer
+  // split bottom half there instead (see `app-split-entry-card` above). The
+  // middle-day "continues" row stays visible on both.
+  .continues-row.end {
+    display: none;
   }
 }

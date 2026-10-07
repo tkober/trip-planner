@@ -11,7 +11,9 @@
         <mat-icon class="leg-icon">{{ departIcon() }}</mat-icon>
         {{ startLabel().when }}
         @if (showZones()) {
-          <span class="zone">{{ startLabel().zone }}</span>
+          <span class="zone" [class.zone-highlight]="topHighlight()">{{
+            startLabel().zone
+          }}</span>
         }
       </div>
       @if (fromDetail(); as detail) {
@@ -66,7 +68,9 @@
           <mat-icon class="leg-icon">{{ arriveIcon() }}</mat-icon>
           {{ end.when }}
           @if (showZones()) {
-            <span class="zone">{{ end.zone }}</span>
+            <span class="zone" [class.zone-highlight]="bottomHighlight()">{{
+              end.zone
+            }}</span>
           }
         </div>
       }

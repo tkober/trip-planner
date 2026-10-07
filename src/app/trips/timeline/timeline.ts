@@ -34,16 +34,23 @@ import { CarDeadline, DayItem, DaySection, DayView } from './day-section';
 import { HotelCell, HotelDayCell } from './hotel-cell';
 import { CarSpan } from './car-span';
 import { StraddleCard } from './straddle-card';
+import { SplitEntryCard } from './split-entry-card';
 import { MoveDayDialog, MoveDayDialogData } from './move-day-dialog';
 import { deltaDaysBetween, shiftZonedTime } from './entry-move';
 import { computeNowLine } from './now-line';
 import { dayStayInfo } from './day-stay';
+import { computeEntrySpan } from './day-span';
 import { NavDay, TimelineNavService } from './timeline-nav.service';
 import {
   accommodationColors,
+  activityColor,
   carReservationColors,
+  transportColor,
 } from '../../shared/color/color';
-import { transportLabel } from '../../shared/transport-format';
+import {
+  transportLabel,
+  transportTo,
+} from '../../shared/transport-format';
 import { formatDay, zoneLabel } from '../../shared/format/date-format';
 
 /** An entry that crosses a day boundary, anchored on the separator line. */
@@ -51,6 +58,13 @@ interface StraddleItem {
   entry: TimelineEntry;
   /** Grid line of the separator between the start and end day. */
   rowLine: number;
+  /**
+   * R6: reference zone of each half's own day (destination zone for a real
+   * day, home zone for a virtual departure/return day) — drives the
+   * highlighted zone tag when an endpoint's own zone differs from it.
+   */
+  topRefZone: string;
+  bottomRefZone: string;
 }
 
 /**
@@ -81,6 +95,16 @@ interface VirtualDay {
   zoneLabelFull: string;
   padTop: boolean;
   padBottom: boolean;
+  /** R6, mobile only: the boundary leg's half that sits on this virtual day. */
+  split?: {
+    entry: TimelineEntry;
+    part: 'top' | 'bottom';
+    refZone: string;
+    farDayLabel?: string;
+    homeZone?: string;
+  };
+  /** R6, mobile only: dashed connector through this virtual day's own header. */
+  connectorColor?: string;
 }
 
 /** The day-by-day timeline grid (one of the trip-page views). */
@@ -95,6 +119,7 @@ interface VirtualDay {
     HotelCell,
     CarSpan,
     StraddleCard,
+    SplitEntryCard,
   ],
   templateUrl: './timeline.html',
   styleUrl: './timeline.scss',
@@ -409,28 +434,119 @@ export class TimelineView {
 
     // R5: the mode of a day-crossing transport that *starts* on a given day
     // index, so a night with no stay of its own can explain itself ("Night
-    // on the overnight bus"). Only real (non-boundary) transport straddles
-    // matter here — the leading/trailing legs straddle a virtual day instead.
+    // on the overnight bus"). Real transport straddles, plus the trailing
+    // boundary leg for the last day (see below).
     const straddleModeByIndex = new Map<number, TransportMode>();
+
+    // R6: extra per-day items a day-crossing entry contributes besides its
+    // own bucket slot — mobile split halves + the "continues"/"arrives" rows
+    // for a span covering more than one boundary (see day-span.ts for the
+    // crossing decision itself). Keyed by destination-tz date, same as
+    // `buckets`/`deadlinesByDate`.
+    const extraByDate = new Map<string, DayItem[]>();
+    const pushExtra = (date: string, item: DayItem) => {
+      const list = extraByDate.get(date) ?? [];
+      list.push(item);
+      extraByDate.set(date, list);
+    };
+    // R6, mobile only: accent colour of the entry whose bottom split half
+    // opens a given day — the dashed header connector (day-section.scss).
+    const connectorColorByDate = new Map<string, string>();
+
+    const accentOf = (entry: TimelineEntry): string =>
+      entry.kind === 'activity'
+        ? activityColor(entry.activity!)
+        : transportColor(entry.transport!);
+    const entryId = (entry: TimelineEntry) =>
+      (entry.activity?.id ?? entry.transport?.id)!;
+    /** Desktop-only "arrives HH:mm · <place>" row text's place half. */
+    const arrivalPlace = (entry: TimelineEntry): string =>
+      entry.transport ? transportTo(entry.transport) : entry.activity?.location ?? '';
 
     const handle = (entry: TimelineEntry, end?: ZonedTime) => {
       // Day is judged in each endpoint's OWN zone, so a flight that departs
-      // Berlin on the 15th and lands in Tokyo on the 16th counts as crossing.
-      const startIdx = this.clampIndex(this.tz.dayKeyLocal(entry.start));
-      if (end) {
-        const endIdx = this.clampIndex(this.tz.dayKeyLocal(end));
-        if (endIdx > startIdx) {
-          // Anchor on the separator just below the start day.
-          straddles.push({ entry, rowLine: offset + startIdx + 2 });
-          padBottom.add(startIdx);
-          padTop.add(startIdx + 1);
-          if (entry.transport && !straddleModeByIndex.has(startIdx)) {
-            straddleModeByIndex.set(startIdx, entry.transport.mode);
-          }
-          return;
-        }
+      // Berlin on the 15th and lands in Tokyo on the 16th counts as crossing
+      // (the midnight rule in day-span.ts also applies: an end at exactly
+      // 00:00 reads as the start day, so it does NOT split).
+      const span = computeEntrySpan(entry);
+      const startIdx = this.clampIndex(span.startKey);
+      const endIdx = span.crosses ? this.clampIndex(span.endKey) : startIdx;
+      if (endIdx <= startIdx) {
+        // No boundary crossed, or both ends clamp to the same day (e.g. an
+        // entry entirely outside the trip range) — a normal single-day item.
+        buckets.get(days[startIdx].date)!.push(entry);
+        return;
       }
-      buckets.get(days[startIdx].date)!.push(entry);
+
+      // Desktop straddle, anchored on the separator just below the start day
+      // — unchanged even for a multi-boundary entry: it only ever covers the
+      // FIRST boundary, the days further in get a continues/arrives row below.
+      straddles.push({
+        entry,
+        rowLine: offset + startIdx + 2,
+        topRefZone: destZone,
+        bottomRefZone: destZone,
+      });
+      padBottom.add(startIdx);
+      padTop.add(startIdx + 1);
+      if (entry.transport && !straddleModeByIndex.has(startIdx)) {
+        straddleModeByIndex.set(startIdx, entry.transport.mode);
+      }
+
+      const id = entryId(entry);
+      const accent = accentOf(entry);
+
+      // R6 mobile split halves (desktop CSS hides them; see SplitEntryCard).
+      pushExtra(days[startIdx].date, {
+        key: id + '-split-top',
+        sortMillis: this.tz.toMillis(entry.start),
+        split: {
+          entry,
+          part: 'top',
+          refZone: destZone,
+          farDayLabel: `Day ${days[endIdx].index}`,
+        },
+      });
+      pushExtra(days[endIdx].date, {
+        key: id + '-split-bottom',
+        sortMillis: this.tz.toMillis(end!),
+        split: {
+          entry,
+          part: 'bottom',
+          refZone: destZone,
+          homeZone: trip.homeTimeZone,
+        },
+      });
+      connectorColorByDate.set(days[endIdx].date, accent);
+
+      // R6: every day strictly between gets a slim "continues" row (both
+      // mobile and desktop); the end day additionally gets a desktop-only
+      // "arrives" row (mobile shows the richer bottom split half there instead).
+      for (let i = startIdx + 1; i < endIdx; i++) {
+        pushExtra(days[i].date, {
+          key: `${id}-continues-${i}`,
+          sortMillis: Number.NEGATIVE_INFINITY,
+          continues: {
+            entry,
+            part: 'middle',
+            label: `continues · until ${formatDay(days[endIdx].date)}`,
+            color: accent,
+          },
+        });
+      }
+      if (endIdx > startIdx + 1) {
+        const arriveTime = this.tz.inZone(end!, destZone).toFormat('HH:mm');
+        pushExtra(days[endIdx].date, {
+          key: `${id}-continues-end`,
+          sortMillis: this.tz.toMillis(end!) - 1, // just ahead of the split bottom
+          continues: {
+            entry,
+            part: 'end',
+            label: `arrives ${arriveTime} · ${arrivalPlace(entry)}`,
+            color: accent,
+          },
+        });
+      }
     };
 
     for (const a of trip.activities) {
@@ -441,15 +557,26 @@ export class TimelineView {
       handle({ kind: 'transport', transport: t, start: t.start }, t.end);
     }
 
-    // Boundary flights become straddles anchored on the virtual-day separators.
+    // Boundary flights become straddles anchored on the virtual-day separators
+    // (desktop + mobile's floating card) — plus, mobile only, a split top/
+    // bottom half: the leading leg's top sits in the virtual "Departure Day"
+    // itself and its bottom in real Day 1; the trailing leg's top sits in the
+    // last real day and its bottom in the virtual "Return Day".
     let leading: VirtualDay | undefined;
     if (leadingLeg) {
       straddles.push({
         entry: { kind: 'transport', transport: leadingLeg, start: leadingLeg.start },
         rowLine: offset + 1, // separator between the virtual day (row 1) and day 1
+        topRefZone: leadingLeg.start.zone,
+        bottomRefZone: destZone,
       });
       padTop.add(0); // real day 1 makes room below the card
       const dt = this.tz.toDateTime(leadingLeg.start);
+      const legEntry: TimelineEntry = {
+        kind: 'transport',
+        transport: leadingLeg,
+        start: leadingLeg.start,
+      };
       leading = {
         label: 'Departure Day',
         weekday: dt.toFormat('ccc'),
@@ -459,7 +586,24 @@ export class TimelineView {
         zoneLabelFull: zoneLabel(leadingLeg.start.zone, dt),
         padTop: false,
         padBottom: true,
+        split: {
+          entry: legEntry,
+          part: 'top',
+          refZone: leadingLeg.start.zone,
+          farDayLabel: `Day ${days[0].index}`,
+        },
       };
+      pushExtra(days[0].date, {
+        key: leadingLeg.id + '-split-bottom',
+        sortMillis: this.tz.toMillis(leadingLeg.end!),
+        split: {
+          entry: legEntry,
+          part: 'bottom',
+          refZone: destZone,
+          homeZone: trip.homeTimeZone,
+        },
+      });
+      connectorColorByDate.set(days[0].date, accentOf(legEntry));
     }
 
     let trailing: VirtualDay | undefined;
@@ -467,9 +611,21 @@ export class TimelineView {
       straddles.push({
         entry: { kind: 'transport', transport: trailingLeg, start: trailingLeg.start },
         rowLine: offset + days.length + 1, // separator between last day and virtual day
+        topRefZone: destZone,
+        bottomRefZone: trailingLeg.end!.zone,
       });
       padBottom.add(days.length - 1); // last real day makes room above the card
+      // The last day's header reads "→ In transit" rather than "No stay
+      // booked": you leave on the trailing flight, not without a hotel.
+      if (!straddleModeByIndex.has(days.length - 1)) {
+        straddleModeByIndex.set(days.length - 1, trailingLeg.mode);
+      }
       const dt = this.tz.toDateTime(trailingLeg.end!);
+      const legEntry: TimelineEntry = {
+        kind: 'transport',
+        transport: trailingLeg,
+        start: trailingLeg.start,
+      };
       trailing = {
         label: 'Return Day',
         weekday: dt.toFormat('ccc'),
@@ -479,7 +635,24 @@ export class TimelineView {
         zoneLabelFull: zoneLabel(trailingLeg.end!.zone, dt),
         padTop: true,
         padBottom: false,
+        split: {
+          entry: legEntry,
+          part: 'bottom',
+          refZone: trailingLeg.end!.zone,
+          homeZone: trip.homeTimeZone,
+        },
+        connectorColor: accentOf(legEntry),
       };
+      pushExtra(days[days.length - 1].date, {
+        key: trailingLeg.id + '-split-top',
+        sortMillis: this.tz.toMillis(trailingLeg.start),
+        split: {
+          entry: legEntry,
+          part: 'top',
+          refZone: destZone,
+          farDayLabel: 'Return Day',
+        },
+      });
     }
 
     // Car rental pickup / return deadlines, bucketed into the day they fall on
@@ -517,10 +690,12 @@ export class TimelineView {
       });
     }
     // Tiebreaker rank for items sharing a time: a check-out stay pill (-1)
-    // first, then pickup (0), entries (1), return (2), a check-in stay pill
-    // (3) last — see `StayEvent`'s ±Infinity `sortMillis` below.
+    // first, then a continues row (-0.5), pickup (0), entries/split halves
+    // (1), return (2), a check-in stay pill (3) last — see `StayEvent`'s
+    // ±Infinity `sortMillis` below.
     const tieRank = (it: DayItem) => {
       if (it.stay) return it.stay.kind === 'checkout' ? -1 : 3;
+      if (it.continues) return -0.5;
       return it.deadline ? (it.deadline.kind === 'pickup' ? 0 : 2) : 1;
     };
 
@@ -594,6 +769,7 @@ export class TimelineView {
           deadline,
         })),
         ...stayItems,
+        ...(extraByDate.get(day.date) ?? []), // R6: split halves + continues rows
         // On a tie, order by intent: a pickup happens before you set off (pill
         // above the entry), a return happens after you arrive (pill below it).
       ].sort((a, b) => a.sortMillis - b.sortMillis || tieRank(a) - tieRank(b));
@@ -635,6 +811,7 @@ export class TimelineView {
         nowLineLabel,
         stay: stayInfo.stay,
         car: stayInfo.car,
+        connectorColor: connectorColorByDate.get(day.date),
       };
     });
 

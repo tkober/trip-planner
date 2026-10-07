@@ -6,6 +6,7 @@ import { TimelineEntry, TransportMode } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { EditModeService } from '../../services/edit-mode.service';
 import { activityColor, transportColor } from '../../shared/color/color';
+import { zoneDiffers } from './day-span';
 import {
   transportFrom,
   transportFromDetail,
@@ -44,6 +45,13 @@ export class StraddleCard {
   readonly entry = input.required<TimelineEntry>();
   /** Grid line to anchor on (the separator between the two days). */
   readonly rowLine = input.required<number>();
+  /**
+   * R6: reference zone of each half's own day (destination zone for a real
+   * day, home zone for a virtual departure/return day) — drives the
+   * highlighted zone tag when an endpoint's own zone differs from it.
+   */
+  readonly topRefZone = input.required<string>();
+  readonly bottomRefZone = input.required<string>();
 
   readonly open = output<TimelineEntry>();
   readonly edit = output<TimelineEntry>();
@@ -147,6 +155,14 @@ export class StraddleCard {
     const e = this.entry();
     const end = e.activity?.end ?? e.transport?.end;
     return !!end && end.zone !== e.start.zone;
+  });
+
+  /** R6: highlight the top/bottom zone tag when it differs from that half's
+   * own day reference zone (destination zone, or home zone for a virtual day). */
+  readonly topHighlight = computed(() => zoneDiffers(this.entry().start, this.topRefZone()));
+  readonly bottomHighlight = computed(() => {
+    const end = this.entry().activity?.end ?? this.entry().transport?.end;
+    return !!end && zoneDiffers(end, this.bottomRefZone());
   });
 
   /** Each endpoint in ITS OWN zone, so the two calendar days read correctly. */
