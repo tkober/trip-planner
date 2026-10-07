@@ -32,9 +32,13 @@ const MODE_ICON: Record<TransportMode, string> = {
   template: `
     <div
       class="entry"
+      [class.up-next]="upNext()"
       [style.--accent]="accent()"
       (click)="open.emit(entry())"
     >
+      @if (upNext()) {
+        <div class="up-next-label">Up next</div>
+      }
       <div class="bullet">
         <mat-icon>{{ icon() }}</mat-icon>
       </div>
@@ -124,6 +128,8 @@ export class EntryCard {
 
   readonly entry = input.required<TimelineEntry>();
   readonly destZone = input.required<string>();
+  /** R4, mobile today only: the first entry whose start is after "now". */
+  readonly upNext = input(false);
   readonly open = output<TimelineEntry>();
   readonly edit = output<TimelineEntry>();
   readonly delete = output<TimelineEntry>();

@@ -101,6 +101,29 @@
   margin: 0;
 }
 
+// R4 mobile sticky day header (first child of `.day-content`) + now-line.
+// Both are desktop-hidden by default — the day-marker column already carries
+// this info there, and the now-line/"Up next" treatment is mobile-only by
+// spec — and only switched on inside the `bp.mobile` block below.
+.day-header {
+  display: none;
+}
+
+.now-line {
+  display: none;
+}
+
+// R5 mobile-only: the check-out/check-in stay pill and the car pill's short
+// label variant (see day-section.html / timeline.ts). Both default hidden —
+// only switched on inside the `bp.mobile` block below.
+.stay-pill {
+  display: none;
+}
+
+.pill-label.short {
+  display: none;
+}
+
 // Car rental pickup / return deadline pills — lightweight markers interleaved
 // with the entry cards by time, not full entry cards. Tinted with the
 // reservation's accent colour.
@@ -226,6 +249,144 @@
     font-size: 0.8rem;
   }
 
+  // R4: the day marker column collapses (see timeline.scss's --tl-marker), so
+  // this sticky header carries the day/date/zone instead.
+  .day-marker {
+    display: none;
+  }
+
+  .day-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    position: sticky;
+    // Sticks right below the app bar + optional edit banner (TripPage
+    // measures their real height via ResizeObserver); 0 outside that stack.
+    top: var(--app-bar-height, 0px);
+    // So the day strip's scrollIntoView(block:'start') lands the header right
+    // under the sticky stack instead of overshooting by its height (which
+    // would otherwise scroll the day's first item behind it).
+    scroll-margin-top: var(--app-bar-height, 0px);
+    z-index: 3;
+    background: var(--app-surface);
+    border-bottom: 1px solid var(--app-line);
+    padding: 0.4rem 0.1rem;
+    cursor: pointer;
+
+    .header-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .header-main {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .header-day {
+      flex-shrink: 0;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--mat-sys-primary);
+    }
+
+    .header-date {
+      font-size: 0.78rem;
+      color: var(--app-ink-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-zone {
+      flex-shrink: 0;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--app-ink-3);
+    }
+
+    // R5: the accommodation/car summary line, split so the car part (which
+    // only exists on some days) shrinks first and the stay part keeps
+    // priority — it always has something to say ("No stay booked" at worst).
+    .header-stay {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .stay-line,
+    .car-line {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      min-width: 0;
+      appearance: none;
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      font-size: 0.72rem;
+      color: var(--app-ink-2);
+      cursor: pointer;
+
+      mat-icon {
+        flex-shrink: 0;
+        font-size: 0.85rem;
+        width: 0.85rem;
+        height: 0.85rem;
+        color: var(--app-ink-3);
+      }
+
+      span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .stay-line {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .car-line {
+      flex: 0 1 auto;
+      max-width: 40%;
+    }
+  }
+
+  // R4 "now" line: a thin red rule at the current time with a small pill
+  // label, inserted among today's chronologically-sorted items.
+  .now-line {
+    display: block;
+    position: relative;
+    height: 0;
+    margin: 0.5rem 0;
+    border-top: 2px solid var(--now);
+
+    .now-pill {
+      position: absolute;
+      left: 0;
+      top: -0.62rem;
+      background: var(--now);
+      color: #fff;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+  }
+
   // The pill can no longer keep name/company/station on one line — let it wrap
   // instead of ellipsing everything down to a single letter.
   .car-pill {
@@ -238,11 +399,69 @@
       font-size: 0.66rem;
     }
 
+    // R5: shorten "Fetch by" / "Return by" to "Pick up" / "Return" on mobile;
+    // desktop keeps the full wording (see day-section.html / timeline.ts).
+    .pill-label.full {
+      display: none;
+    }
+    .pill-label.short {
+      display: inline;
+    }
+
     .pill-company,
     .pill-station,
     .pill-name {
       white-space: normal;
       overflow: visible;
+    }
+  }
+
+  // R5: check-out/check-in stay pills, same visual family as `.car-pill`.
+  .stay-pill {
+    display: inline-flex;
+    align-self: flex-start;
+    max-width: 100%;
+    align-items: baseline;
+    flex-wrap: wrap;
+    row-gap: 0;
+    gap: 0.35rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid
+      color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 45%, white);
+    background: color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 16%, white);
+    color: #1c2733;
+    font: inherit;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    cursor: pointer;
+
+    &:hover {
+      filter: brightness(0.97);
+    }
+
+    .pill-icon {
+      align-self: center;
+      color: var(--accent, var(--mat-sys-primary));
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .pill-label {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      font-size: 0.66rem;
+    }
+
+    .pill-name {
+      color: var(--mat-sys-on-surface-variant);
+      white-space: normal;
+    }
+
+    .pill-nights {
+      color: var(--mat-sys-on-surface-variant);
     }
   }
 }

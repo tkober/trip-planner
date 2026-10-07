@@ -97,6 +97,12 @@
   }
 }
 
+// R4 mobile sticky header for the virtual departure/return days — grey, to
+// match the virtual day-marker. Desktop-hidden by default (see bp.mobile).
+.day-header.virtual-header {
+  display: none;
+}
+
 // Bed icon + vertical hotel name as one group, centered over the stay in the
 // hotel lane (mirrors the car lane's icon + name). Click-through so the colored
 // half-cells beneath handle taps (details dialog).
@@ -144,37 +150,20 @@
 
   .days-grid {
     // Consumed by the inline grid-template-columns binding (see the component's
-    // gridTemplateColumns).
-    --tl-marker: 3.4rem;
-    --tl-lane: 1.7rem;
-    column-gap: 0.45rem;
+    // gridTemplateColumns). R4: the marker column collapses outright — the new
+    // sticky day headers (day-section.html / this file) replace it. R5: the
+    // hotel/car lanes shrink to thin colour rails (see hotel-cell.scss /
+    // car-span.scss) — the hotel name/car name move to the day header
+    // (day-section.html) instead, so the lanes no longer need width for text.
+    --tl-marker: 0;
+    --tl-lane: 6px;
+    column-gap: 0.3rem;
   }
 
+  // Replaced by the R4 sticky day header on mobile (see .day-header.virtual-header
+  // below); the column itself is already 0-width via --tl-marker above.
   .day-marker.virtual {
-    padding: 0.6rem 0.35rem 0.6rem 0;
-
-    .day-date {
-      font-size: 0.65rem;
-    }
-
-    .day-date-num {
-      font-size: 0.8rem;
-    }
-
-    .day-zone {
-      font-size: 0.55rem;
-
-      .zone-icon {
-        font-size: 0.7rem;
-        width: 0.7rem;
-        height: 0.7rem;
-      }
-    }
-
-    .virtual-label {
-      font-size: 0.68rem;
-      line-height: 1.15;
-    }
+    display: none;
   }
 
   // Matches the real day rows' straddle clearance (see day-section.scss).
@@ -187,18 +176,56 @@
     }
   }
 
+  .day-header.virtual-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    position: sticky;
+    top: var(--app-bar-height, 0px);
+    scroll-margin-top: var(--app-bar-height, 0px);
+    z-index: 3;
+    background: var(--app-surface);
+    border-bottom: 1px solid var(--app-line);
+    padding: 0.4rem 0.1rem;
+    color: var(--app-ink-3);
+
+    .header-main {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .header-day {
+      flex-shrink: 0;
+      font-weight: 600;
+      font-size: 0.78rem;
+      color: var(--app-ink-3);
+    }
+
+    .header-date {
+      font-size: 0.78rem;
+      color: var(--app-ink-3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-zone {
+      flex-shrink: 0;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--app-ink-3);
+    }
+  }
+
+  // R5: the hotel lane is now a thin colour rail with no room for the
+  // rotated name — it moved to the day header's stay line instead.
   .stay-label {
-    padding: 0.35rem 0;
-
-    .stay-icon {
-      font-size: 1rem;
-      width: 1rem;
-      height: 1rem;
-    }
-
-    .stay-name {
-      margin-top: 0.15rem;
-      font-size: 0.7rem;
-    }
+    display: none;
   }
 }

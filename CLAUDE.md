@@ -110,6 +110,44 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   Transport / More) so every section and the R1 edit-mode toggle stay
   reachable without scrolling back to the top. Desktop is unchanged. See
   "Responsive layout" below.
+- **Mobile timeline navigation**: on phones the day-marker column collapses
+  and each day instead gets a **sticky header** (`Day 7` **Thu, 9 Apr**,
+  right-aligned `TOKYO · GMT+9`) that pins below the app bar while that day's
+  cards scroll under it, plus a horizontally-scrollable **day strip** in the
+  app bar (a chip per day, including the virtual departure/return days) that
+  jumps to a day on tap and tracks the current one as you scroll ("scroll
+  spy"). Today's chip gets an indigo ring, and opening the Timeline scrolls to
+  it once. Today's own day also gets a 2px **"now" line** between its items at
+  the current time, with the next upcoming entry marked **"Up next"**. Desktop
+  keeps the plain marker column and none of this renders there, nor in the
+  plan export (`exportMode`/`tripOverride`). See "Responsive layout" below.
+- **Mobile hotel/car lanes as colour rails ("Variante C")**: on phones the
+  hotel and car lanes shrink to thin (6px) solid-colour **rails** instead of
+  the desktop's wide tinted blocks with a rotated name — reusing the same
+  `HotelCell` half-day-handoff and `CarSpan` block, just restyled (full accent
+  colour, small rounded ends, no icon/text). A hotel switch reads as a plain
+  colour change on the rail; a night with no stay reads as a gap. The hotel
+  name/car name move to a **second line in the mobile day header** instead
+  (`dayStayInfo` in [day-stay.ts](src/app/trips/timeline/day-stay.ts), a pure,
+  unit-tested function): an accommodation part (priority, ellipsis) reading
+  `Hotel Kanra · night 2/4` on a plain night, `Hakone Ginyu → Hotel Kanra` on a
+  switch day, `Cross Hotel → Night on the overnight bus` on a check-out with
+  no new stay that night (the wording naming the day-crossing transport that
+  covers the gap — bus/train/"In transit"/"No stay booked"), plus a car part
+  (max 40% width, shrinks first) on any day a rental runs; both tap through to
+  the respective details dialog (`stopPropagation` so the header's own
+  edit-mode day-menu tap doesn't also fire). Each stay additionally surfaces
+  **check-out/check-in pills** (same visual family as the car deadline pills)
+  as the first/last item of the day's chronological list — a new `DayItem`
+  `stay` kind with ±Infinity `sortMillis` so a check-out always sorts before
+  everything (incl. untimed car deadlines) and a check-in always after,
+  excluded from "Up next". The day strip's chip also gets a thin **colour
+  bar** for the day's night stay (`NavDay.color`, unset → no bar). The car
+  deadline pills' labels shorten on mobile (`Fetch by` → `Pick up`, `Return
+  by` → `Return`; desktop keeps the full wording) via a CSS-toggled
+  full/short span pair rather than reading the breakpoint in TypeScript. None
+  of this renders on desktop or in the plan export — same `bp.mobile` guard as
+  the rest of this section.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -188,6 +226,11 @@ Services (signal-backed, `providedIn: 'root'` unless noted):
   `startEditing`/`stopEditing` persist the mobile choice to `localStorage`.
   Injected directly by the timeline components and `DetailsDialog` that need
   to hide editing affordances in read mode.
+- [ClockService](src/app/services/clock.service.ts) — the timeline's single
+  source of "now" (R4: the now-line, "Up next", and the day strip's today
+  ring): a `now` signal (Luxon `DateTime`) that ticks every 60s. The instant
+  comes from the `CLOCK_NOW` injection token (default `() => DateTime.now()`),
+  overridable in tests for a fixed time.
 
 Timeline composition:
 - [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid; computes
@@ -198,18 +241,72 @@ Timeline composition:
   leading/trailing `VirtualDay`, and exposes `rowOffset` — the number of prepended
   virtual rows (0 or 1) that shifts every real-day grid row. Virtual rows are rendered
   inline in `timeline.html` (grayed marker + empty padded content); the boundary flight
-  itself is pushed as a `StraddleCard` anchored on the virtual-day separator.
+  itself is pushed as a `StraddleCard` anchored on the virtual-day separator. `layout()`
+  also computes, per day, a `zoneLabelFull` ("Tokyo · GMT+9", via `date-format.ts`
+  `zoneLabel`) for the R4 mobile sticky header, and — for whichever day is "today" in
+  the destination tz (`ClockService` + `TripDto.destinationTimeZone`) — the R4
+  now-line/"Up next" placement via the pure [now-line.ts](src/app/trips/timeline/now-line.ts)
+  `computeNowLine` helper (unit-tested standalone: entries without end, now
+  before/after every item, untimed deadlines, a transport leg in another zone —
+  all comparisons are absolute-instant, so the entry's own zone never matters).
+  `TimelineView` also publishes the day list (incl. virtual days) to
+  `TimelineNavService` for the R4 day strip, and clears it on destroy — but never
+  while rendering for another trip/the plan export (`tripOverride`/`exportMode`).
+  R5: `layout()` additionally derives, per day, the mobile header's `stay`/`car`
+  summary via the pure [day-stay.ts](src/app/trips/timeline/day-stay.ts)
+  `dayStayInfo` helper (fed the day's morning/night accommodation — the same
+  half-day-handoff pair `hotelCells` uses, hoisted into the shared `nightOf`
+  computed — plus `carReservations` and the mode of any transport straddle
+  starting that day) and pushes a check-out/check-in `DayItem` (`stay` kind,
+  ±Infinity `sortMillis`) onto the day with one. `dayNightColors` (also reusing
+  `nightOf`) feeds each published `NavDay.color` for the day strip's colour bar.
+- [TimelineNavService](src/app/trips/timeline/timeline-nav.service.ts) — root
+  service bridging the timeline (which knows the days) and the mobile day strip
+  (which renders them, Timeline route only): `days` / `activeKey` signals, a day
+  header registry (`registerHeader`/`unregisterHeader`, `HTMLElement`s), `scrollTo(key)`
+  (`scrollIntoView`, respecting `prefers-reduced-motion`), and a scroll-spy (a single
+  passive, rAF-throttled `scroll` listener) that sets `activeKey` to whichever
+  registered header sits at/just below the app bar (reading `--app-bar-height`, see
+  "Responsive layout" below).
+- [DayStrip](src/app/trips/timeline/day-strip.ts) — the app bar's horizontal day
+  strip (one chip per day, incl. virtual days): reads `TimelineNavService` directly,
+  renders nothing when it holds no days, and keeps the active chip scrolled into
+  view horizontally (never scrolling the page) as the scroll spy moves. Mounted by
+  [TripPage](src/app/trips/trip-page/trip-page.ts) in the app bar, Timeline route
+  only.
 - [DaySection](src/app/trips/timeline/day-section.ts) — one day. Uses
   `display: contents` so its day-marker (col 1) and CDK drop-list content (last col)
-  become direct children of the timeline grid, sharing rows with span blocks.
+  become direct children of the timeline grid, sharing rows with span blocks. On
+  mobile, `.day-content` additionally renders a sticky **day header** as its first
+  child (not a `cdkDrag` item, so it's never a drop target) — tapping it opens the
+  same day menu as the (now hidden) marker in edit mode, a no-op in read mode — plus,
+  on today's day only, the now-line/"Up next" card from `TimelineView.layout()`. R5:
+  the header gets a second line (`.header-stay`) with a `stay-line` (bed icon + text,
+  flex priority) and, when a rental runs, a `car-line` (car icon + name, max 40%),
+  each a `<button>` that `stopPropagation`s before emitting `openAccommodation`/
+  `openCar` so the header's own click doesn't also open the day menu. The day's item
+  list also renders a `.stay-pill` for a `DayItem.stay` (check-out/check-in, same
+  visual family as `.car-pill`), and the car pill's label renders both a `.full` and
+  `.short` span (`Fetch by`/`Pick up`, `Return by`/`Return`) with one hidden per
+  breakpoint in CSS, desktop keeping the full wording.
 - [HotelCell](src/app/trips/timeline/hotel-cell.ts) — one day's accommodation cell
   (top = morning hotel, bottom = night hotel); computed in `TimelineView.hotelCells`.
+  R5, mobile only: the lane shrinks to a 6px colour **rail** (`--tl-lane`) — full
+  accent colour instead of the light tint, small rounded ends, no text — reusing the
+  same half-day-handoff markup/logic; the vertical hotel-name label
+  (`.stay-label` in timeline.html) is hidden, the name having moved to the day
+  header's stay line instead.
 - [CarSpan](src/app/trips/timeline/car-span.ts) — one car reservation as a single
   continuous block in the car lane (col 3), spanning pickup→return rows; computed in
-  `TimelineView.carSpans`.
+  `TimelineView.carSpans`. R5, mobile only: same colour-rail treatment as `HotelCell`
+  (full accent colour, no icon/name — the car's name moved to the day header's car
+  line); click/long-press (contextmenu) behaviour is unchanged.
 - [EntryCard](src/app/trips/timeline/entry-card.ts) — one single-day activity/transport.
   Transport entries split ~2/3 route · ~1/3 **detail column** (same per-mode facts as
-  `TransportCard`; absent for activities/car or when no detail fields are set).
+  `TransportCard`; absent for activities/car or when no detail fields are set). Takes
+  an R4 `upNext` input (set by `DaySection` from `TimelineView.layout()`'s now-line
+  computation) that adds an uppercase "Up next" eyebrow + an indigo outline — mobile,
+  today's day only; the styling (not the data) is what keeps it off desktop.
 - [StraddleCard](src/app/trips/timeline/straddle-card.ts) — a day-crossing entry,
   anchored on the separator line (`grid-row` from `TimelineView.layout`, then
   `translateY(-50%)`); adjacent days get padding so the card has clear space. The
@@ -347,8 +444,8 @@ Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoint
   [trip-context.ts](src/app/shared/format/trip-context.ts) — a pure function
   ("Day 7 of 16 · Thu, 9 Apr" / "Starts in N days" / the date range after the
   trip), resolving "today" in the trip's **destination** zone via Luxon
-  `setZone`, not the device's. A commented, empty `.bar-day-strip` div sits
-  below the title row for R4's horizontal day strip. The bottom nav
+  `setZone`, not the device's. `<app-day-strip>` (R4, see below) sits below the
+  title row, rendered only on the Timeline route. The bottom nav
   (`position: fixed; bottom: 0`) has five columns — Timeline / Overview /
   Stays / Transport / a **More** `mat-menu` (Car rentals, Reservations, then
   the same Export plan / Export JSON / Edit trip handlers as the kebab) —
@@ -363,6 +460,36 @@ Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoint
   without the explicit floor one non-wrapping row (e.g. a deadline-pill
   button) would blow the shared single-column track — and every other row in
   it — out past the viewport.
+- **Mobile timeline navigation** ([day-section.scss](src/app/trips/timeline/day-section.scss),
+  [timeline.scss](src/app/trips/timeline/timeline.scss), R4): below `$mobile`
+  `--tl-marker` collapses to `0` and `.day-marker` is hidden outright; each day's
+  `.day-content` instead gets a sticky `.day-header` as its first child (`position: sticky; top:
+  var(--app-bar-height, 0px)`, `scroll-margin-top` the same — needed so the day
+  strip's `scrollIntoView(block:'start')` lands the header right under the app bar
+  instead of overshooting by its height and hiding the day's first item behind it).
+  `--app-bar-height` is set on `document.documentElement` by `TripPage`, which
+  measures `.mobile-sticky-stack`'s real height (app bar + optional R1 edit banner)
+  with a `ResizeObserver` (mobile only; the property is removed on destroy/desktop).
+  The day strip and the day headers' tap-to-open-day-menu, today ring, now-line and
+  "Up next" card are all covered by their own bullets above (Timeline composition);
+  none of it renders on desktop (`.day-header`/`.now-line`/`.up-next-label` default
+  to `display: none`, only switched on inside each file's `bp.mobile` block) or
+  during the plan export, since `bp.mobile` already excludes `html.exporting-plan`
+  and `TimelineView` never publishes to `TimelineNavService` when `tripOverride`/
+  `exportMode` is set.
+- **Mobile hotel/car lanes as colour rails** ([hotel-cell.scss](src/app/trips/timeline/hotel-cell.scss),
+  [car-span.scss](src/app/trips/timeline/car-span.scss), [timeline.scss](src/app/trips/timeline/timeline.scss),
+  R5, "Variante C"): below `$mobile`, `--tl-lane` shrinks from the desktop
+  `clamp(40px, 9vw, 52px)` to a flat `6px` and the grid's `column-gap` tightens —
+  the day marker is already `0` (R4), so the content column starts within ~40px
+  of the left edge. `HotelCell`'s half-day-handoff divs and `CarSpan`'s block
+  keep their desktop markup/logic and just get restyled: full accent colour
+  (not the desktop's light `color-mix` tint), small rounded corners instead of
+  12px, and the icon/name (`.car-icon`/`.car-name`, `.stay-label` in
+  timeline.html) hidden outright — the name now lives in the day header's
+  stay/car line (see "Mobile timeline navigation" below). A hotel switch thus
+  reads as a plain colour change on the rail, a night with no stay as a gap;
+  click and long-press (contextmenu) behaviour is untouched.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,

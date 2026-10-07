@@ -1,7 +1,10 @@
 import {
   Component,
-  computed,
+  DestroyRef,
   ElementRef,
+  afterNextRender,
+  computed,
+  effect,
   inject,
   input,
   signal,
@@ -18,24 +21,30 @@ import {
   AccommodationDto,
   CarReservationDto,
   TimelineEntry,
+  TransportMode,
   TripDto,
   ZonedTime,
 } from '../../models/trip.model';
 import { TripStore } from '../../services/trip-store';
 import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
+import { EditModeService } from '../../services/edit-mode.service';
+import { ClockService } from '../../services/clock.service';
 import { CarDeadline, DayItem, DaySection, DayView } from './day-section';
 import { HotelCell, HotelDayCell } from './hotel-cell';
 import { CarSpan } from './car-span';
 import { StraddleCard } from './straddle-card';
 import { MoveDayDialog, MoveDayDialogData } from './move-day-dialog';
 import { deltaDaysBetween, shiftZonedTime } from './entry-move';
+import { computeNowLine } from './now-line';
+import { dayStayInfo } from './day-stay';
+import { NavDay, TimelineNavService } from './timeline-nav.service';
 import {
   accommodationColors,
   carReservationColors,
 } from '../../shared/color/color';
 import { transportLabel } from '../../shared/transport-format';
-import { formatDay } from '../../shared/format/date-format';
+import { formatDay, zoneLabel } from '../../shared/format/date-format';
 
 /** An entry that crosses a day boundary, anchored on the separator line. */
 interface StraddleItem {
@@ -64,8 +73,12 @@ interface VirtualDay {
   /** Weekday / date in the endpoint's OWN (home) zone. */
   weekday: string;
   dayNum: string;
+  /** Bare day-of-month, e.g. "9" (for the day strip's chip). */
+  dayNumShort: string;
   /** Home city label. */
   city: string;
+  /** "Berlin · GMT+1" (mobile sticky header's zone label). */
+  zoneLabelFull: string;
   padTop: boolean;
   padBottom: boolean;
 }
@@ -99,10 +112,90 @@ export class TimelineView {
   private readonly actions = inject(TripActionsService);
   private readonly snack = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
+  private readonly clock = inject(ClockService);
+  private readonly editMode = inject(EditModeService);
+  private readonly nav = inject(TimelineNavService);
 
   readonly trip = computed<TripDto | undefined>(
     () => this.tripOverride() ?? this.store.trips().find((t) => t.id === this.id()),
   );
+
+  /** "Today" in the trip's destination tz (R4), or undefined before/after load. */
+  readonly todayKey = computed(() => {
+    const trip = this.trip();
+    return trip
+      ? this.clock.now().setZone(trip.destinationTimeZone).toISODate() ?? undefined
+      : undefined;
+  });
+
+  private readonly leadingHeaderEl =
+    viewChild<ElementRef<HTMLElement>>('leadingHeaderEl');
+  private readonly trailingHeaderEl =
+    viewChild<ElementRef<HTMLElement>>('trailingHeaderEl');
+
+  constructor() {
+    // Publish the day list (incl. virtual days) for the mobile day strip —
+    // never while rendering the plan export (tripOverride/exportMode), so an
+    // off-screen export render can't leak a strip onto whatever route is
+    // really on screen.
+    effect(() => {
+      if (this.tripOverride() || this.exportMode()) return;
+      const today = this.todayKey();
+      const list: NavDay[] = [];
+      const leading = this.leadingDay();
+      if (leading) {
+        list.push({
+          key: 'virtual-leading',
+          topLabel: 'Dep.',
+          dayNum: leading.dayNumShort,
+          isToday: false,
+        });
+      }
+      const nightColors = this.dayNightColors();
+      for (const dv of this.dayViews()) {
+        list.push({
+          key: dv.day.date,
+          topLabel: dv.day.startOfDay.toFormat('ccc'),
+          dayNum: dv.day.startOfDay.toFormat('d'),
+          isToday: dv.day.date === today,
+          color: nightColors.get(dv.day.date),
+        });
+      }
+      const trailing = this.trailingDay();
+      if (trailing) {
+        list.push({
+          key: 'virtual-trailing',
+          topLabel: 'Ret.',
+          dayNum: trailing.dayNumShort,
+          isToday: false,
+        });
+      }
+      this.nav.publish(list);
+    });
+
+    effect(() => {
+      const el = this.leadingHeaderEl()?.nativeElement;
+      if (el) this.nav.registerHeader('virtual-leading', el);
+      else this.nav.unregisterHeader('virtual-leading');
+    });
+    effect(() => {
+      const el = this.trailingHeaderEl()?.nativeElement;
+      if (el) this.nav.registerHeader('virtual-trailing', el);
+      else this.nav.unregisterHeader('virtual-trailing');
+    });
+
+    inject(DestroyRef).onDestroy(() => this.nav.clear());
+
+    // Fresh navigation to the Timeline route: scroll to today's header once,
+    // if today falls within the trip. Before/after the trip there's nothing
+    // to scroll to, so the page simply opens at the top as-is.
+    afterNextRender(() => {
+      const key = this.todayKey();
+      if (key && this.editMode.isMobile() && this.days().some((d) => d.date === key)) {
+        this.nav.scrollTo(key);
+      }
+    });
+  }
 
   readonly days = computed(() => {
     const trip = this.trip();
@@ -141,6 +234,24 @@ export class TimelineView {
   });
 
   /**
+   * The accommodation you sleep in on each day's night, if any (parallel to
+   * `days`). Shared by `hotelCells` (the lane blocks) and `layout` (the R5
+   * mobile header stay line + check-in/out pills), so the half-day-handoff
+   * convention — a day's night stay is `nightOf[i]`, its morning stay (last
+   * night's) is `nightOf[i - 1]` — stays in exactly one place.
+   */
+  private readonly nightOf = computed<(AccommodationDto | undefined)[]>(() => {
+    const trip = this.trip();
+    const days = this.days();
+    if (!trip || !days.length) return [];
+    return days.map((d) =>
+      trip.accommodations.find(
+        (a) => a.checkInDate <= d.date && d.date < a.checkOutDate,
+      ),
+    );
+  });
+
+  /**
    * Per-day hotel cells. Each day's top half is the hotel you wake up in
    * (last night's stay) and the bottom half the hotel you sleep in tonight.
    * A switch day naturally splits top/bottom; a continuous stay reads as one
@@ -153,13 +264,7 @@ export class TimelineView {
 
     const colorById = accommodationColors(trip.accommodations);
     const offset = this.rowOffset();
-
-    // The accommodation you sleep in on each day's night, if any.
-    const nightOf = days.map((d) =>
-      trip.accommodations.find(
-        (a) => a.checkInDate <= d.date && d.date < a.checkOutDate,
-      ),
-    );
+    const nightOf = this.nightOf();
 
     const cells: HotelDayCell[] = [];
     days.forEach((_, i) => {
@@ -188,6 +293,24 @@ export class TimelineView {
       });
     });
     return cells;
+  });
+
+  /**
+   * R5: each day's night-stay colour, keyed by destination-tz date — fills
+   * the mobile day strip's chip colour bar (no bar on a night with no stay).
+   */
+  private readonly dayNightColors = computed<Map<string, string>>(() => {
+    const trip = this.trip();
+    const days = this.days();
+    const map = new Map<string, string>();
+    if (!trip || !days.length) return map;
+    const colorById = accommodationColors(trip.accommodations);
+    const nightOf = this.nightOf();
+    days.forEach((d, i) => {
+      const night = nightOf[i];
+      if (night) map.set(d.date, colorById.get(night.id) ?? '');
+    });
+    return map;
   });
 
   /**
@@ -284,6 +407,12 @@ export class TimelineView {
     const padBottom = new Set<number>();
     const padTop = new Set<number>();
 
+    // R5: the mode of a day-crossing transport that *starts* on a given day
+    // index, so a night with no stay of its own can explain itself ("Night
+    // on the overnight bus"). Only real (non-boundary) transport straddles
+    // matter here — the leading/trailing legs straddle a virtual day instead.
+    const straddleModeByIndex = new Map<number, TransportMode>();
+
     const handle = (entry: TimelineEntry, end?: ZonedTime) => {
       // Day is judged in each endpoint's OWN zone, so a flight that departs
       // Berlin on the 15th and lands in Tokyo on the 16th counts as crossing.
@@ -295,6 +424,9 @@ export class TimelineView {
           straddles.push({ entry, rowLine: offset + startIdx + 2 });
           padBottom.add(startIdx);
           padTop.add(startIdx + 1);
+          if (entry.transport && !straddleModeByIndex.has(startIdx)) {
+            straddleModeByIndex.set(startIdx, entry.transport.mode);
+          }
           return;
         }
       }
@@ -322,7 +454,9 @@ export class TimelineView {
         label: 'Departure Day',
         weekday: dt.toFormat('ccc'),
         dayNum: dt.toFormat('d LLL'),
+        dayNumShort: dt.toFormat('d'),
         city: this.tz.zoneCity(leadingLeg.start.zone),
+        zoneLabelFull: zoneLabel(leadingLeg.start.zone, dt),
         padTop: false,
         padBottom: true,
       };
@@ -340,7 +474,9 @@ export class TimelineView {
         label: 'Return Day',
         weekday: dt.toFormat('ccc'),
         dayNum: dt.toFormat('d LLL'),
+        dayNumShort: dt.toFormat('d'),
         city: this.tz.zoneCity(trailingLeg.end!.zone),
+        zoneLabelFull: zoneLabel(trailingLeg.end!.zone, dt),
         padTop: true,
         padBottom: false,
       };
@@ -363,6 +499,7 @@ export class TimelineView {
         car: c,
         kind: 'pickup',
         label: 'Fetch by',
+        shortLabel: 'Pick up',
         time: c.pickupTime ?? '',
         company: c.company ?? '',
         location: c.pickupLocation ?? '',
@@ -372,23 +509,74 @@ export class TimelineView {
         car: c,
         kind: 'dropoff',
         label: 'Return by',
+        shortLabel: 'Return',
         time: c.dropoffTime ?? '',
         company: c.company ?? '',
         location: c.dropoffLocation ?? '',
         color,
       });
     }
-    // Tiebreaker rank for items sharing a time: pickup (0) above entries (1),
-    // return (2) below them.
-    const tieRank = (it: DayItem) =>
-      it.deadline ? (it.deadline.kind === 'pickup' ? 0 : 2) : 1;
+    // Tiebreaker rank for items sharing a time: a check-out stay pill (-1)
+    // first, then pickup (0), entries (1), return (2), a check-in stay pill
+    // (3) last — see `StayEvent`'s ±Infinity `sortMillis` below.
+    const tieRank = (it: DayItem) => {
+      if (it.stay) return it.stay.kind === 'checkout' ? -1 : 3;
+      return it.deadline ? (it.deadline.kind === 'pickup' ? 0 : 2) : 1;
+    };
+
+    // R5: per-day accommodation/car header summary + check-out/check-in
+    // pills, computed by the pure `dayStayInfo` helper (day-stay.ts).
+    const accColorById = accommodationColors(trip.accommodations);
+    const nightOf = this.nightOf();
+
+    const today = this.todayKey();
+    const nowMillis = this.clock.now().toMillis();
 
     const dayViews: DayView[] = days.map((day, i) => {
       const entries = buckets.get(day.date) ?? [];
       const deadlines = deadlinesByDate.get(day.date) ?? [];
-      // Interleave entries and deadlines by time so a "Return by 14:00" pill
-      // lands between the activities before and after it. Untimed deadlines
-      // float to the top of the day (their time is unknown).
+
+      const stayItems: DayItem[] = [];
+      const checkoutAcc = trip.accommodations.find(
+        (a) => a.checkOutDate === day.date,
+      );
+      if (checkoutAcc) {
+        stayItems.push({
+          key: checkoutAcc.id + '-checkout',
+          sortMillis: Number.NEGATIVE_INFINITY,
+          stay: {
+            kind: 'checkout',
+            accommodation: checkoutAcc,
+            color: accColorById.get(checkoutAcc.id) ?? '',
+          },
+        });
+      }
+      const checkinAcc = trip.accommodations.find(
+        (a) => a.checkInDate === day.date,
+      );
+      if (checkinAcc) {
+        const nights = Math.round(
+          DateTime.fromISO(checkinAcc.checkOutDate).diff(
+            DateTime.fromISO(checkinAcc.checkInDate),
+            'days',
+          ).days,
+        );
+        stayItems.push({
+          key: checkinAcc.id + '-checkin',
+          sortMillis: Number.POSITIVE_INFINITY,
+          stay: {
+            kind: 'checkin',
+            accommodation: checkinAcc,
+            color: accColorById.get(checkinAcc.id) ?? '',
+            nights,
+          },
+        });
+      }
+
+      // Interleave entries, deadlines and stay pills by time so a "Return by
+      // 14:00" pill lands between the activities before and after it.
+      // Untimed deadlines float to the top of the day; stay pills always sit
+      // at the very start/end (±Infinity `sortMillis`).
       const items: DayItem[] = [
         ...entries.map((entry): DayItem => ({
           key: (entry.activity?.id ?? entry.transport?.id)!,
@@ -405,9 +593,36 @@ export class TimelineView {
             : Number.NEGATIVE_INFINITY,
           deadline,
         })),
+        ...stayItems,
         // On a tie, order by intent: a pickup happens before you set off (pill
         // above the entry), a return happens after you arrive (pill below it).
       ].sort((a, b) => a.sortMillis - b.sortMillis || tieRank(a) - tieRank(b));
+
+      // R4, mobile only (styling guards it; see day-section.scss): today's
+      // "now" line + "Up next" card, in a pure, independently-tested helper.
+      let nowLineInsertIndex: number | undefined;
+      let nowLineLabel: string | undefined;
+      if (day.date === today) {
+        const info = computeNowLine(items, nowMillis, destZone);
+        nowLineInsertIndex = info.insertIndex;
+        nowLineLabel = info.label;
+        const upNextItem = items.find((it) => it.key === info.upNextKey);
+        if (upNextItem) upNextItem.upNext = true;
+      }
+
+      // R5 mobile header second line (hidden on desktop via CSS).
+      const night = nightOf[i];
+      const morning = i > 0 ? nightOf[i - 1] : undefined;
+      const stayInfo = dayStayInfo(
+        day.date,
+        morning,
+        night,
+        trip.carReservations,
+        straddleModeByIndex.get(i),
+        (a) => accColorById.get(a.id) ?? '',
+        (c) => carColorById.get(c.id) ?? '',
+      );
+
       return {
         day,
         items,
@@ -415,6 +630,11 @@ export class TimelineView {
         dropListId: 'day-' + day.date,
         padTop: padTop.has(i),
         padBottom: padBottom.has(i),
+        zoneLabelFull: zoneLabel(destZone, day.startOfDay),
+        nowLineInsertIndex,
+        nowLineLabel,
+        stay: stayInfo.stay,
+        car: stayInfo.car,
       };
     });
 

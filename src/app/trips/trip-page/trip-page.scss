@@ -202,10 +202,9 @@
     text-overflow: ellipsis;
   }
 
-  // R4 slot (horizontal day strip) — empty today, so it contributes no height.
-  .bar-day-strip:empty {
-    display: none;
-  }
+  // R4: app-day-strip (the horizontal day strip) renders nothing — zero
+  // height — when TimelineNavService holds no days (every route but
+  // Timeline, and desktop, which never publishes); see trip-page.html.
 
   @media print {
     display: none;
