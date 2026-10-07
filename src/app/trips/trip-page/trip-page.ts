@@ -1,11 +1,16 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
+  NavigationEnd,
   Router,
   RouterLink,
   RouterLinkActive,
   RouterOutlet,
 } from '@angular/router';
+import { filter, map } from 'rxjs';
+import { DateTime } from 'luxon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { TripDto } from '../../models/trip.model';
@@ -15,6 +20,7 @@ import { TripActionsService } from '../../services/trip-actions.service';
 import { EditModeService } from '../../services/edit-mode.service';
 import { ExportHost } from '../export/export-host';
 import { formatRange, zoneLabel } from '../../shared/format/date-format';
+import { tripContextLabel } from '../../shared/format/trip-context';
 
 interface NavItem {
   path: string;
@@ -35,6 +41,7 @@ interface NavItem {
     RouterLinkActive,
     RouterOutlet,
     MatButtonModule,
+    MatDividerModule,
     MatIconModule,
     MatMenuModule,
     ExportHost,
@@ -82,6 +89,27 @@ export class TripPage {
   /** Expose the format helpers to the template. */
   protected readonly formatRange = formatRange;
   protected readonly zoneLabel = zoneLabel;
+
+  /** Mobile app bar subtitle, e.g. "Day 7 of 16 · Thu, 9 Apr". */
+  readonly contextLabel = computed(() => {
+    const t = this.trip();
+    return t ? tripContextLabel(t, DateTime.now()) : '';
+  });
+
+  /** Current URL, kept live for the bottom nav's "More" active state. */
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(() => this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /** "More" (bottom nav) reads as active for its two menu-only routes. */
+  readonly moreActive = computed(() => {
+    const u = this.url();
+    return u.includes('/car-reservations') || u.includes('/reservations');
+  });
 
   back(): void {
     void this.router.navigate(['/trips']);

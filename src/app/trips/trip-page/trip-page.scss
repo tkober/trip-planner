@@ -155,6 +155,121 @@
   }
 }
 
+// Mobile-only app bar + bottom nav (see trip-page.html). Rendered only when
+// `editMode.isMobile()` is true, so none of this ever reaches the desktop DOM;
+// `.trip-layout` itself is hidden for plan export/print (styles.scss), so
+// these never bake into the exported PNG/PDF either.
+.mobile-sticky-stack {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+}
+
+.mobile-app-bar {
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-line);
+  padding-top: env(safe-area-inset-top);
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .bar-title {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .bar-trip-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--app-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bar-context {
+    font-size: 12px;
+    color: var(--app-ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // R4 slot (horizontal day strip) — empty today, so it contributes no height.
+  .bar-day-strip:empty {
+    display: none;
+  }
+
+  @media print {
+    display: none;
+  }
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: var(--app-surface);
+  border-top: 1px solid var(--app-line);
+  padding-bottom: env(safe-area-inset-bottom);
+
+  .bn-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 44px;
+    padding: 0.4rem 0 0.3rem;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--app-ink-3);
+    text-decoration: none;
+    cursor: pointer;
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+
+    .icon-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 14px;
+      border-radius: 999px;
+    }
+
+    &.active {
+      color: var(--mat-sys-primary);
+
+      .icon-pill {
+        background: var(--mat-sys-secondary-container, #e2e8f6);
+      }
+    }
+  }
+
+  @media print {
+    display: none;
+  }
+}
+
 .not-found {
   text-align: center;
   padding: 4rem 1rem;
@@ -168,57 +283,28 @@
 }
 
 // ---- Mobile ---------------------------------------------------------------
-// The side panel becomes a header above the content, so it has to earn its
-// vertical space: tighter padding and smaller type keep it from pushing the
-// actual section (usually the timeline) off the first screen.
+// The side panel is replaced outright by the sticky app bar + fixed bottom
+// nav rendered in trip-page.html (see the rules above); the content column
+// gets bottom padding so the last content isn't hidden behind the bar.
 @media (max-width: bp.$mobile) {
   .trip-layout {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-    padding: 0.5rem 0.75rem 3rem;
+    // minmax(0, 1fr), not a bare 1fr: an `fr` track's implicit minimum is
+    // `auto` (the widest min-content child in it), so without the explicit
+    // 0 floor a single long, non-wrapping row (e.g. a deadline-pill button)
+    // would blow the whole column — and every other row sharing it, since
+    // they're all one grid track — out past the viewport.
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0;
   }
 
   .side-panel {
-    position: static;
-    gap: 0.5rem;
-    padding: 0.25rem 0.5rem 0.5rem;
-    border-radius: 14px;
-
-    .panel-top {
-      margin-bottom: -0.25rem;
-    }
-
-    .trip-meta {
-      padding: 0 0.25rem;
-
-      h1 {
-        font-size: 1.05rem;
-      }
-
-      p {
-        font-size: 0.78rem;
-      }
-
-      .dates {
-        margin-top: 0.25rem;
-      }
-    }
+    display: none;
   }
 
-  .section-nav {
-    flex-direction: row;
-    // Five icon-only tabs sharing the row evenly.
-    gap: 0.15rem;
-
-    .nav-item {
-      flex: 1;
-      justify-content: center;
-      padding: 0.5rem 0;
-
-      span {
-        display: none;
-      }
-    }
+  .trip-content {
+    padding: 0.75rem 0.75rem
+      calc(64px + env(safe-area-inset-bottom) + 1rem);
   }
 
   .not-found {
