@@ -10,6 +10,8 @@ export interface NavDay {
   dayNum: string;
   /** Destination-tz "today" (never true for a virtual day). */
   isToday: boolean;
+  /** R5: the night's stay colour, filling the chip's colour bar; unset → no bar. */
+  color?: string;
 }
 
 /**

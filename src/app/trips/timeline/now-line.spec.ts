@@ -20,6 +20,7 @@ function deadlineItem(key: string, sortMillis: number): DayItem {
     car: { id: 'c1', name: 'Car' } as CarReservationDto,
     kind: 'pickup',
     label: 'Fetch by',
+    shortLabel: 'Pick up',
     time: '',
     company: '',
     location: '',

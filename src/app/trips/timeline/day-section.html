@@ -40,13 +40,40 @@
        target and doesn't interfere with drag-drop between days. Tapping it
        opens the day menu in edit mode; openDayMenu() no-ops in read mode. -->
   <div #headerEl class="day-header" (click)="openDayMenu($event)">
-    <div class="header-main">
-      <span class="header-day">Day {{ view().day.index }}</span>
-      <span class="header-date">{{
-        view().day.startOfDay.toFormat('ccc, d LLL')
-      }}</span>
+    <div class="header-top">
+      <div class="header-main">
+        <span class="header-day">Day {{ view().day.index }}</span>
+        <span class="header-date">{{
+          view().day.startOfDay.toFormat('ccc, d LLL')
+        }}</span>
+      </div>
+      <div class="header-zone">{{ view().zoneLabelFull }}</div>
     </div>
-    <div class="header-zone">{{ view().zoneLabelFull }}</div>
+    <!-- R5 mobile-only: the accommodation/car summary for the night. -->
+    @if (view().stay; as stay) {
+      <div class="header-stay">
+        <button
+          type="button"
+          class="stay-line"
+          (click)="openHeaderStay($event)"
+        >
+          <mat-icon [style.color]="stay.color || null">bed</mat-icon>
+          <span>{{ stay.text }}</span>
+        </button>
+        @if (view().car; as carLine) {
+          <button
+            type="button"
+            class="car-line"
+            (click)="openHeaderCar($event)"
+          >
+            <mat-icon [style.color]="carLine.color || null"
+              >directions_car</mat-icon
+            >
+            <span>{{ carLine.text }}</span>
+          </button>
+        }
+      </div>
+    }
   </div>
 
   @for (item of view().items; track item.key; let idx = $index) {
@@ -79,7 +106,8 @@
         <mat-icon class="pill-icon">{{
           d.kind === 'pickup' ? 'key' : 'keyboard_return'
         }}</mat-icon>
-        <span class="pill-label">{{ d.label }}</span>
+        <span class="pill-label full">{{ d.label }}</span>
+        <span class="pill-label short">{{ d.shortLabel }}</span>
         @if (d.time) {
           <span class="pill-time">{{ d.time }}</span>
         }
@@ -89,6 +117,28 @@
         }
         @if (d.location) {
           <span class="pill-station">– {{ d.location }}</span>
+        }
+      </button>
+    } @else if (item.stay; as s) {
+      <button
+        type="button"
+        class="stay-pill"
+        [class.checkout]="s.kind === 'checkout'"
+        [class.checkin]="s.kind === 'checkin'"
+        [style.--accent]="s.color"
+        (click)="openAccommodation.emit(s.accommodation)"
+      >
+        <mat-icon class="pill-icon">{{
+          s.kind === 'checkout' ? 'logout' : 'login'
+        }}</mat-icon>
+        <span class="pill-label">{{
+          s.kind === 'checkout' ? 'Check-out' : 'Check-in'
+        }}</span>
+        <span class="pill-name">{{ s.accommodation.name }}</span>
+        @if (s.kind === 'checkin' && s.nights) {
+          <span class="pill-nights"
+            >{{ s.nights }} night{{ s.nights === 1 ? '' : 's' }}</span
+          >
         }
       </button>
     }
