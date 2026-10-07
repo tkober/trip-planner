@@ -53,6 +53,7 @@ import {
   transportTo,
 } from '../../shared/transport-format';
 import { formatDay, zoneLabel } from '../../shared/format/date-format';
+import { runRowSpan } from './lane-run-span';
 
 /** An entry that crosses a day boundary, anchored on the separator line. */
 interface StraddleItem {
@@ -357,6 +358,8 @@ export class TimelineView {
   /**
    * One vertical name label per stay, spanning its day-rows in the hotel lane.
    * Rendered click-through (the colored half-cells beneath handle clicks).
+   * R10.1: a hotel-switch day's row is claimed by the EARLIER (checking-out)
+   * stay only — see `runRowSpan` below for why.
    */
   readonly stayLabels = computed(() => {
     const trip = this.trip();
@@ -366,10 +369,13 @@ export class TimelineView {
     return trip.accommodations.map((a) => {
       const s = this.clampIndex(a.checkInDate);
       const e = this.clampIndex(a.checkOutDate);
+      const switchStart = trip.accommodations.some(
+        (other) => other.id !== a.id && other.checkOutDate === a.checkInDate,
+      );
       return {
         id: a.id,
         name: a.name,
-        gridRow: `${Math.min(s, e) + 1 + offset} / ${Math.max(s, e) + 2 + offset}`,
+        gridRow: runRowSpan(s, e, switchStart, offset),
       };
     });
   });
@@ -377,7 +383,10 @@ export class TimelineView {
   /**
    * One continuous block per car reservation, spanning its day-rows in the car
    * lane (pickup → return, inclusive). Colour is keyed off storage order so it
-   * stays stable and matches the Car Rentals list.
+   * stays stable and matches the Car Rentals list. R10.1: a back-to-back
+   * pickup/dropoff day's row is likewise claimed by the earlier reservation
+   * only (see `runRowSpan`), defensively mirroring the hotel-lane fix even
+   * though the sample data has no adjacent car reservations to exercise it.
    */
   readonly carSpans = computed(() => {
     const trip = this.trip();
@@ -388,10 +397,13 @@ export class TimelineView {
     return trip.carReservations.map((c) => {
       const s = this.clampIndex(c.pickupDate);
       const e = this.clampIndex(c.dropoffDate);
+      const switchStart = trip.carReservations.some(
+        (other) => other.id !== c.id && other.dropoffDate === c.pickupDate,
+      );
       return {
         car: c,
         color: colorById.get(c.id) ?? '',
-        gridRow: `${Math.min(s, e) + 1 + offset} / ${Math.max(s, e) + 2 + offset}`,
+        gridRow: runRowSpan(s, e, switchStart, offset),
       };
     });
   });
