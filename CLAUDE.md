@@ -208,6 +208,28 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   header's kebab; both are gated by `EditModeService.editing()` (desktop:
   always), so a phone in read mode shows neither, just a "Close" button. See
   "Dialogs" below.
+- **Date steppers (R9)**: the lane right-click menu's ±1-day nudge (below) is
+  now also available as a compact **stepper** (`− Tue, 14 Apr +`, ≥40px icon
+  buttons) in the details view's when/where block, next to Check-in/Check-out
+  (accommodation) and Pickup/Return (car rental) — the only practical way to
+  move a stay/rental on a phone, where the hotel/car lanes are 6px rails
+  (R5). Shown only when `EditModeService.editing()` (desktop: always; mobile:
+  edit mode only), replacing the plain date text. Each tap saves immediately
+  (`TripStore.upsertAccommodation`/`upsertCarReservation`) and the view
+  updates live — `DetailsContent` re-derives the accommodation/car from
+  `TripStore` by id (`liveAccommodation`/`liveCarReservation`, fed by a new
+  `tripId` on `DetailsDialogData`) rather than the dialog-open snapshot, so
+  the nights count and the stepper's own disabled state track the store.
+  Disabled per the same collapse rule as the lane menu, and a snackbar
+  ("Check-in moved to Tue, 14 Apr") offers **Undo**, restoring the previous
+  dates via the same upsert. Unlike a delete or a trip-duration edit, a
+  single-day nudge is neither, so — like the lane menu it mirrors — it skips
+  the confirm dialog. The shared ±1-day rules (`canShift`/`shift`: an
+  accommodation can't collapse to zero nights, a car rental may be picked up
+  and returned the same day) were extracted out of `TimelineView` into a
+  pure, unit-tested helper,
+  [stay-nudge.ts](src/app/shared/stay-nudge.ts), used by both the lane menu
+  and the steppers — see "Timeline composition" and "Dialogs" below.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -295,7 +317,12 @@ Services (signal-backed, `providedIn: 'root'` unless noted):
 Timeline composition:
 - [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid; computes
   `dayViews`, accommodation hotel cells/labels, straddles; owns drag-drop
-  confirmation. Dialog actions are delegated to `TripActionsService`. `layout()` also
+  confirmation. Dialog actions are delegated to `TripActionsService`. The lane
+  right-click menu's `canPlus`/`canMinus`/`nudge` (R9) now just wrap the pure
+  `canShift`/`shift` helpers in
+  [stay-nudge.ts](src/app/shared/stay-nudge.ts) — `laneContext`/`LaneContext`
+  and the `open`/click plumbing are unchanged, only the date math moved out,
+  shared with the R9 details-view steppers (see "Dialogs" below). `layout()` also
   detects the boundary international legs (inbound flight arriving from another zone
   at/before day 1; outbound leaving to another zone at/after the last day), emits a
   leading/trailing `VirtualDay`, and exposes `rowOffset` — the number of prepended
@@ -708,7 +735,9 @@ activity, transport, a shared read-only **details** view, and a generic
     data exists); a per-type **"when/where" block** (transport: two dual-zone
     legs with a dashed connector carrying the duration + line/kind; activity:
     start–end + location; accommodation: check-in/check-out + nights; car:
-    pickup/return date+time+station); **secondary links** (smartEX + the
+    pickup/return date+time+station — accommodation/car additionally render
+    as **R9 steppers** instead of plain text when editing, see the R9 Status
+    bullet above and below); **secondary links** (smartEX + the
     Jorudan timetable search, the car's pickup/return station pages); and
     **grouped facts** — Details (the mode-specific facts: terminals, platforms,
     train name, airline, …; route and mode itself are gone, since the header
@@ -734,6 +763,21 @@ activity, transport, a shared read-only **details** view, and a generic
     stacks the transport leg-row (desktop: `[leg][connector][leg]` in one row)
     into `[leg]` / `[connector]` / `[leg]` — the same reflow `TransportCard`
     does — since the three-column grid has no room on a phone-width sheet.
+  - **R9 check-in/out & pickup/return steppers**: `TripActionsService` adds a
+    `tripId` to `DetailsDialogData` for `openAccommodation`/
+    `openCarReservation`. `DetailsContent` uses it to re-derive a live
+    `liveAccommodation`/`liveCarReservation` from `TripStore` by id on every
+    change (not the data captured when the dialog opened), so a stepper nudge
+    — and the nights count `stayWhen` derives from it — shows up immediately
+    without closing/reopening. `showSteppers` gates rendering on
+    `EditModeService.editing()`; `checkInStepper`/`checkOutStepper`/
+    `pickupStepper`/`returnStepper` each compute a `StepperState` (`label`,
+    `canMinus`, `canPlus`) via `stay-nudge.ts`'s `canShift`. A tap calls
+    `nudgeAccommodation`/`nudgeCarReservation`, which `shift()`s the dates,
+    upserts immediately, and opens a `MatSnackBar` ("Check-in moved to Tue,
+    14 Apr") with an **Undo** action that upserts the pre-nudge dates back.
+    No confirm dialog — a single-day nudge isn't a delete or a
+    trip-duration change, same reasoning as the lane menu it mirrors.
 
 ## Data Model
 
