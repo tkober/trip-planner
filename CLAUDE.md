@@ -148,6 +148,44 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   full/short span pair rather than reading the breakpoint in TypeScript. None
   of this renders on desktop or in the plan export — same `bp.mobile` guard as
   the rest of this section.
+- **Mobile split cards for day-crossing entries (R6)**: on phones a
+  day-crossing activity/transport no longer floats as a `StraddleCard` over
+  the day separator (that card, and the straddle `pad-top`/`pad-bottom`
+  clearance, are desktop-only now) — it renders as two halves inline in the
+  normal day flow via `SplitEntryCard`: a **top half** (last item of the
+  start day — departure/start time, origin, per-mode detail, a duration line
+  `↓ 8h 20min · arrives Day 14` for transport or `until Mon 01:00 · Day 4` for
+  an activity) and a **bottom half** (first item of the end day — arrival/end
+  time, destination, and, when the arrival zone differs from home, a small
+  `01:55 in Berlin` subtitle). The halves share a dashed inner edge (top:
+  dashed bottom border + square bottom corners; bottom: dashed top border +
+  square top corners) in the entry's accent colour; a dashed **connector**
+  continues that edge through the next day's sticky header via a CSS
+  pseudo-element (`.day-header.has-connector::before`, coloured by
+  `DayView.connectorColor` / `VirtualDay.connectorColor`), shown whenever
+  that day opens with a bottom half. Both halves are full `cdkDrag` items
+  (dragging either moves the whole entry via the existing `moveEntryToDay`)
+  and carry the usual kebab; applies to the boundary departure/return flights
+  too (their top/bottom half sits in the virtual day or the adjacent real
+  day, whichever side of the boundary it's on). **An entry spanning more than
+  one day boundary** additionally gets a slim, non-draggable **"continues"**
+  row (`continues · until Thu, 16 Apr`) on every day strictly between start
+  and end — rendered on *both* mobile and desktop; desktop also gets a small
+  **"arrives"** row (`arrives 06:50 · Tokyo`) on the end day, since there the
+  floating straddle only ever covers the first boundary (unchanged) — mobile
+  shows the richer bottom split half there instead. A time whose own zone
+  differs from its day's reference zone (destination zone for a real day,
+  home zone for a virtual one) gets a highlighted amber **zone tag**
+  (`.zone-highlight`, both on `SplitEntryCard` and on the existing
+  `StraddleCard` zone tags via its new `topRefZone`/`bottomRefZone` inputs) —
+  desktop's existing dual-zone rendering is otherwise unchanged. The
+  day-crossing **decision** itself (does an entry cross a boundary, and
+  which calendar day under the midnight rule) is a pure, unit-tested helper,
+  [day-span.ts](src/app/trips/timeline/day-span.ts) `computeEntrySpan` — an
+  end at **exactly midnight counts as the start day** (does not split), so a
+  bar crawl entered as "21:00 → 00:00" reads as one evening, not a one-instant
+  sliver of the next day. See "Timeline composition" and "Responsive layout"
+  below.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -260,6 +298,24 @@ Timeline composition:
   starting that day) and pushes a check-out/check-in `DayItem` (`stay` kind,
   ±Infinity `sortMillis`) onto the day with one. `dayNightColors` (also reusing
   `nightOf`) feeds each published `NavDay.color` for the day strip's colour bar.
+  R6: for every day-crossing entry, `layout()`'s `handle()` calls the pure
+  [day-span.ts](src/app/trips/timeline/day-span.ts) `computeEntrySpan` for the
+  crossing decision (incl. the midnight rule), then — besides the unchanged
+  `StraddleItem` anchored at the first boundary — pushes a `DayItem.split`
+  (`{ entry, part: 'top' | 'bottom', refZone, farDayLabel?, homeZone? }`) onto
+  the start/end day and, for every day strictly between the two (a
+  multi-boundary span), a `DayItem.continues` (`{ entry, part: 'middle' |
+  'end', label, color }`) — `'middle'` on each in-between day, `'end'`
+  (desktop-only "arrives…" row) additionally on the end day. The boundary
+  flights get the same split treatment: the leading leg's top half is
+  attached to the `VirtualDay` itself and its bottom half pushed onto real
+  Day 1; the trailing leg's top half is pushed onto the last real day and its
+  bottom attached to the trailing `VirtualDay`. Both `DayView` and
+  `VirtualDay` also carry a `connectorColor` (set whenever a `split: 'bottom'`
+  lands on that day) for the R6 mobile header connector. None of this new
+  data changes desktop rendering by itself — `SplitEntryCard` is mobile-only
+  (CSS) and the floating `StraddleCard` keeps rendering at the first boundary
+  on desktop; see "Mobile split cards for day-crossing entries (R6)" above.
 - [TimelineNavService](src/app/trips/timeline/timeline-nav.service.ts) — root
   service bridging the timeline (which knows the days) and the mobile day strip
   (which renders them, Timeline route only): `days` / `activeKey` signals, a day
@@ -288,7 +344,13 @@ Timeline composition:
   list also renders a `.stay-pill` for a `DayItem.stay` (check-out/check-in, same
   visual family as `.car-pill`), and the car pill's label renders both a `.full` and
   `.short` span (`Fetch by`/`Pick up`, `Return by`/`Return`) with one hidden per
-  breakpoint in CSS, desktop keeping the full wording.
+  breakpoint in CSS, desktop keeping the full wording. R6: the item list also
+  renders a `DayItem.split` as `<app-split-entry-card>` (mobile-only via that
+  component's own CSS) and a `DayItem.continues` as a plain, non-`cdkDrag`
+  `.continues-row` button (its `part: 'end'` variant — the desktop "arrives…"
+  row — hidden on mobile, see "Responsive layout"); the sticky header gets
+  `.has-connector` + the `--connector-accent` custom property whenever
+  `DayView.connectorColor` is set.
 - [HotelCell](src/app/trips/timeline/hotel-cell.ts) — one day's accommodation cell
   (top = morning hotel, bottom = night hotel); computed in `TimelineView.hotelCells`.
   R5, mobile only: the lane shrinks to a 6px colour **rail** (`--tl-lane`) — full
@@ -312,10 +374,36 @@ Timeline composition:
   `translateY(-50%)`); adjacent days get padding so the card has clear space. The
   per-mode detail (same set as `EntryCard`) is stacked **in the top half's
   upper-right corner**, just left of the kebab; the equal-height rows keep the day
-  divider centred even when that makes the top half the taller one.
+  divider centred even when that makes the top half the taller one. R6:
+  **desktop-only** now (`bp.mobile` hides it outright — mobile renders
+  `SplitEntryCard` instead); its `topRefZone`/`bottomRefZone` inputs (the
+  reference zone of each half's own day) drive an amber `.zone-highlight` on
+  the existing zone tag when an endpoint's own zone differs from it.
   The grid columns ([marker][hotel][car][content]) are built in
   `TimelineView.gridTemplateColumns` (hotel and car lanes each collapse to 0px when
   their entity is absent; content is referenced as the last column via `-2/-1`).
+- [SplitEntryCard](src/app/trips/timeline/split-entry-card.ts) (R6, mobile
+  only — `:host` is `display: none` outside `bp.mobile`) — one half (`top` |
+  `bottom`) of a day-crossing entry, rendered inline in `DaySection`'s normal
+  item list instead of a floating straddle. The top half (last item of the
+  start day) shows the departure/start time + origin + per-mode detail + a
+  duration line (`↓ 8h 20min · arrives Day 14` for transport, `until Mon
+  01:00 · Day 4` for an activity, using its `farDayLabel` input); the bottom
+  half (first item of the end day) shows the arrival/end time + destination
+  and, when the arrival zone differs from its `homeZone` input, a small
+  `01:55 in Berlin` subtitle. A time whose own zone differs from the half's
+  `refZone` input gets the same amber `.zone-highlight` tag as `StraddleCard`
+  (`zoneDiffers` from [day-span.ts](src/app/trips/timeline/day-span.ts)). The
+  halves share a dashed inner edge in the entry's accent colour (top: dashed
+  bottom border + square bottom corners; bottom: dashed top border + square
+  top corners) so the pair reads as one block sliced by the day boundary; a
+  CSS pseudo-element on the following day's `.day-header`
+  (`.has-connector::before`, coloured via the `--connector-accent` custom
+  property from `DayView`/`VirtualDay.connectorColor`) continues that dashed
+  line through the sticky header between them. Both halves are full
+  `cdkDrag` items (`[cdkDragData]="entry"`, same as `EntryCard` — dragging
+  either moves the whole entry via `TimelineView.moveEntryToDay`) and carry
+  the usual drag handle + kebab in edit mode.
 - [TransportCard](src/app/shared/transport-card/transport-card.ts) — a shared,
   full-width transport card in the **same route style as the timeline** (accent icon
   bullet, derived `FROM → TO` headline with dual-tz departure/arrival times + dates and
@@ -419,9 +507,13 @@ Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoint
   `>` matters, a bare `.detail` would also hit the per-leg one). The day marker
   and lanes shrink via `--tl-marker` / `--tl-lane`, read by the inline
   `TimelineView.gridTemplateColumns` binding (export mode still pins fixed px).
-  Straddle cards need *more* clearance than on desktop
-  (`.day-content.pad-top/.pad-bottom` 6.5rem vs 4.25rem) because the mobile card
-  is taller — the clearance must always exceed half the tallest straddle.
+  Straddle cards need clearance on desktop (`.day-content.pad-top/.pad-bottom`
+  4.25rem — the clearance must exceed half the card's height) — R6: mobile no
+  longer reserves this space at all (the `pad-top`/`pad-bottom` overrides that
+  used to widen it to 6.5rem there were simply removed, so a mobile
+  `.day-content.pad-top/.pad-bottom` falls back to the ordinary `.day-content`
+  padding), since the floating `StraddleCard` doesn't render there any more —
+  see "Mobile split cards for day-crossing entries (R6)" above.
 - The `bp.mobile` / `bp.mobile-wide` **mixins** also exclude the plan-export
   document (`html.exporting-plan`, set by [ExportHost](src/app/trips/export/export-host.ts)
   for the duration of an export): it is rendered off-screen at a fixed 1024px,
@@ -490,6 +582,21 @@ Responsive layout ([src/app/shared/_breakpoints.scss](src/app/shared/_breakpoint
   stay/car line (see "Mobile timeline navigation" below). A hotel switch thus
   reads as a plain colour change on the rail, a night with no stay as a gap;
   click and long-press (contextmenu) behaviour is untouched.
+- **Mobile split cards for day-crossing entries** ([split-entry-card.scss](src/app/trips/timeline/split-entry-card.scss),
+  [straddle-card.scss](src/app/trips/timeline/straddle-card.scss),
+  [day-section.scss](src/app/trips/timeline/day-section.scss), R6):
+  `SplitEntryCard`'s `:host` is `display: none` by default and only switched
+  to `display: block` inside `bp.mobile`, while `StraddleCard`'s `:host`
+  does the reverse (switched to `display: none` inside `bp.mobile`) — so
+  which one renders is a pure CSS swap on the same always-computed data,
+  the same pattern R4/R5 use for the day header/stay pills. The desktop-only
+  `.continues-row.end` ("arrives…" row) is likewise hidden inside
+  `bp.mobile` — mobile shows the richer split bottom half on that day
+  instead; the `.continues-row` without `.end` (the "continues…" middle-day
+  row) stays visible on both and isn't gated by any breakpoint. The header
+  connector (`.day-header.has-connector::before`, a dashed vertical line in
+  `--connector-accent`) is declared inside the existing mobile-only
+  `.day-header` rule, so it too only ever paints once `bp.mobile` is active.
 
 Dialogs ([src/app/trips/dialogs/](src/app/trips/dialogs/) +
 [src/app/shared/](src/app/shared/)): trip form, accommodation, car reservation,
