@@ -37,7 +37,7 @@
 
     <!-- Mobile-only app bar, replacing the side panel (see trip-page.scss). -->
     @if (editMode.isMobile()) {
-      <div class="mobile-sticky-stack">
+      <div #stickyStack class="mobile-sticky-stack">
         <header class="mobile-app-bar">
           <div class="bar-row">
             <button matIconButton (click)="back()" aria-label="Back to trips">
@@ -78,9 +78,12 @@
             </button>
           </div>
 
-          <!-- R4 slot: a horizontal day strip will render here. Intentionally
-               empty for now — no visual output until that redesign step. -->
-          <div class="bar-day-strip" aria-hidden="true"></div>
+          <!-- R4: the horizontal day strip, Timeline route only — renders
+               nothing (zero height) on every other route or on desktop,
+               since `TimelineNavService.days()` is then empty. -->
+          @if (onTimelineRoute()) {
+            <app-day-strip />
+          }
         </header>
 
         @if (editMode.editing()) {

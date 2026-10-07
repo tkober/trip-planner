@@ -1,4 +1,13 @@
-import { Component, computed, inject, input } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  input,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   NavigationEnd,
@@ -19,6 +28,7 @@ import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { EditModeService } from '../../services/edit-mode.service';
 import { ExportHost } from '../export/export-host';
+import { DayStrip } from '../timeline/day-strip';
 import { formatRange, zoneLabel } from '../../shared/format/date-format';
 import { tripContextLabel } from '../../shared/format/trip-context';
 
@@ -45,6 +55,7 @@ interface NavItem {
     MatIconModule,
     MatMenuModule,
     ExportHost,
+    DayStrip,
   ],
   templateUrl: './trip-page.html',
   styleUrl: './trip-page.scss',
@@ -110,6 +121,39 @@ export class TripPage {
     const u = this.url();
     return u.includes('/car-reservations') || u.includes('/reservations');
   });
+
+  /** The R4 day strip only ever shows on the Timeline route. */
+  readonly onTimelineRoute = computed(() => this.url().includes('/timeline'));
+
+  /** The sticky app bar (+ optional edit banner) whose real height drives
+   * `--app-bar-height` (the day headers' sticky offset) below. */
+  private readonly stickyStackEl =
+    viewChild<ElementRef<HTMLElement>>('stickyStack');
+  private resizeObserver?: ResizeObserver;
+
+  constructor() {
+    effect(() => {
+      const el = this.editMode.isMobile() ? this.stickyStackEl()?.nativeElement : undefined;
+      this.resizeObserver?.disconnect();
+      this.resizeObserver = undefined;
+      if (!el) {
+        document.documentElement.style.removeProperty('--app-bar-height');
+        return;
+      }
+      const update = () =>
+        document.documentElement.style.setProperty(
+          '--app-bar-height',
+          `${el.getBoundingClientRect().height}px`,
+        );
+      update();
+      this.resizeObserver = new ResizeObserver(update);
+      this.resizeObserver.observe(el);
+    });
+    inject(DestroyRef).onDestroy(() => {
+      this.resizeObserver?.disconnect();
+      document.documentElement.style.removeProperty('--app-bar-height');
+    });
+  }
 
   back(): void {
     void this.router.navigate(['/trips']);
