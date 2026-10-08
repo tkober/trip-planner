@@ -1,0 +1,43 @@
+.geo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: -0.25rem 0 0.5rem;
+}
+
+.geo-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.geo-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--mat-sys-error, #b3261e);
+}
+
+.geo-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.geo-label {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.geo-coords {
+  margin: 0;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.geo-result google-map {
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}

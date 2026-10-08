@@ -97,6 +97,8 @@ const trip = process.env.DEFAULT_TRIP_TZ || 'Asia/Tokyo';
 const storageBackend =
   process.env.STORAGE_BACKEND === 'http' ? 'http' : 'indexeddb';
 const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
+const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY ?? '';
+const googleMapsMapId = process.env.GOOGLE_MAPS_MAP_ID ?? '';
 const trainKinds = parseList(process.env.TRAIN_KINDS, DEFAULT_TRAIN_KINDS);
 const busKinds = parseList(process.env.BUS_KINDS, DEFAULT_BUS_KINDS);
 const currencies = parseList(process.env.CURRENCIES, DEFAULT_CURRENCIES);
@@ -164,6 +166,10 @@ export const environment = {
   /** Train kinds that can be seat-reserved, i.e. that get a booking window. */
   reservableTrainKinds:
     splitList(runtime.reservableTrainKinds) ?? ${literal(reservableTrainKinds)},
+  /** Google Maps JS API browser key (D5, #49). Empty = maps disabled. */
+  googleMapsApiKey: runtime.googleMapsApiKey || ${literal(googleMapsApiKey)},
+  /** Google Maps "Map ID" (Advanced Markers / custom style, #49). */
+  googleMapsMapId: runtime.googleMapsMapId || ${literal(googleMapsMapId)},
 };
 `;
 
@@ -175,5 +181,6 @@ console.log(
     `backend="${storageBackend}"${storageBackend === 'http' ? ` api="${apiBaseUrl}"` : ''} ` +
     `trainKinds=${trainKinds.length} busKinds=${busKinds.length} ` +
     `currencies=${currencies.length} ` +
-    `reservable=${reservableTrainKinds.join('/')}`,
+    `reservable=${reservableTrainKinds.join('/')} ` +
+    `googleMaps=${googleMapsApiKey ? 'on' : 'off'}`,
 );

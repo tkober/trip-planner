@@ -55,4 +55,8 @@ export const environment = {
   /** Train kinds that can be seat-reserved, i.e. that get a booking window. */
   reservableTrainKinds:
     splitList(runtime.reservableTrainKinds) ?? ["Shinkansen","Limited express"],
+  /** Google Maps JS API browser key (D5, #49). Empty = maps disabled. */
+  googleMapsApiKey: runtime.googleMapsApiKey || "",
+  /** Google Maps "Map ID" (Advanced Markers / custom style, #49). */
+  googleMapsMapId: runtime.googleMapsMapId || "",
 };

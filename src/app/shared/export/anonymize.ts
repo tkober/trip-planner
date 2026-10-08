@@ -61,6 +61,7 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
       if (a.fullName) a.fullName = REDACTED;
       if (a.address) a.address = REDACTED;
       a.googleMapsUrl = undefined;
+      a.geo = undefined;
     }
     if (opts.notes && a.remarks) a.remarks = REDACTED;
     if (opts.costs) stripCost(a);
@@ -77,6 +78,8 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
     if (opts.locations) {
       if (c.pickupLocation) c.pickupLocation = REDACTED;
       if (c.dropoffLocation) c.dropoffLocation = REDACTED;
+      c.pickupGeo = undefined;
+      c.dropoffGeo = undefined;
     }
     if (opts.costs) stripCost(c);
   }
@@ -84,13 +87,20 @@ export function anonymizeTrip(trip: TripDto, opts: AnonymizeOptions): TripDto {
   for (const a of t.activities) {
     if (opts.addresses) a.googleMapsUrl = undefined;
     if (opts.notes && a.notes) a.notes = REDACTED;
-    if (opts.locations && a.location) a.location = REDACTED;
+    if (opts.locations) {
+      if (a.location) a.location = REDACTED;
+      a.geo = undefined;
+    }
     if (opts.costs) stripCost(a);
   }
 
   for (const tr of t.transport) {
     if (opts.flightNumbers && tr.flightNumber) tr.flightNumber = REDACTED;
     if (opts.notes && tr.notes) tr.notes = REDACTED;
+    if (opts.locations) {
+      tr.fromGeo = undefined;
+      tr.toGeo = undefined;
+    }
     if (opts.costs) stripCost(tr);
   }
 

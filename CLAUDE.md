@@ -530,6 +530,90 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
     the List's leading/trailing virtual days in Columns/Week's shared
     `TripStrip`, not the hour grid itself); mobile at 390×844 confirmed
     unchanged (forced to List, switcher absent).
+- **Places and coordinates with Google Maps (D5, #49)**, desktop and mobile
+  (dialogs are used on both). A new optional `GeoPoint { lat; lng; placeId?;
+  label? }` on `AccommodationDto.geo`, `CarReservationDto.pickupGeo`/
+  `dropoffGeo`, `ActivityDto.geo`, `TransportDto.fromGeo`/`toGeo` (**schema
+  v9**, no-op migration). Two runtime config keys, `googleMapsApiKey` /
+  `googleMapsMapId` (env `GOOGLE_MAPS_API_KEY` / `GOOGLE_MAPS_MAP_ID`,
+  through `environment.ts`/`generate-env.mjs`/`docker-entrypoint.sh`/
+  `config.js`/`.env.example` exactly like the other runtime keys) — blank
+  (the default, incl. the GitHub Pages build) disables every Maps feature
+  with no console errors: every "Locate" button, mini map, and the trip
+  menu's "Locate places…" item are hidden outright. See
+  [GOOGLE_SETUP.md](GOOGLE_SETUP.md) for obtaining the key/Map ID (light,
+  indigo-accented style — distinct from `footage-archive`'s dark one).
+  - [GoogleMapsLoaderService](src/app/services/google-maps-loader.service.ts)
+    loads the Maps JS API (`maps`/`marker`/`geocoding` libraries) at most
+    once, resolving `false` with no key — modelled on `footage-archive`'s
+    service of the same name, minus its backend `/config` round trip (the
+    key already lives in `environment.ts` here).
+  - A **"Locate"** button sits next to the relevant field in every entity
+    dialog — accommodation address; car pickup + dropoff location; activity
+    location (falling back to the title); transport from + to (station/
+    airport/stop/location, by mode) — via the shared
+    [GeoField](src/app/shared/geo/geo-field/geo-field.ts) component
+    (`<app-geo-field [query] [countryBias] [(value)]>`). It geocodes through
+    [GeocodeService](src/app/shared/geo/geocode.service.ts) (a thin
+    `MapGeocoder` wrapper) with a **region bias** derived from the trip's
+    destination zone via the pure, unit-tested
+    [zone-country.ts](src/app/shared/geo/zone-country.ts) `countryForZone`
+    (a small zone→country-code map, e.g. `Asia/Tokyo` → `jp`; unmapped zones
+    geocode with no bias rather than a wrong one), then shows a small
+    `@angular/google-maps` map with a draggable Advanced Marker (indigo pin,
+    `#24489a`) to fine-tune the point; dragging clears the geocoded
+    `placeId`/`label` (lat/lng only); "Clear" removes the point outright.
+    Every dialog's field/data interface grew the zone it needs for the bias
+    (`destinationZone` on `AccommodationDialogData`/`CarReservationDialogData`,
+    already present on the activity/transport ones) —
+    `TripActionsService`'s add/edit methods pass `trip.destinationTimeZone`.
+  - Trip menu **"Locate places…"** (hidden when Maps is disabled) opens
+    [LocatePlacesDialog](src/app/trips/dialogs/locate-places/locate-places-dialog.ts):
+    it plans every entity/endpoint without a `GeoPoint` via the pure,
+    unit-tested
+    [locate-places-planner.ts](src/app/trips/dialogs/locate-places/locate-places-planner.ts)
+    `planLocateTargets` (accommodation → address, falling back to full
+    name/name; car pickup/dropoff → their station text, independently; activity
+    → location, falling back to title; transport endpoints → the mode-specific
+    station/airport/stop, falling back to the city — `transportEndpointQuery`),
+    then geocodes them **sequentially with a small delay** (throttled, not in
+    parallel) and renders a review list — one row per target with its query,
+    found label/coordinates (or "No match found"), and per-row **Accept**/
+    **Discard** (defaulting to Accept on a match) plus an **Accept all**
+    button. Only entries left on **Accept** are written back — grouped by
+    entity so e.g. a car's pickup and dropoff accepted together save in one
+    `upsertCarReservation` call — via the usual `TripStore` upserts; nothing
+    is touched until "Save N accepted". `TripActionsService.locatePlaces()`
+    opens it through a **dynamic `import()`**, same reasoning as below.
+  - The details view ([DetailsContent](src/app/trips/dialogs/details-content.ts))
+    shows a small read-only map
+    ([GeoMap](src/app/shared/geo/geo-map/geo-map.ts), one or more pins,
+    auto-fit bounds when there's more than one — e.g. a transport leg's
+    from/to) whenever the live entity has at least one `GeoPoint`, tinted
+    with the same accent colour (`data.accent`) the header icon tile uses.
+    Pure pin extraction lives in `details-view.logic.ts`'s `detailsGeoPins`.
+  - **Bundle budget**: `@angular/google-maps` and everything built on it
+    (`GeoField`, `GeoMap`, `GeocodeService`) are **lazy-loaded** — `GeoField`/
+    `GeoMap` only ever appear inside `@defer` blocks (gated on the
+    module-level `GOOGLE_MAPS_CONFIGURED` constant in
+    [maps-configured.ts](src/app/shared/geo/maps-configured.ts), computed
+    once from `environment.googleMapsApiKey`, no script load), which Angular
+    automatically code-splits into their own chunks; `LocatePlacesDialog` is
+    opened via a dynamic `import()` (`MatDialog.open` needs the class at
+    runtime only) rather than a static import, for the same reason. With no
+    key configured, none of this ever downloads. Initial bundle: **537.33 kB
+    → 544–546 kB raw** (~135.3 kB → ~137–138 kB transfer) — the small,
+    unavoidable cost of the config plumbing + region-bias map eagerly
+    reachable from every entity dialog; the actual Maps/geocoding code sits
+    in separate ~2–10 kB chunks (`geo-field`, `geo-map`,
+    `locate-places-dialog`, plus a couple of shared `@angular/google-maps`
+    chunks) that only load once a key is set and a dialog/view is actually
+    opened.
+  - The optional HTTP backend ([server/](server/)) needed **no changes** —
+    `Trip`'s Pydantic model already uses `extra="allow"` and leaves nested
+    entities as untyped `dict`s, so the new `geo`/`pickupGeo`/`dropoffGeo`/
+    `fromGeo`/`toGeo` fields (and schema v9 generally) round-trip through it
+    unmodified; it has no test suite to run.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -1205,6 +1289,15 @@ are additive.
 Adding the optional trip `exchangeRatesUpdatedAt` (when each exchange rate was
 last set) was an additive **schema v8** step (no data transform).
 
+Adding the optional `GeoPoint { lat; lng; placeId?; label? }` — on
+`AccommodationDto.geo`, `CarReservationDto.pickupGeo`/`dropoffGeo`,
+`ActivityDto.geo`, `TransportDto.fromGeo`/`toGeo` — was an additive
+**schema v9** step (D5, #49; no data transform). See "Places and coordinates
+with Google Maps (D5, #49)" above for how it's populated/displayed.
+`src/app/shared/export/anonymize.ts`'s `addresses`/`locations` categories
+strip the relevant geo fields alongside the text fields they came from
+(accommodation under `addresses`; activity/car/transport under `locations`).
+
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations and car reservations each cycle their own distinct tints by
 storage order; each transport mode has its own colour; activities use their own
@@ -1279,6 +1372,14 @@ New-trip timezone defaults are build-time configurable.
   autocomplete, so any 3-letter code can still be typed). EUR is the base currency;
   non-EUR amounts need an exchange rate in the trip Overview. When set, **replaces**
   the default (`EUR, USD, JPY`). Surfaces as `string[]` on `environment`.
+- `GOOGLE_MAPS_API_KEY` / `GOOGLE_MAPS_MAP_ID` (D5, #49) — Google Maps JS API
+  browser key + Cloud "Map ID". Blank (default) disables every Maps feature
+  (Locate buttons, mini maps, "Locate places…") with no console errors —
+  see [GOOGLE_SETUP.md](GOOGLE_SETUP.md) to obtain real values. Surfaces as
+  `googleMapsApiKey`/`googleMapsMapId` on `environment`; same three-layer
+  plumbing as every other runtime key (`generate-env.mjs` build-time
+  default → `window.__TRIP_PLANNER_ENV__`/`config.js` runtime override →
+  `docker-entrypoint.sh` writes it from the container env on Docker).
 
 These can be set on the command line (`STORAGE_BACKEND=http npm start`) or placed in
 a `.env` file at the repo root (see [.env.example](.env.example)); `generate-env.mjs`

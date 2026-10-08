@@ -8,12 +8,15 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { AccommodationDto, CostInfo } from '../../models/trip.model';
+import { AccommodationDto, CostInfo, GeoPoint } from '../../models/trip.model';
 import { DateField } from '../../shared/date-field/date-field';
 import { ColorField } from '../../shared/color/color-field';
 import { CostFieldset } from '../../shared/cost/cost-fieldset';
 import { pickCost } from '../../shared/cost/cost';
 import { environment } from '../../../environments/environment';
+import { GeoField } from '../../shared/geo/geo-field/geo-field';
+import { countryForZone } from '../../shared/geo/zone-country';
+import { GOOGLE_MAPS_CONFIGURED } from '../../shared/geo/maps-configured';
 
 export interface AccommodationDialogData {
   accommodation?: AccommodationDto;
@@ -21,6 +24,8 @@ export interface AccommodationDialogData {
   defaultCheckOut: string;
   /** Default tint for this stay (its position-based colour). */
   defaultColor: string;
+  /** Trip's destination zone — region bias for the "Locate" button (#49). */
+  destinationZone: string;
   newId: () => string;
 }
 
@@ -35,6 +40,7 @@ export interface AccommodationDialogData {
     DateField,
     ColorField,
     CostFieldset,
+    GeoField,
   ],
   templateUrl: './accommodation-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -50,6 +56,9 @@ export class AccommodationDialog {
   readonly fullName = signal(this.data.accommodation?.fullName ?? '');
   readonly address = signal(this.data.accommodation?.address ?? '');
   readonly googleMapsUrl = signal(this.data.accommodation?.googleMapsUrl ?? '');
+  readonly geo = signal<GeoPoint | undefined>(this.data.accommodation?.geo);
+  readonly mapsConfigured = GOOGLE_MAPS_CONFIGURED;
+  readonly countryBias = countryForZone(this.data.destinationZone);
   readonly bookingUrl = signal(this.data.accommodation?.bookingUrl ?? '');
   readonly remarks = signal(this.data.accommodation?.remarks ?? '');
   readonly cost = signal<CostInfo>(pickCost(this.data.accommodation));
@@ -97,6 +106,7 @@ export class AccommodationDialog {
       color: this.color() || undefined,
       checkInDate: this.checkInDate(),
       checkOutDate: this.checkOutDate(),
+      geo: this.geo(),
       ...this.cost(),
     };
     this.dialogRef.close(result);

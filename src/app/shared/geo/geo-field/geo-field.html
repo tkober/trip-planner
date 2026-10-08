@@ -1,0 +1,52 @@
+<div class="geo-field">
+  <div class="geo-actions">
+    <button
+      matButton
+      type="button"
+      [disabled]="loading() || !query().trim()"
+      (click)="locate()"
+    >
+      @if (loading()) {
+        <mat-spinner diameter="16" />
+      } @else {
+        <mat-icon>near_me</mat-icon>
+      }
+      {{ value() ? 'Re-locate' : 'Locate' }}
+    </button>
+    @if (value()) {
+      <button matButton type="button" (click)="clear()">
+        <mat-icon>close</mat-icon> Clear
+      </button>
+    }
+  </div>
+
+  @if (notFound()) {
+    <p class="geo-error">No match found for this query.</p>
+  }
+
+  @if (value(); as v) {
+    <div class="geo-result">
+      @if (v.label) {
+        <p class="geo-label">{{ v.label }}</p>
+      }
+      <p class="geo-coords">{{ v.lat.toFixed(5) }}, {{ v.lng.toFixed(5) }}</p>
+      @if (mapsReady()) {
+        <google-map
+          height="160px"
+          width="100%"
+          [center]="center()"
+          [zoom]="15"
+          [mapId]="mapId"
+          [options]="mapOptions"
+        >
+          <map-advanced-marker
+            [position]="center()"
+            [content]="pinContent()"
+            [gmpDraggable]="true"
+            (mapDragend)="onMarkerDragend($event)"
+          />
+        </google-map>
+      }
+    </div>
+  }
+</div>

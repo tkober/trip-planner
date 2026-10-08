@@ -270,6 +270,24 @@ export class TripActionsService {
   }
 
   /**
+   * Trip-menu "Locate places…" (D5, #49) — hidden entirely when no Maps key
+   * is configured (see `GOOGLE_MAPS_CONFIGURED`, checked by the caller).
+   * The dialog (and `@angular/google-maps`, pulled in transitively via
+   * `GeocodeService`) is loaded via a dynamic `import()` so it never grows
+   * the main bundle for someone without Maps configured.
+   */
+  async locatePlaces(trip: TripDto): Promise<void> {
+    const { LocatePlacesDialog } = await import(
+      '../trips/dialogs/locate-places/locate-places-dialog'
+    );
+    this.dialog.open(LocatePlacesDialog, {
+      data: { trip },
+      width: 'min(640px, 94vw)',
+      maxWidth: '94vw',
+    });
+  }
+
+  /**
    * Open the shared details content (R8): a `MatDialog` on desktop, a
    * `MatBottomSheet` on phones (`EditModeService.isMobile()`), both resolving
    * to the same `DetailsAction | undefined`. Callers subscribe exactly as
@@ -300,6 +318,7 @@ export class TripActionsService {
       defaultCheckIn: date ?? trip.startDate,
       defaultCheckOut: date ? this.nextDay(date) : trip.endDate,
       defaultColor: accommodationDefaultColor(trip.accommodations.length),
+      destinationZone: trip.destinationTimeZone,
       newId: () => this.store.newId(),
     };
     this.dialog
@@ -332,6 +351,7 @@ export class TripActionsService {
       defaultCheckIn: trip.startDate,
       defaultCheckOut: trip.endDate,
       defaultColor: accommodationDefaultColor(index < 0 ? 0 : index),
+      destinationZone: trip.destinationTimeZone,
       newId: () => this.store.newId(),
     };
     this.dialog
@@ -365,6 +385,7 @@ export class TripActionsService {
       defaultPickup: date ?? trip.startDate,
       defaultDropoff: date ?? trip.endDate,
       defaultColor: carReservationDefaultColor(trip.carReservations.length),
+      destinationZone: trip.destinationTimeZone,
       newId: () => this.store.newId(),
     };
     this.dialog
@@ -397,6 +418,7 @@ export class TripActionsService {
       defaultPickup: trip.startDate,
       defaultDropoff: trip.endDate,
       defaultColor: carReservationDefaultColor(index < 0 ? 0 : index),
+      destinationZone: trip.destinationTimeZone,
       newId: () => this.store.newId(),
     };
     this.dialog

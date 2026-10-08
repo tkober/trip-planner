@@ -15,6 +15,9 @@ set -e
 : "${BUS_KINDS:=City bus,Long-distance coach,Overnight,Hop on/off}"
 : "${CURRENCIES:=EUR,USD,JPY}"
 : "${RESERVABLE_TRAIN_KINDS:=Shinkansen,Limited express}"
+# Google Maps (D5, #49). Blank = maps disabled (locate buttons/maps hidden).
+: "${GOOGLE_MAPS_API_KEY:=}"
+: "${GOOGLE_MAPS_MAP_ID:=}"
 
 # Only "http" or "indexeddb" are valid; anything else falls back to indexeddb.
 [ "$STORAGE_BACKEND" = "http" ] || STORAGE_BACKEND=indexeddb
@@ -29,8 +32,12 @@ window.__TRIP_PLANNER_ENV__ = {
   trainKinds: "${TRAIN_KINDS}",
   busKinds: "${BUS_KINDS}",
   currencies: "${CURRENCIES}",
-  reservableTrainKinds: "${RESERVABLE_TRAIN_KINDS}"
+  reservableTrainKinds: "${RESERVABLE_TRAIN_KINDS}",
+  googleMapsApiKey: "${GOOGLE_MAPS_API_KEY}",
+  googleMapsMapId: "${GOOGLE_MAPS_MAP_ID}"
 };
 EOF
 
-echo "[trip-planner] config.js: backend=${STORAGE_BACKEND} api=${API_BASE_URL} trip=${DEFAULT_TRIP_TZ} trainKinds=${TRAIN_KINDS} busKinds=${BUS_KINDS} currencies=${CURRENCIES} reservable=${RESERVABLE_TRAIN_KINDS}"
+GOOGLE_MAPS_STATUS="off"
+[ -n "${GOOGLE_MAPS_API_KEY}" ] && GOOGLE_MAPS_STATUS="on"
+echo "[trip-planner] config.js: backend=${STORAGE_BACKEND} api=${API_BASE_URL} trip=${DEFAULT_TRIP_TZ} trainKinds=${TRAIN_KINDS} busKinds=${BUS_KINDS} currencies=${CURRENCIES} reservable=${RESERVABLE_TRAIN_KINDS} googleMaps=${GOOGLE_MAPS_STATUS}"

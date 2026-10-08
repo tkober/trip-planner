@@ -36,6 +36,7 @@ import {
   bookingReferenceGroup,
   costGroup,
   detailFactsGroup,
+  detailsGeoPins,
   detailsHeading,
   detailsIcon,
   detailsSubtitle,
@@ -48,6 +49,8 @@ import {
   zonedMoment,
   ZonedMoment,
 } from './details-view.logic';
+import { GOOGLE_MAPS_CONFIGURED } from '../../shared/geo/maps-configured';
+import { GeoMap } from '../../shared/geo/geo-map/geo-map';
 
 interface TransportLegs {
   from: ZonedMoment & { place: string; detail?: string };
@@ -96,7 +99,7 @@ export interface StepperState {
  */
 @Component({
   selector: 'app-details-content',
-  imports: [MatButtonModule, MatIconModule, MatMenuModule],
+  imports: [MatButtonModule, MatIconModule, MatMenuModule, GeoMap],
   templateUrl: './details-content.html',
   styleUrl: './details-content.scss',
 })
@@ -253,6 +256,18 @@ export class DetailsContent {
     });
     ref.onAction().subscribe(() => void undo());
   }
+
+  /** D5 (#49): the mini map's pins, hidden entirely when Maps isn't configured.
+   *  Reads the live accommodation/car (not the dialog-open snapshot) so a
+   *  "Locate places…" save while this view is open reflects immediately. */
+  readonly mapsConfigured = GOOGLE_MAPS_CONFIGURED;
+  readonly geoPins = computed(() =>
+    detailsGeoPins({
+      ...this.data(),
+      accommodation: this.liveAccommodation(),
+      carReservation: this.liveCarReservation(),
+    }),
+  );
 
   readonly icon = computed(() => detailsIcon(this.data()));
   readonly heading = computed(() => detailsHeading(this.data()));
