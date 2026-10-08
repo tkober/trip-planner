@@ -312,6 +312,404 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   - Purely presentational/interaction — no data model or TypeScript logic
     change beyond `TimelineNavService`'s marker registry and `TimelineView`'s
     toolbar computeds (`toolbarDays`, `currentDayLabel`, `todayEnabled`).
+- **Desktop header + view switcher (D1, #45)**, part of the #44 desktop-views
+  epic, desktop only (mobile unchanged): the trip shell's grey `side-panel` is
+  gone on desktop, replaced by a full-width sticky **top bar** — see the
+  `TripPage` bullet under "Architecture" above for the bar's layout and the
+  new `TimelineHost`/`TimelineViewModeService`. **List** and, since D3 (#47),
+  **Columns** exist; the segmented view switcher (List · Columns · Week · Map
+  in the design) only ever shows the implemented segments — see the D3 bullet
+  below for Columns. The List timeline and every other section keep
+  roughly their previous ~1000px content width, now centred under the bar
+  instead of sitting beside the old 260px panel. The R10 hotel/car lane
+  sticky names (`.stay-sticky`/`.car-sticky`) now clear the sticky bar via
+  `--app-bar-height` — the same CSS variable `TripPage` already measured for
+  the mobile sticky stack (via `ResizeObserver`), now also measured for the
+  desktop bar. Purely a shell/chrome change — no timeline data or behaviour
+  changed, and the plan export (PNG/PDF) is unaffected (it never renders
+  `TripPage`).
+- **Desktop day model + trip strip (D2, #46)**, part of the #44 epic, not yet
+  mounted anywhere (D3 wires it into Columns first): a pure per-day helper,
+  [trip-day-model.ts](src/app/trips/desktop/trip-day-model.ts)
+  `buildTripDayModel(trip, tz)`, reads the same ingredients `TimelineView.layout()`
+  does — car pickup/return deadlines, the `dayStayInfo` line, the boundary-leg
+  detection for the virtual departure/return day — as a fresh, independent read
+  of `TripDto` + `TimeZoneService`; the List view's own straddle/split/continues
+  machinery is untouched. Unlike the List's floating straddle cards, a
+  day-crossing entry here stays on its **start day** and gets an `arrivesLabel`
+  ("arrives Day 14") instead — kept simple since nothing here needs to render a
+  card spanning the boundary. Per real day it returns the destination-tz date,
+  weekday/day-of-month/month, the time-sorted `items` (entries + car deadlines),
+  and the `dayStayInfo` `stay`/`car` lines (so `stay.accommodation`/
+  `car.reservation` are the covering stay/rental); it also reports the leading/
+  trailing virtual-day info (home-tz weekday/date + city) when the trip has an
+  international boundary flight at either edge. Thoroughly unit-tested
+  ([trip-day-model.spec.ts](src/app/trips/desktop/trip-day-model.spec.ts)): a
+  Herbsturlaub-like trip, a hotel-switch day, a one-day car rental, a flight
+  crossing the date line, and an empty day.
+  [TripStrip](src/app/trips/desktop/trip-strip.ts) is the horizontal strip
+  Columns/Week/Map (D3-D6) will share directly under the top bar — per the epic,
+  it's the **only** place stays/cars render as bars for the new desktop views.
+  Built on `buildTripDayModel`: each day cell shows weekday/date/"Day N" (the
+  last `primary`-coloured when selected) plus up to 6 type-coloured dots for
+  that day's entries; continuous accommodation bars run from the middle of
+  check-in day to the middle of check-out day (the List's half-day-handoff
+  convention), white name, ellipsis + `matTooltip` when too short; car bars sit
+  below, thinner, a light tint of the car colour with a border, icon + company.
+  A selected range (`selected` input, a list of date keys) renders as one
+  continuous soft-primary (`#dfe6f6`) fill with no gaps, via a dedicated
+  absolutely-positioned layer painted with `z-index: -1` *inside* `.track`'s own
+  stacking context (`.track { z-index: 0 }`) — without that, a plain
+  `position: relative` ancestor doesn't form a stacking context, so a
+  negative-z-index child escapes to the page's root context and ends up hidden
+  behind unrelated content instead of just behind its own siblings. Today gets a
+  small now-colour mark under the date. Clicking a day emits `dayClick`;
+  clicking a stay/car bar opens its details via the same
+  `TripActionsService.openAccommodation`/`openCarReservation` the List uses.
+  **Sizing**, the core of the issue: each day is
+  `clamp(56px, available-width / day-count, 160px)`, read via `ResizeObserver`
+  on the scroll viewport — when the trip fits, cells stretch up to 160px and the
+  strip centers; otherwise it scrolls horizontally with native trackpad swipe
+  left alone, a vertical wheel gesture translated to `scrollLeft` only while
+  overflowing, mouse drag-to-scroll (pointer events, a done element goes to the
+  pointer; the eventual click is explicitly suppressed when the drag moved more
+  than a few px, since a plain `click` fires regardless of distance), arrow
+  buttons + a soft edge fade shown only when there's more that direction,
+  `scroll-behavior: smooth`, `scroll-snap-type: x proximity` on day boundaries,
+  no visible scrollbar, and keyboard ←/→ on a focused day button that moves
+  focus to the next/previous day, scrolls it into view, and emits `dayClick` for
+  it. A selected range outside the viewport auto-scrolls into view (centered
+  when it fits, else flush) whenever `selected`/the day list/the day width
+  change. Manually verified (dev server + chrome-devtools MCP, no automated
+  component test yet — D3 adds one once the strip has a real mount): the
+  Herbsturlaub trip at 1440×900 and 3440×1440 and a 45-day synthetic trip
+  (extra stays/activities/a car rental appended) at 1440×900 (scrolled to the
+  middle, both arrows visible) and 900×700, plus scripted wheel/drag/keyboard/
+  arrow-button interactions and the stay/car bar click→details wiring.
+- **Desktop Columns view (D3, #47)**, part of the #44 epic, desktop only: the
+  view switcher (D1) now offers **List · Columns**
+  (`TimelineViewModeService.available`), and `TimelineHost` renders
+  [ColumnsView](src/app/trips/desktop/columns-view.ts) for the `'columns'`
+  mode — forced back to `'list'` on mobile regardless of a persisted desktop
+  choice (`TimelineHost` reads `EditModeService.isMobile()`), since the
+  switcher never renders there. `TripStrip` (D2) sits at the top at the full
+  content width (`TripPage.useFullWidthContent`); below it a slim toolbar
+  (prev/next, Shift = a whole window, a "Today" button enabled only while the
+  trip is running, and the visible range label "22 – 24 Nov · Day 7–9") and
+  then **N day columns** side by side, each built on `buildTripDayModel` (D2)
+  and reusing `EntryCard` unmodified from the List.
+  - **Column count and the visible window** (first visible day + column
+    count) are pure, unit-tested helpers in
+    [columns-layout.ts](src/app/trips/desktop/columns-layout.ts):
+    `computeColumnCount` (`clamp(2, floor(width / 380), 7)`, read via
+    `ResizeObserver`), `clampWindowStart`/`navigateWindow` (prev/next,
+    keeping the window inside the trip's bounds), `windowContaining` (a strip
+    click moves the window the minimal amount needed to make that day
+    visible, not re-centered) and `initialWindowStart` (today's column when
+    the trip is running, else Day 1). On resize the first visible day is
+    kept (just reclamped to the new column count) rather than recentering.
+    Global ←/→ (Shift = a window) mirror the toolbar buttons, skipped while
+    focus is in a form control or inside `TripStrip` (which handles its own
+    arrow keys to move focus between day cells).
+  - **A column** reads like the mobile view: "Day 8" (indigo, bold) + "Mon,
+    23 Nov", the destination zone label only on the window's first column
+    (it never changes between real days within one trip), the `dayStayInfo`
+    stay line with a bed icon — plus, on a check-in day, the accommodation's
+    full name appended ("Takamatsu → Kochi · Dormy Inn Kochi") — and **no**
+    coloured hotel/car box (per the epic, those bars live only in
+    `TripStrip`). Car pickup/return deadlines render as the same pill
+    concept as the List's `.car-pill` (a small, desktop-only duplicate in
+    columns-view.scss rather than an extraction, since the List's version
+    also carries R5 mobile-only overrides this view never needs),
+    interleaved by time with the entry cards exactly as `buildTripDayModel`
+    sorts them. A day-crossing entry stays on its start column with the
+    model's `arrivesLabel` ("arrives Day 14") underneath. An empty day shows
+    "Nothing planned". Each column scrolls independently
+    (`overflow-y: auto`, `flex-shrink: 0` on every row so a tall day scrolls
+    instead of squashing its cards) to fill the remaining viewport height
+    under the sticky top bar, measured via `getBoundingClientRect()` on
+    resize/window-resize rather than CSS alone (the page's own padding made a
+    pure `calc()` fragile).
+  - **Actions** reuse `TripActionsService` directly — `openEntry`/
+    `editEntry`/`deleteEntry`/`addActivity`/`addTransport`/
+    `openAccommodation`/`openCarReservation` were already shared; **`moveEntry`**
+    (the "Move to another day…" dialog + the confirm/shift/snackbar flow) was
+    extracted out of `TimelineView` into `TripActionsService.moveEntry`/
+    `moveEntryToDay` so Columns and the List now share one implementation —
+    `TimelineView`'s own drag-drop (`onEntryDropped`) and kebab (`moveEntry`)
+    just call it, with no change to the List's behaviour. The entry kebab
+    (reused from `EntryCard`, always in the DOM) and the per-column "Add"
+    button reveal on hover/focus via scoped CSS
+    (`app-entry-card ::ng-deep .entry-menu`), not a template change. Drag &
+    drop between columns is explicitly out of scope (follow-up, per the
+    issue).
+  - Verified with the dev server + chrome-devtools MCP against the
+    Herbsturlaub trip: 1440×900 (Day 7–9, 3 columns) and 3440×1440 (Day 7–13,
+    7 columns, keeping the first visible day across the resize) and 960×700
+    (2 columns); Day 1 (inbound flight correct on the first real day); an
+    empty day; a synthetic running trip (Today enabled, initial window at
+    today, Today button jumps back); details/edit/add/move/delete exercised
+    through the real dialogs; mobile at 390×844 confirmed unchanged (forced
+    to List, switcher absent). Caught and fixed in the process: car-deadline
+    pills were silently collapsing to ~8px tall at narrower widths because
+    flex children of `.col-body` shrink by default — fixed with
+    `flex-shrink: 0`.
+- **Desktop Week view (D4, #48)**, part of the #44 epic, desktop only: the
+  view switcher now offers **List · Columns · Week**
+  (`TimelineViewModeService.available`), and `TimelineHost` renders
+  [WeekView](src/app/trips/desktop/week-view.ts) for the `'week'` mode —
+  same `TripStrip`-on-top structure as Columns, but the content below is an
+  **hour-grid week calendar** instead of day columns, so it needs its own
+  read of `trip.activities`/`trip.transport` (real time spans) rather than
+  Columns' per-day `buildTripDayModel` bucketing (`buildTripDayModel` is
+  still used here too, but only for the day metadata fed to `TripStrip` and
+  the column headers).
+  - **The visible window is 7 days (5 below 1100px)**, not the
+    width-scaled column count Columns uses —
+    [week-layout.ts](src/app/trips/desktop/week-layout.ts)'s
+    `computeWeekWindowSize`. Window *navigation* reuses Columns'
+    `clampWindowStart`/`navigateWindow`/`initialWindowStart` directly (today's
+    week when the trip is running, else Day 1), just with this fixed size —
+    **prev/next shift by the whole window, Shift by 1 day** (the opposite of
+    Columns' plain-1/Shift-window convention, per the issue). A strip click
+    makes the clicked day the **start** of the new window (not a minimal
+    shift like Columns' `windowContaining`), since "the week begins where you
+    click" is the issue's whole point (a 19-day trip in three clicks). Global
+    ←/→ mirror the toolbar, Shift again meaning 1 day; skipped in a form
+    control or inside `TripStrip`.
+  - **The hour grid**: range = earliest start / latest end across every
+    block on the visible days, rounded outward to full hours, never narrower
+    than 08:00–20:00 (`computeHourRange`); row height = `availableHeight /
+    hourCount`, floored at 28px/hour — once that floor is hit the grid's
+    content height exceeds the viewport and `.grid-scroll` scrolls instead of
+    shrinking rows further (`computeRowHeight`). No hotel/car bands render in
+    the grid (those stay in `TripStrip` per the epic) — the header row is
+    just "Day 8" + "Mon, 23 Nov" per column, zone label on the first column.
+  - **Blocks**: each activity/transport is resolved to a destination-tz wall
+    time span (`WeekView.rawSpans`, via `TimeZoneService.inZone`) — an entry
+    without an end gets a synthetic 1h span and a dashed bottom edge. A span
+    crossing one or more destination-tz midnights is cut into per-day
+    segments by the pure, unit-tested `splitAcrossDays`
+    (week-layout.ts): the first segment runs to 24:00 with a
+    "continues to next day" arrow, continuation segments start at 00:00 with
+    a "continues from previous day" arrow, honouring the same "end at exactly
+    midnight doesn't count as crossing" rule `day-span.ts`'s `localDayKey`
+    uses elsewhere (`normalizeEndOfDay`). Same-day overlaps are laid out side
+    by side (never covering each other) by the pure, unit-tested `packLanes`
+    — a greedy interval-graph sweep that clusters only genuinely overlapping
+    blocks, so an unrelated later block never inflates an earlier cluster's
+    width. Each block shows a left colour stripe + light tint (the same
+    `activityColor`/`transportColor` helpers as the List/Columns), an icon,
+    the title (activity) or route (`FROM → TO`, transport), and the start
+    time once the block is tall enough to hold it. Car pickup/return
+    deadlines render directly on the grid as a thin coloured line with a
+    "Fetch by 08:00 · Rental Car" label at their time (not a pill, unlike
+    Columns) — they don't participate in lane packing. A now-line
+    (`--now` red, same token as the List/Columns) crosses today's column at
+    the current time when it falls inside the hour range.
+  - **Actions**: a block click opens the entry's details
+    (`TripActionsService.openEntry`); a car deadline click opens the car's
+    details. Clicking an **empty** hour slot computes the clicked hour from
+    the pointer's offset within the day column and calls
+    `TripActionsService.addActivity(trip, date, hour)` — `addActivity` grew
+    an optional `hour` parameter (defaults to the previous hard-coded 09:00
+    when omitted) purely to carry this prefill; every other caller
+    (Columns, the List) is unaffected.
+  - Verified with the dev server + chrome-devtools MCP against the
+    Herbsturlaub trip: 1440×900 and 3440×1440 (week 21–27 Nov, Day 6–12,
+    toolbar label "21 – 27 Nov · Day 6–12 · Okayama · Takamatsu · Kochi ·
+    Matsuyama · Kyoto Kawaramachi"), 1000×700 (5-day window after a strip
+    click); block click → details, an empty-slot click → "Add activity"
+    prefilled with the clicked day/hour (cancelled); prev/next/Shift and a
+    strip click moving the window's start day; a synthetic running trip
+    (Today enabled, initial window at today's week, Today jumps back); the
+    trip's one real midnight-crossing entry (the return flight, Day
+    19 → the following day) rendering with a trailing "continues" arrow at
+    the bottom of the grid, clipped cleanly at the trip's last day (no
+    virtual day beyond it — out of scope per the issue, which only asks for
+    the List's leading/trailing virtual days in Columns/Week's shared
+    `TripStrip`, not the hour grid itself); mobile at 390×844 confirmed
+    unchanged (forced to List, switcher absent).
+- **Places and coordinates with Google Maps (D5, #49)**, desktop and mobile
+  (dialogs are used on both). A new optional `GeoPoint { lat; lng; placeId?;
+  label? }` on `AccommodationDto.geo`, `CarReservationDto.pickupGeo`/
+  `dropoffGeo`, `ActivityDto.geo`, `TransportDto.fromGeo`/`toGeo` (**schema
+  v9**, no-op migration). Two runtime config keys, `googleMapsApiKey` /
+  `googleMapsMapId` (env `GOOGLE_MAPS_API_KEY` / `GOOGLE_MAPS_MAP_ID`,
+  through `environment.ts`/`generate-env.mjs`/`docker-entrypoint.sh`/
+  `config.js`/`.env.example` exactly like the other runtime keys) — blank
+  (the default, incl. the GitHub Pages build) disables every Maps feature
+  with no console errors: every "Locate" button, mini map, and the trip
+  menu's "Locate places…" item are hidden outright. See
+  [GOOGLE_SETUP.md](GOOGLE_SETUP.md) for obtaining the key/Map ID (light,
+  indigo-accented style — distinct from `footage-archive`'s dark one).
+  - [GoogleMapsLoaderService](src/app/services/google-maps-loader.service.ts)
+    loads the Maps JS API (`maps`/`marker`/`geocoding` libraries) at most
+    once, resolving `false` with no key — modelled on `footage-archive`'s
+    service of the same name, minus its backend `/config` round trip (the
+    key already lives in `environment.ts` here).
+  - A **"Locate"** button sits next to the relevant field in every entity
+    dialog — accommodation address; car pickup + dropoff location; activity
+    location (falling back to the title); transport from + to (station/
+    airport/stop/location, by mode) — via the shared
+    [GeoField](src/app/shared/geo/geo-field/geo-field.ts) component
+    (`<app-geo-field [query] [countryBias] [(value)]>`). It geocodes through
+    [GeocodeService](src/app/shared/geo/geocode.service.ts) (a thin
+    `MapGeocoder` wrapper) with a **region bias** derived from the trip's
+    destination zone via the pure, unit-tested
+    [zone-country.ts](src/app/shared/geo/zone-country.ts) `countryForZone`
+    (a small zone→country-code map, e.g. `Asia/Tokyo` → `jp`; unmapped zones
+    geocode with no bias rather than a wrong one), then shows a small
+    `@angular/google-maps` map with a draggable Advanced Marker (indigo pin,
+    `#24489a`) to fine-tune the point; dragging clears the geocoded
+    `placeId`/`label` (lat/lng only); "Clear" removes the point outright.
+    Every dialog's field/data interface grew the zone it needs for the bias
+    (`destinationZone` on `AccommodationDialogData`/`CarReservationDialogData`,
+    already present on the activity/transport ones) —
+    `TripActionsService`'s add/edit methods pass `trip.destinationTimeZone`.
+  - Trip menu **"Locate places…"** (hidden when Maps is disabled) opens
+    [LocatePlacesDialog](src/app/trips/dialogs/locate-places/locate-places-dialog.ts):
+    it plans every entity/endpoint without a `GeoPoint` via the pure,
+    unit-tested
+    [locate-places-planner.ts](src/app/trips/dialogs/locate-places/locate-places-planner.ts)
+    `planLocateTargets` (accommodation → address, falling back to full
+    name/name; car pickup/dropoff → their station text, independently; activity
+    → location, falling back to title; transport endpoints → the mode-specific
+    station/airport/stop, falling back to the city — `transportEndpointQuery`),
+    then geocodes them **sequentially with a small delay** (throttled, not in
+    parallel) and renders a review list — one row per target with its query,
+    found label/coordinates (or "No match found"), and per-row **Accept**/
+    **Discard** (defaulting to Accept on a match) plus an **Accept all**
+    button. Only entries left on **Accept** are written back — grouped by
+    entity so e.g. a car's pickup and dropoff accepted together save in one
+    `upsertCarReservation` call — via the usual `TripStore` upserts; nothing
+    is touched until "Save N accepted". `TripActionsService.locatePlaces()`
+    opens it through a **dynamic `import()`**, same reasoning as below.
+  - The details view ([DetailsContent](src/app/trips/dialogs/details-content.ts))
+    shows a small read-only map
+    ([GeoMap](src/app/shared/geo/geo-map/geo-map.ts), one or more pins,
+    auto-fit bounds when there's more than one — e.g. a transport leg's
+    from/to) whenever the live entity has at least one `GeoPoint`, tinted
+    with the same accent colour (`data.accent`) the header icon tile uses.
+    Pure pin extraction lives in `details-view.logic.ts`'s `detailsGeoPins`.
+  - **Bundle budget**: `@angular/google-maps` and everything built on it
+    (`GeoField`, `GeoMap`, `GeocodeService`) are **lazy-loaded** — `GeoField`/
+    `GeoMap` only ever appear inside `@defer` blocks (gated on the
+    module-level `GOOGLE_MAPS_CONFIGURED` constant in
+    [maps-configured.ts](src/app/shared/geo/maps-configured.ts), computed
+    once from `environment.googleMapsApiKey`, no script load), which Angular
+    automatically code-splits into their own chunks; `LocatePlacesDialog` is
+    opened via a dynamic `import()` (`MatDialog.open` needs the class at
+    runtime only) rather than a static import, for the same reason. With no
+    key configured, none of this ever downloads. Initial bundle: **537.33 kB
+    → 544–546 kB raw** (~135.3 kB → ~137–138 kB transfer) — the small,
+    unavoidable cost of the config plumbing + region-bias map eagerly
+    reachable from every entity dialog; the actual Maps/geocoding code sits
+    in separate ~2–10 kB chunks (`geo-field`, `geo-map`,
+    `locate-places-dialog`, plus a couple of shared `@angular/google-maps`
+    chunks) that only load once a key is set and a dialog/view is actually
+    opened.
+  - The optional HTTP backend ([server/](server/)) needed **no changes** —
+    `Trip`'s Pydantic model already uses `extra="allow"` and leaves nested
+    entities as untyped `dict`s, so the new `geo`/`pickupGeo`/`dropoffGeo`/
+    `fromGeo`/`toGeo` fields (and schema v9 generally) round-trip through it
+    unmodified; it has no test suite to run.
+- **Desktop Map view (D6, #50)**, part of the #44 epic, desktop only, needs
+  D5: the view switcher now offers **List · Columns · Week · Map** —
+  `'map'` is added to `TimelineViewModeService.available` only when
+  `GOOGLE_MAPS_CONFIGURED` (D5), so without a key Map never appears and a
+  previously-persisted `'map'` choice falls back to `'list'` (the usual
+  `isAvailable` check, no special-casing needed). `TimelineHost` renders
+  [MapView](src/app/trips/desktop/map-view.ts) for `'map'` inside an
+  `@defer (on immediate)` block so it (and the `@angular/google-maps` bits it
+  uses) stays out of the initial bundle exactly like the D5 pieces, reachable
+  only once a key is configured — initial bundle unchanged at **546.28 kB
+  raw / 137.92 kB transfer** (same as D5's number); `map-view` is its own
+  **18.07 kB / 5.49 kB** lazy chunk.
+  - **Layout**: `TripStrip` (D2) over the full content width, same as
+    Columns/Week; below it a fixed **560–640px** (`clamp`) list panel on the
+    left — the selected day(s) in the mobile/Columns day-block style (day
+    header, `dayStayInfo` stay line, `EntryCard`, car pills), scrolling on
+    its own — and the Google map filling the rest of the width and the full
+    remaining height on the right.
+  - **Selection**: one day by default (today's column when the trip is
+    running, else Day 1 — `initialSelectedDate`); a plain strip click selects
+    just that day, Shift+click extends the range from the last plain click
+    (the inclusive span between the two in trip order — `selectionRange`).
+    `TripStrip` grew a second output, `dayClickModified` (`{ date, shiftKey
+    }`), alongside the existing `dayClick` purely for this — Columns/Week
+    keep using the original `dayClick` unchanged. Scrolling the list panel
+    updates the active day to whichever day's header sits at/just above the
+    panel's own top (`activeDayFromScroll`, a day-header position registry
+    read on the panel's `scroll` event) — also the "strong" day on the map
+    (the rest of the selection renders faded).
+  - **The draw plan is pure and unit-tested**,
+    [map-layout.ts](src/app/trips/desktop/map-layout.ts)
+    (`buildDayMapContent`/`buildMapContent`): per selected day, a running
+    per-day marker number (shared by activities and transport, in time
+    order) — a located activity gets a numbered marker in its `activityColor`;
+    a transport leg with both `fromGeo`/`toGeo` gets a geodesic line in its
+    `transportColor` (dashed for flights, via a Maps JS `icons` line-symbol —
+    polylines have no native dash style) instead of a marker; a leg with only
+    one located endpoint gets a single numbered marker there; the night's
+    covering accommodation gets a bed marker in its own stay colour, only
+    when that accommodation itself has a `geo`. `countWithoutLocation` sums
+    entries with no location at all (neither transport endpoint, no activity
+    `geo`) across the selection, for the counter chip below.
+  - **Rendering is imperative, not `<map-advanced-marker>`/`<map-polyline>`
+    template children**: `MapView.drawOverlays()` places/removes
+    `google.maps.marker.AdvancedMarkerElement`/`google.maps.Polyline`
+    objects by hand on every content change, each one in its own try/catch.
+    This followed from testing with a deliberately fake key (no real key
+    available in this environment): under an invalid key the map instance is
+    left in a degraded state (Google shows its own "Oops!" overlay), and
+    `AdvancedMarkerElement`'s constructor itself throws there — letting
+    Angular's own marker/polyline *directives* bind to that broken map made
+    the thrown error recur on every selection change and stall the app's
+    (zoneless) change detection app-wide, not just the map. Managing the
+    overlays directly keeps each failure local to that one marker/line, so
+    the rest of the app — the list panel, the strip's own selection
+    highlight, every other view — stays fully interactive regardless. A
+    separate, much cheaper effect handles hover/click linking by mutating
+    the already-placed marker `content` `HTMLElement`s directly (border/scale
+    toggle, no Google Maps API calls), so it can't hit the same failure mode.
+  - **Linking**: hovering an `EntryCard` in the list (a `.entry-wrap`
+    wrapper's `mouseenter`/`mouseleave`) sets a shared `hoverEntryId`, which
+    the effect above reflects onto that entry's marker(s); a marker's own
+    `content` div mirrors the same events back. Clicking a marker scrolls the
+    list to that entry (`scrollIntoView` + a brief highlight,
+    `clickedEntryId`); double-clicking it opens the entry's details
+    (`TripActionsService.openEntry`).
+  - **Entries without a location**: `EntryCard` grew an opt-in
+    `showLocateHint` input (default `false`, so List/Columns/Week render
+    exactly as before) and a `hasLocation`/`locate` output — set only by
+    MapView's list panel, it adds a subtle "No location · Locate" row that
+    opens the entry's edit dialog (where D5's "Locate" field lives). The
+    map's top-left **counter chip** ("N entries without location") opens the
+    existing trip-wide `TripActionsService.locatePlaces()` dialog.
+  - **Style**: light, restrained Map ID styling via the existing
+    `GoogleMapsLoaderService.mapId` (no footage-archive dark look); no Routes
+    API — every transport line is a straight geodesic line, per the issue.
+  - Verified with the dev server + chrome-devtools MCP and a **deliberately
+    fake key** (`googleMapsApiKey: 'fake-key-for-layout'` — no real key
+    available in this environment): Map appears in the switcher; layout at
+    1440×900 and 3440×1440 (Day 8, Shikoku with the rental car, and Day 1,
+    arrival with flights — both given synthetic `GeoPoint`s on the imported
+    Herbsturlaub trip for the located-entry/line code paths); Shift+click a
+    strip range (Day 8–10); list scroll → active day; the "No location"
+    hints + counter chip (Day 1's flights are deliberately left unlocated);
+    hover linking (`hoverEntryId` verified via the component); no console
+    errors across repeated day/range switches — Google's own "Oops! Something
+    went wrong" overlay shows (expected, invalid key) but never throws into
+    the app. Polyline creation under the fake key was confirmed directly (3
+    polylines for Day 8); `AdvancedMarkerElement` construction itself throws
+    under an invalid key (confirmed directly too) — each is individually
+    try/caught, so this is a cosmetic limitation of testing without a real
+    key, not a behaviour difference a real key would also show. Also verified
+    with **no key**: Map absent from the switcher, a stored `'map'` choice
+    falls back to `'list'`, no console errors. Tiles/pins rendering for real
+    and the "zoomed/panned, animated" feel of `fitBounds` on a day change
+    need a real Google Maps key to confirm visually.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -333,15 +731,39 @@ attachments, trip duplication, dark-mode toggle, undo.
 Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
 - `/trips` → [TripList](src/app/trips/trip-list/trip-list.ts) (dashboard).
 - `/trips/:id` → [TripPage](src/app/trips/trip-page/trip-page.ts) — the trip shell:
-  a fixed left **side panel** (back button, trip name + compact details, section
-  nav, trip-actions menu) plus a `<router-outlet>` for the active section. On
-  mobile the side panel is replaced outright by a **sticky app bar** (back,
-  title + a `tripContextLabel` subtitle, the R1 Read/Editing toggle, the same
-  trip-actions kebab menu) and a **fixed bottom nav** (Timeline / Overview /
-  Stays / Transport / a "More" `mat-menu` for Car rentals, Reservations, and
-  the remaining kebab items) — see "Responsive layout" below. It has
-  six child routes (deep-linkable), defaulting to `timeline`:
-  - `timeline` → [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid.
+  on **desktop** (D1, #45) a full-width sticky **top bar** (64px, `--app-surface`,
+  `--app-line` bottom border) replacing the old grey side panel — back arrow +
+  trip title + a muted one-line context (`tripContextLabel` + the date range +
+  destination zone, e.g. "Starts in 39 days · 16 Nov – 4 Dec 2026 · Tokyo · GMT+9") on
+  the left, the section tabs centred (text pills, the active one a soft-primary
+  rounded pill — icon-only + `matTooltip` below ~1200px, where paddings also
+  tighten and the context line truncates), then on the right the **view
+  switcher** (timeline route only, see below) and the same trip-actions kebab.
+  On **mobile** the side panel is replaced outright by a **sticky app bar**
+  (back, title + a `tripContextLabel` subtitle, the R1 Read/Editing toggle, the
+  same trip-actions kebab menu) and a **fixed bottom nav** (Timeline / Overview
+  / Stays / Transport / a "More" `mat-menu` for Car rentals, Reservations, and
+  the remaining kebab items) — see "Responsive layout" below. Either way a
+  `<router-outlet>` hosts the active section, centred under the bar at the
+  side panel's old ~1000px content width (`.trip-content`, desktop only; an
+  opt-in `.full-width` class exists for later desktop timeline views that want
+  the bar's full width — not used yet). It has six child routes
+  (deep-linkable), defaulting to `timeline`:
+  - `timeline` → [TimelineHost](src/app/trips/timeline/timeline-host.ts) — a
+    thin `@switch` over `TimelineViewModeService.mode()` that renders the
+    active desktop view; only `'list'` exists yet (D1, #45), so it always
+    renders [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid,
+    unchanged. D3/D4/D6 add a `@case` each for Columns/Week/Map. The desktop
+    **view switcher** (segmented control in the TripPage top bar, icon + label
+    from 1700px wide, icon-only + `matTooltip` below that) reads/writes
+    [TimelineViewModeService](src/app/trips/timeline/timeline-view-mode.service.ts)
+    — a `mode` signal persisted per device in `localStorage`
+    (`trip-planner.timeline-view`), injectable-storage pattern like
+    `EditModeService`; `available` (currently just List) gates both the
+    switcher's segments and the host's `@switch`, so an unimplemented view
+    simply doesn't appear (not shown disabled), and an unknown/unavailable
+    stored value falls back to `'list'`. The switcher itself only renders on
+    the Timeline route and never on mobile.
   - `overview` → [OverviewView](src/app/trips/views/overview-view.ts) — trip facts
     (dates, length, zones, description), a **Trip cost** section (total / paid /
     outstanding in EUR + per-category breakdown + the per-currency exchange-rate
@@ -963,6 +1385,15 @@ are additive.
 Adding the optional trip `exchangeRatesUpdatedAt` (when each exchange rate was
 last set) was an additive **schema v8** step (no data transform).
 
+Adding the optional `GeoPoint { lat; lng; placeId?; label? }` — on
+`AccommodationDto.geo`, `CarReservationDto.pickupGeo`/`dropoffGeo`,
+`ActivityDto.geo`, `TransportDto.fromGeo`/`toGeo` — was an additive
+**schema v9** step (D5, #49; no data transform). See "Places and coordinates
+with Google Maps (D5, #49)" above for how it's populated/displayed.
+`src/app/shared/export/anonymize.ts`'s `addresses`/`locations` categories
+strip the relevant geo fields alongside the text fields they came from
+(accommodation under `addresses`; activity/car/transport under `locations`).
+
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations and car reservations each cycle their own distinct tints by
 storage order; each transport mode has its own colour; activities use their own
@@ -1037,6 +1468,14 @@ New-trip timezone defaults are build-time configurable.
   autocomplete, so any 3-letter code can still be typed). EUR is the base currency;
   non-EUR amounts need an exchange rate in the trip Overview. When set, **replaces**
   the default (`EUR, USD, JPY`). Surfaces as `string[]` on `environment`.
+- `GOOGLE_MAPS_API_KEY` / `GOOGLE_MAPS_MAP_ID` (D5, #49) — Google Maps JS API
+  browser key + Cloud "Map ID". Blank (default) disables every Maps feature
+  (Locate buttons, mini maps, "Locate places…") with no console errors —
+  see [GOOGLE_SETUP.md](GOOGLE_SETUP.md) to obtain real values. Surfaces as
+  `googleMapsApiKey`/`googleMapsMapId` on `environment`; same three-layer
+  plumbing as every other runtime key (`generate-env.mjs` build-time
+  default → `window.__TRIP_PLANNER_ENV__`/`config.js` runtime override →
+  `docker-entrypoint.sh` writes it from the container env on Docker).
 
 These can be set on the command line (`STORAGE_BACKEND=http npm start`) or placed in
 a `.env` file at the repo root (see [.env.example](.env.example)); `generate-env.mjs`

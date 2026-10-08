@@ -1,0 +1,90 @@
+<h2 mat-dialog-title>Locate places…</h2>
+
+<mat-dialog-content>
+  @if (!rows().length) {
+    <p class="empty">Every place in this trip already has coordinates.</p>
+  } @else {
+    <p class="intro">
+      Geocoding {{ rows().length }} place{{ rows().length === 1 ? '' : 's' }} without
+      coordinates. Review each result below, then save the ones you want to keep.
+    </p>
+
+    <div class="row-list">
+      @for (row of rows(); track row.target.id; let i = $index) {
+        <div class="row" [class.discarded]="row.decision === 'discard'">
+          <div class="row-marker">
+            @switch (row.status) {
+              @case ('geocoding') {
+                <mat-spinner diameter="18" />
+              }
+              @case ('found') {
+                <mat-icon [class.accepted]="row.decision === 'accept'">
+                  {{ row.decision === 'accept' ? 'check_circle' : 'radio_button_unchecked' }}
+                </mat-icon>
+              }
+              @case ('not-found') {
+                <mat-icon class="not-found-icon">error_outline</mat-icon>
+              }
+              @default {
+                <mat-icon class="pending-icon">schedule</mat-icon>
+              }
+            }
+          </div>
+
+          <div class="row-body">
+            <p class="row-label">{{ row.target.label }}</p>
+            <p class="row-query">"{{ row.target.query }}"</p>
+            @if (row.status === 'found' && row.geo) {
+              <p class="row-result">
+                {{ row.geo.label || (row.geo.lat.toFixed(5) + ', ' + row.geo.lng.toFixed(5)) }}
+              </p>
+            } @else if (row.status === 'not-found') {
+              <p class="row-result not-found">No match found.</p>
+            }
+          </div>
+
+          @if (row.status === 'found') {
+            <div class="row-actions">
+              <button
+                matIconButton
+                [class.active]="row.decision === 'accept'"
+                aria-label="Accept"
+                title="Accept"
+                (click)="accept(i)"
+              >
+                <mat-icon>check</mat-icon>
+              </button>
+              <button
+                matIconButton
+                [class.active]="row.decision === 'discard'"
+                aria-label="Discard"
+                title="Discard"
+                (click)="discard(i)"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (rows().length) {
+    <button matButton type="button" [disabled]="running()" (click)="acceptAll()">
+      Accept all
+    </button>
+  }
+  <button matButton type="button" (click)="close()">Cancel</button>
+  <button
+    matButton="filled"
+    color="primary"
+    type="button"
+    [disabled]="running() || saving() || acceptedCount() === 0"
+    (click)="save()"
+  >
+    Save {{ acceptedCount() }} accepted
+  </button>
+</mat-dialog-actions>

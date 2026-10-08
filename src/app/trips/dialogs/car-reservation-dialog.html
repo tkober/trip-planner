@@ -35,6 +35,13 @@
       <mat-label>Pickup station (optional)</mat-label>
       <input matInput [ngModel]="pickupLocation()" (ngModelChange)="pickupLocation.set($event)" name="pickupLocation" />
     </mat-form-field>
+    @defer (when mapsConfigured) {
+      <app-geo-field
+        [query]="pickupLocation()"
+        [countryBias]="countryBias"
+        [(value)]="pickupGeo"
+      />
+    }
     <mat-form-field class="full-width">
       <mat-label>Pickup Google Maps link (optional)</mat-label>
       <input matInput type="url" [ngModel]="pickupGoogleMapsUrl()" (ngModelChange)="pickupGoogleMapsUrl.set($event)" name="pickupMaps" />
@@ -61,6 +68,13 @@
       <mat-label>Return station (optional)</mat-label>
       <input matInput [ngModel]="dropoffLocation()" (ngModelChange)="dropoffLocation.set($event)" name="dropoffLocation" />
     </mat-form-field>
+    @defer (when mapsConfigured) {
+      <app-geo-field
+        [query]="dropoffLocation()"
+        [countryBias]="countryBias"
+        [(value)]="dropoffGeo"
+      />
+    }
     <mat-form-field class="full-width">
       <mat-label>Return Google Maps link (optional)</mat-label>
       <input matInput type="url" [ngModel]="dropoffGoogleMapsUrl()" (ngModelChange)="dropoffGoogleMapsUrl.set($event)" name="dropoffMaps" />

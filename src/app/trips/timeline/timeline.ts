@@ -13,7 +13,6 @@ import {
 import { DateTime } from 'luxon';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -35,8 +34,6 @@ import { HotelCell, HotelDayCell } from './hotel-cell';
 import { CarSpan } from './car-span';
 import { StraddleCard } from './straddle-card';
 import { SplitEntryCard } from './split-entry-card';
-import { MoveDayDialog, MoveDayDialogData } from './move-day-dialog';
-import { deltaDaysBetween, shiftZonedTime } from './entry-move';
 import { computeNowLine } from './now-line';
 import { dayStayInfo } from './day-stay';
 import { computeEntrySpan } from './day-span';
@@ -48,10 +45,7 @@ import {
   carReservationColors,
   transportColor,
 } from '../../shared/color/color';
-import {
-  transportLabel,
-  transportTo,
-} from '../../shared/transport-format';
+import { transportTo } from '../../shared/transport-format';
 import { formatDay, zoneLabel } from '../../shared/format/date-format';
 import { runRowSpan } from './lane-run-span';
 
@@ -138,7 +132,6 @@ export class TimelineView {
   private readonly tz = inject(TimeZoneService);
   private readonly actions = inject(TripActionsService);
   private readonly snack = inject(MatSnackBar);
-  private readonly dialog = inject(MatDialog);
   private readonly clock = inject(ClockService);
   private readonly editMode = inject(EditModeService);
   private readonly nav = inject(TimelineNavService);
@@ -1084,70 +1077,16 @@ export class TimelineView {
 
   async onEntryDropped(event: CdkDragDrop<DayView>): Promise<void> {
     if (event.previousContainer === event.container) return; // same-day, ignore
+    const trip = this.trip();
+    if (!trip) return;
     const entry = event.item.data as TimelineEntry;
     const targetDate = event.container.data.day.date;
-    await this.moveEntryToDay(entry, targetDate);
+    await this.actions.moveEntryToDay(trip, entry, targetDate);
   }
 
   /** "Move to another day…" from the kebab menu: pick a day, then move. */
   moveEntry(entry: TimelineEntry): void {
-    const data: MoveDayDialogData = {
-      days: this.days(),
-      currentDate: this.tz.dayKeyLocal(entry.start),
-    };
-    this.dialog
-      .open(MoveDayDialog, { data })
-      .afterClosed()
-      .subscribe(async (targetDate?: string) => {
-        if (targetDate) await this.moveEntryToDay(entry, targetDate);
-      });
-  }
-
-  /**
-   * Shift an activity/transport entry to `targetDate` (its destination-tz
-   * day), keeping its time of day. Shared by drag-drop (`onEntryDropped`) and
-   * the "Move to another day…" dialog (`moveEntry`) so both go through the
-   * same confirm dialog, upsert and snackbar.
-   */
-  private async moveEntryToDay(
-    entry: TimelineEntry,
-    targetDate: string,
-  ): Promise<void> {
     const trip = this.trip();
-    if (!trip) return;
-
-    const currentKey = this.tz.dayKeyLocal(entry.start);
-    const deltaDays = deltaDaysBetween(currentKey, targetDate);
-    if (deltaDays === 0) return;
-
-    const label = entry.activity?.title
-      ?? (entry.transport ? transportLabel(entry.transport) : undefined)
-      ?? 'item';
-    const confirmed = await this.actions.confirm({
-      title: 'Move item?',
-      message:
-        `Move "${label}" to ${formatDay(targetDate)}? Its time of day is kept.`,
-      confirmLabel: 'Move',
-    });
-    if (!confirmed) return;
-
-    if (entry.activity) {
-      await this.store.upsertActivity(trip, {
-        ...entry.activity,
-        start: shiftZonedTime(entry.activity.start, deltaDays),
-        end: entry.activity.end
-          ? shiftZonedTime(entry.activity.end, deltaDays)
-          : undefined,
-      });
-    } else if (entry.transport) {
-      await this.store.upsertTransport(trip, {
-        ...entry.transport,
-        start: shiftZonedTime(entry.transport.start, deltaDays),
-        end: entry.transport.end
-          ? shiftZonedTime(entry.transport.end, deltaDays)
-          : undefined,
-      });
-    }
-    this.snack.open('Item moved', undefined, { duration: 2000 });
+    if (trip) this.actions.moveEntry(trip, entry, this.days());
   }
 }

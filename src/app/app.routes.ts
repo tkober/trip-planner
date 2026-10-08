@@ -21,7 +21,7 @@ export const routes: Routes = [
       {
         path: 'timeline',
         loadComponent: () =>
-          import('./trips/timeline/timeline').then((m) => m.TimelineView),
+          import('./trips/timeline/timeline-host').then((m) => m.TimelineHost),
       },
       {
         path: 'accommodations',

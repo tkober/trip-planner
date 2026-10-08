@@ -1,0 +1,55 @@
+import { Component, inject, input } from '@angular/core';
+import { TimelineView } from './timeline';
+import { TimelineViewModeService } from './timeline-view-mode.service';
+import { ColumnsView } from '../desktop/columns-view';
+import { WeekView } from '../desktop/week-view';
+import { MapView } from '../desktop/map-view';
+import { EditModeService } from '../../services/edit-mode.service';
+
+/**
+ * Thin host for the Timeline route (issue #45): renders whichever view the
+ * desktop segmented control (`TripPage`) has selected via
+ * `TimelineViewModeService`. D3 (#47) adds the `'columns'` case, D4 (#48)
+ * `'week'` — D6 adds `'map'` the same way, so adding a view later is a
+ * one-line change here. Mobile always lands on `list`, overriding a stored
+ * desktop choice — the switcher never renders on mobile, but the mode is
+ * persisted across viewport sizes (same session, a narrowed window), so this
+ * guard is what actually keeps mobile on `list`.
+ */
+@Component({
+  selector: 'app-timeline-host',
+  imports: [TimelineView, ColumnsView, WeekView, MapView],
+  template: `
+    @switch (editMode.isMobile() ? 'list' : viewMode.mode()) {
+      @case ('columns') {
+        <app-columns-view [id]="id()" />
+      }
+      @case ('week') {
+        <app-week-view [id]="id()" />
+      }
+      @case ('map') {
+        <!-- D6 (#50): only reachable when GOOGLE_MAPS_CONFIGURED gated
+             TimelineViewModeService.available to include 'map', so this
+             @defer is the sole place MapView (and the @angular/google-maps
+             bits it pulls in) gets requested — keeps it out of the initial
+             bundle with no key configured. -->
+        @defer (on immediate) {
+          <app-map-view [id]="id()" />
+        }
+      }
+      @case ('list') {
+        <app-timeline-view [id]="id()" />
+      }
+      @default {
+        <app-timeline-view [id]="id()" />
+      }
+    }
+  `,
+})
+export class TimelineHost {
+  /** Route param, forwarded to `TimelineView` — see withComponentInputBinding. */
+  readonly id = input.required<string>();
+
+  protected readonly viewMode = inject(TimelineViewModeService);
+  protected readonly editMode = inject(EditModeService);
+}

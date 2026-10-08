@@ -1,0 +1,261 @@
+// D2 (#46): the trip strip shared by Columns/Week/Map (D3-D6) — the only
+// place stays/cars render as bars for the new desktop views. Desktop only;
+// mounted by `TripPage`/`TimelineHost` at full width, above the active view.
+
+:host {
+  display: block;
+}
+
+.strip {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-line);
+}
+
+.scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.track {
+  position: relative;
+  // Establishes a stacking context so `.selection`'s z-index: -1 stays
+  // scoped to this element's own children (painted below the day cells)
+  // instead of escaping to the page's root stacking context, where it would
+  // end up hidden behind unrelated content.
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  scroll-snap-type: x proximity;
+
+  &.centered {
+    margin-inline: auto;
+  }
+}
+
+// Continuous soft-primary fill behind a selected range — z-index -1 so it
+// paints beneath the (unpositioned) rows above, not on top of them.
+.selection {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: -1;
+  background: #dfe6f6;
+}
+
+.days-row {
+  display: flex;
+}
+
+.cell {
+  flex: 0 0 auto;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  scroll-snap-align: start;
+  position: relative;
+  padding: 0;
+
+  .weekday {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--app-ink-3);
+  }
+
+  .date-num {
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--app-ink);
+  }
+
+  .day-num {
+    font-size: 10.5px;
+    color: var(--app-ink-3);
+  }
+
+  .dots {
+    display: flex;
+    gap: 2px;
+    height: 6px;
+  }
+
+  .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+  }
+
+  // Today: a small now-colour mark under the date instead of the ring used
+  // by the mobile day strip (there's no "active" state to share it with here).
+  .now-mark {
+    position: absolute;
+    bottom: 3px;
+    width: 16px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--now);
+  }
+
+  &.selected .day-num {
+    color: var(--mat-sys-primary);
+    font-weight: 600;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+  }
+
+  // Departure/return virtual day — grayed, not clickable.
+  &.virtual {
+    cursor: default;
+    background: var(--app-bg);
+
+    .weekday,
+    .date-num,
+    .day-num {
+      color: var(--app-ink-3);
+    }
+  }
+}
+
+.stay-row {
+  position: relative;
+  height: 22px;
+  margin-top: 2px;
+}
+
+.stay-bar {
+  position: absolute;
+  top: 0;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 0 6px;
+
+  .bar-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.car-row {
+  position: relative;
+  height: 16px;
+  margin: 2px 0 4px;
+}
+
+.car-bar {
+  position: absolute;
+  top: 0;
+  height: 14px;
+  border: 1px solid;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 0 4px;
+
+  .car-icon {
+    font-size: 11px;
+    width: 11px;
+    height: 11px;
+  }
+
+  .bar-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fade-left {
+  left: 0;
+  background: linear-gradient(to right, var(--app-surface), transparent);
+}
+
+.fade-right {
+  right: 0;
+  background: linear-gradient(to left, var(--app-surface), transparent);
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--app-line);
+  background: var(--app-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--app-ink-2);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: var(--app-bg);
+  }
+}
+
+.arrow-left {
+  left: 4px;
+}
+
+.arrow-right {
+  right: 4px;
+}

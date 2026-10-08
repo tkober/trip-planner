@@ -1,0 +1,134 @@
+<div class="strip">
+  @if (canScrollLeft()) {
+    <div class="fade fade-left" aria-hidden="true"></div>
+    <button
+      type="button"
+      class="arrow arrow-left"
+      aria-label="Scroll to earlier days"
+      (click)="scrollByCells(-3)"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+  }
+
+  <div
+    #scrollEl
+    class="scroll"
+    (wheel)="onWheel($event)"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp()"
+    (pointercancel)="onPointerUp()"
+    (scroll)="onScroll()"
+  >
+    <div
+      class="track"
+      [style.width.px]="trackWidth()"
+      [class.centered]="fits()"
+    >
+      @if (selectionRect(); as sel) {
+        <div
+          class="selection"
+          aria-hidden="true"
+          [style.left.px]="sel.left"
+          [style.width.px]="sel.width"
+        ></div>
+      }
+
+      <div class="days-row">
+        @if (leadingDay(); as lead) {
+          <div class="cell virtual" [style.width.px]="dayWidth()" aria-hidden="true">
+            <span class="weekday">{{ lead.weekday }}</span>
+            <span class="date-num">{{ lead.dayOfMonth }}</span>
+            <span class="day-num">{{ lead.label }}</span>
+          </div>
+        }
+
+        @for (day of days(); track day.date; let i = $index) {
+          <button
+            #dayBtn
+            type="button"
+            class="cell"
+            [style.width.px]="dayWidth()"
+            [class.selected]="isSelected(day.date)"
+            [class.today]="day.date === today()"
+            [attr.aria-label]="dayAriaLabel(day)"
+            [attr.aria-pressed]="isSelected(day.date)"
+            (click)="onCellClick(day.date, $event)"
+            (keydown.arrowleft)="onArrowKey($event, -1, i)"
+            (keydown.arrowright)="onArrowKey($event, 1, i)"
+          >
+            <span class="weekday">{{ day.weekday }}</span>
+            <span class="date-num">{{ day.dayOfMonth }}</span>
+            <span class="day-num">Day {{ day.index }}</span>
+            <span class="dots">
+              @for (dot of entryDots(day); track $index) {
+                <span class="dot" [style.background]="dot"></span>
+              }
+            </span>
+            @if (day.date === today()) {
+              <span class="now-mark" aria-hidden="true"></span>
+            }
+          </button>
+        }
+
+        @if (trailingDay(); as trail) {
+          <div class="cell virtual" [style.width.px]="dayWidth()" aria-hidden="true">
+            <span class="weekday">{{ trail.weekday }}</span>
+            <span class="date-num">{{ trail.dayOfMonth }}</span>
+            <span class="day-num">{{ trail.label }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="stay-row">
+        @for (bar of stayBars(); track bar.id) {
+          <button
+            type="button"
+            class="stay-bar"
+            [style.left.px]="bar.left"
+            [style.width.px]="bar.width"
+            [style.background]="bar.color"
+            [matTooltip]="bar.fullName"
+            (click)="openStay(bar, $event)"
+          >
+            <span class="bar-name">{{ bar.name }}</span>
+          </button>
+        }
+      </div>
+
+      @if (carBars().length) {
+        <div class="car-row">
+          @for (bar of carBars(); track bar.id) {
+            <button
+              type="button"
+              class="car-bar"
+              [style.left.px]="bar.left"
+              [style.width.px]="bar.width"
+              [style.background]="tintColor(bar.color)"
+              [style.border-color]="bar.color"
+              [style.color]="bar.color"
+              [matTooltip]="bar.reservation.name"
+              (click)="openCar(bar, $event)"
+            >
+              <mat-icon class="car-icon">directions_car</mat-icon>
+              <span class="bar-name">{{ bar.reservation.company || bar.reservation.name }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (canScrollRight()) {
+    <div class="fade fade-right" aria-hidden="true"></div>
+    <button
+      type="button"
+      class="arrow arrow-right"
+      aria-label="Scroll to later days"
+      (click)="scrollByCells(3)"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  }
+</div>

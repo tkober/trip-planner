@@ -13,6 +13,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import {
   CostInfo,
+  GeoPoint,
   TransportDto,
   TransportMode,
   ZonedTime,
@@ -24,6 +25,9 @@ import { CostFieldset } from '../../shared/cost/cost-fieldset';
 import { pickCost } from '../../shared/cost/cost';
 import { TRANSPORT_MODE_COLOR } from '../../shared/color/color';
 import { environment } from '../../../environments/environment';
+import { GeoField } from '../../shared/geo/geo-field/geo-field';
+import { countryForZone } from '../../shared/geo/zone-country';
+import { GOOGLE_MAPS_CONFIGURED } from '../../shared/geo/maps-configured';
 
 export interface TransportDialogData {
   transport?: TransportDto;
@@ -56,6 +60,7 @@ const MODES: { value: TransportMode; label: string; icon: string }[] = [
     ColorField,
     SuggestField,
     CostFieldset,
+    GeoField,
   ],
   templateUrl: './transport-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -92,6 +97,27 @@ export class TransportDialog {
   );
   readonly fromLocation = signal(this.data.transport?.fromLocation ?? '');
   readonly toLocation = signal(this.data.transport?.toLocation ?? '');
+  readonly fromGeo = signal<GeoPoint | undefined>(this.data.transport?.fromGeo);
+  readonly toGeo = signal<GeoPoint | undefined>(this.data.transport?.toGeo);
+  readonly mapsConfigured = GOOGLE_MAPS_CONFIGURED;
+  readonly countryBias = countryForZone(this.data.destinationZone);
+  /** Station/airport/stop specific to one end, matching the selected mode. */
+  private endpointSpecific(end: 'from' | 'to'): string {
+    if (this.isFlight()) return (end === 'from' ? this.fromAirport() : this.toAirport());
+    if (this.isTrain()) return (end === 'from' ? this.fromStation() : this.toStation());
+    if (this.isBus()) return (end === 'from' ? this.fromStop() : this.toStop());
+    return '';
+  }
+  readonly fromQuery = computed(() => {
+    const specific = this.endpointSpecific('from').trim();
+    const city = this.fromLocation().trim();
+    return [specific, city].filter(Boolean).join(', ');
+  });
+  readonly toQuery = computed(() => {
+    const specific = this.endpointSpecific('to').trim();
+    const city = this.toLocation().trim();
+    return [specific, city].filter(Boolean).join(', ');
+  });
   readonly airline = signal(this.data.transport?.airline ?? '');
   readonly flightNumber = signal(this.data.transport?.flightNumber ?? '');
   // Flight-specific
@@ -154,6 +180,8 @@ export class TransportDialog {
       end: this.hasEnd() && this.end().dateTime ? this.end() : undefined,
       fromLocation: this.fromLocation().trim() || undefined,
       toLocation: this.toLocation().trim() || undefined,
+      fromGeo: this.fromGeo(),
+      toGeo: this.toGeo(),
       // Flight
       airline: flight(this.airline()),
       flightNumber: flight(this.flightNumber()),

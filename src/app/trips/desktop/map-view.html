@@ -1,0 +1,108 @@
+@if (trip(); as t) {
+  <app-trip-strip
+    [trip]="t"
+    [selected]="selectedDates()"
+    [today]="todayKey()"
+    (dayClickModified)="onStripClick($event)"
+  />
+
+  <div #mapRow class="map-row" [style.height.px]="rowHeight()">
+    <div #listEl class="list-panel" (scroll)="onListScroll()">
+      @for (day of selectedDayModels(); track day.date) {
+        <div class="day-block">
+          <div #dayHeaderEl class="day-header">
+            <div class="header-top">
+              <span class="day-num">Day {{ day.index }}</span>
+              <span class="day-date">{{ day.weekday }}, {{ day.dayOfMonth }} {{ day.month }}</span>
+            </div>
+            @if (showZoneFor(day)) {
+              <div class="day-zone">{{ destZoneLabel() }}</div>
+            }
+            @if (stayText(day); as text) {
+              <button
+                type="button"
+                class="stay-line"
+                [style.--stay-color]="day.stay.color || null"
+                [disabled]="!day.stay.accommodation"
+                (click)="day.stay.accommodation && openAccommodation(day.stay.accommodation)"
+              >
+                <mat-icon>bed</mat-icon>
+                <span>{{ text }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="day-items">
+            @for (item of day.items; track $index) {
+              @if (item.kind === 'entry') {
+                <div
+                  class="entry-wrap"
+                  [attr.data-entry-id]="entryId(item.entry)"
+                  [class.linked]="hoverEntryId() === entryId(item.entry)"
+                  [class.clicked]="clickedEntryId() === entryId(item.entry)"
+                  (mouseenter)="hoverEntryId.set(entryId(item.entry))"
+                  (mouseleave)="hoverEntryId.set(undefined)"
+                >
+                  <app-entry-card
+                    [entry]="item.entry"
+                    [destZone]="destZone()"
+                    [showLocateHint]="true"
+                    (open)="openEntry(item.entry)"
+                    (edit)="editEntry(item.entry)"
+                    (delete)="deleteEntry(item.entry)"
+                    (move)="moveEntry(item.entry)"
+                    (locate)="editEntry(item.entry)"
+                  />
+                </div>
+              } @else {
+                <button
+                  type="button"
+                  class="car-pill"
+                  [style.--accent]="item.deadline.color"
+                  (click)="openCar(item.deadline.car)"
+                >
+                  <mat-icon class="pill-icon">{{
+                    item.deadline.kind === 'pickup' ? 'key' : 'keyboard_return'
+                  }}</mat-icon>
+                  <span class="pill-label">{{ item.deadline.label }}</span>
+                  @if (item.deadline.time) {
+                    <span class="pill-time">{{ item.deadline.time }}</span>
+                  }
+                  <span class="pill-name">{{ item.deadline.car.name }}</span>
+                </button>
+              }
+            }
+            @if (!day.items.length) {
+              <p class="empty">Nothing planned</p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="map-area">
+      @if (mapsReady()) {
+        <!-- Markers/lines are placed imperatively by MapView.drawOverlays()
+             straight onto the underlying google.maps.Map — see the
+             constructor for why (an invalid/missing key leaves the map in a
+             degraded state that made the `<map-advanced-marker>`/
+             `<map-polyline>` directives throw repeatedly and stall the
+             app's change detection). -->
+        <google-map
+          height="100%"
+          width="100%"
+          [center]="initialCenter"
+          [zoom]="10"
+          [mapId]="mapId"
+          [options]="mapOptions"
+        ></google-map>
+      }
+      @if (missingCount() > 0) {
+        <button type="button" class="missing-chip" (click)="locatePlaces()">
+          <mat-icon>location_off</mat-icon>
+          {{ missingCount() }} {{ missingCount() === 1 ? 'entry' : 'entries' }} without location
+        </button>
+      }
+    </div>
+  </div>
+}

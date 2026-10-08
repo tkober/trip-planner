@@ -22,15 +22,17 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TripDto } from '../../models/trip.model';
 import { TripStore } from '../../services/trip-store';
-import { TimeZoneService } from '../../services/time-zone.service';
 import { TripActionsService } from '../../services/trip-actions.service';
 import { EditModeService } from '../../services/edit-mode.service';
+import { TimelineViewModeService } from '../timeline/timeline-view-mode.service';
 import { ExportHost } from '../export/export-host';
 import { DayStrip } from '../timeline/day-strip';
 import { formatRange, zoneLabel } from '../../shared/format/date-format';
 import { tripContextLabel } from '../../shared/format/trip-context';
+import { GOOGLE_MAPS_CONFIGURED } from '../../shared/geo/maps-configured';
 
 interface NavItem {
   path: string;
@@ -39,10 +41,12 @@ interface NavItem {
 }
 
 /**
- * The trip page shell: a fixed left side panel (back button, trip name + compact
- * details, and the section nav) plus a `<router-outlet>` that hosts the active
- * section view (overview / timeline / accommodations / car rentals / transport /
- * reservations).
+ * The trip page shell: on desktop (D1, #45) a full-width sticky top bar (back
+ * button, trip title + context line, the section tabs, the timeline-only view
+ * switcher, the trip kebab); on mobile its own sticky app bar + fixed bottom
+ * nav instead (see below). Either way, a `<router-outlet>` hosts the active
+ * section view (timeline / overview / accommodations / car rentals /
+ * transport / reservations).
  */
 @Component({
   selector: 'app-trip-page',
@@ -54,6 +58,7 @@ interface NavItem {
     MatDividerModule,
     MatIconModule,
     MatMenuModule,
+    MatTooltipModule,
     ExportHost,
     DayStrip,
   ],
@@ -65,21 +70,25 @@ export class TripPage {
   readonly id = input.required<string>();
 
   private readonly store = inject(TripStore);
-  private readonly tz = inject(TimeZoneService);
   private readonly actions = inject(TripActionsService);
   private readonly router = inject(Router);
   readonly editMode = inject(EditModeService);
+  readonly viewMode = inject(TimelineViewModeService);
 
   readonly loaded = this.store.loaded;
   readonly trip = computed<TripDto | undefined>(() =>
     this.store.trips().find((t) => t.id === this.id()),
   );
 
+  /** Section nav — both the desktop top bar's tabs (full icon+label, or
+   * icon-only + tooltip below ~1200px, see trip-page.scss) and the mobile
+   * bottom nav's two "More" items reuse these path/icon pairs; Timeline
+   * leads per the desktop design. */
   readonly nav: NavItem[] = [
-    { path: 'overview', label: 'Overview', icon: 'info' },
     { path: 'timeline', label: 'Timeline', icon: 'calendar_view_day' },
-    { path: 'accommodations', label: 'Accommodations', icon: 'hotel' },
-    { path: 'car-reservations', label: 'Car Rentals', icon: 'directions_car' },
+    { path: 'overview', label: 'Overview', icon: 'info' },
+    { path: 'accommodations', label: 'Stays', icon: 'hotel' },
+    { path: 'car-reservations', label: 'Car rentals', icon: 'directions_car' },
     { path: 'transport', label: 'Transport', icon: 'commute' },
     {
       path: 'reservations',
@@ -88,24 +97,30 @@ export class TripPage {
     },
   ];
 
-  /** Trip length as "N days · M nights". */
-  readonly lengthLabel = computed(() => {
-    const t = this.trip();
-    if (!t) return '';
-    const days = this.tz.enumerateDays(t).length;
-    const nights = Math.max(0, days - 1);
-    return `${days} day${days === 1 ? '' : 's'} · ${nights} night${nights === 1 ? '' : 's'}`;
-  });
-
-  /** Expose the format helpers to the template. */
-  protected readonly formatRange = formatRange;
-  protected readonly zoneLabel = zoneLabel;
-
   /** Mobile app bar subtitle, e.g. "Day 7 of 16 · Thu, 9 Apr". */
   readonly contextLabel = computed(() => {
     const t = this.trip();
     return t ? tripContextLabel(t, DateTime.now()) : '';
   });
+
+  /** Desktop top bar's muted context line, e.g. "Starts in 39 days · 16 Nov –
+   * 4 Dec 2026 · Tokyo · GMT+9" — the mobile context label plus the date
+   * range and destination zone. */
+  readonly desktopContextLabel = computed(() => {
+    const t = this.trip();
+    if (!t) return '';
+    const context = tripContextLabel(t, DateTime.now());
+    const range = formatRange(t.startDate, t.endDate);
+    return `${context} · ${range} · ${zoneLabel(t.destinationTimeZone)}`;
+  });
+
+  /** Opt-in for the desktop timeline views that want the bar's full width
+   * instead of the centered ~1000px content column — see
+   * `.trip-content.full-width` in trip-page.scss. Columns (D3, #47) is the
+   * first to use it; Week/Map (D4/D6) will too. */
+  readonly useFullWidthContent = computed(
+    () => this.onTimelineRoute() && this.viewMode.mode() !== 'list',
+  );
 
   /** Current URL, kept live for the bottom nav's "More" active state. */
   private readonly url = toSignal(
@@ -125,15 +140,21 @@ export class TripPage {
   /** The R4 day strip only ever shows on the Timeline route. */
   readonly onTimelineRoute = computed(() => this.url().includes('/timeline'));
 
-  /** The sticky app bar (+ optional edit banner) whose real height drives
-   * `--app-bar-height` (the day headers' sticky offset) below. */
+  /** The sticky app bar (+ optional edit banner on mobile, or the desktop top
+   * bar) whose real height drives `--app-bar-height` — the mobile day
+   * headers' sticky offset, and (desktop) the R10 hotel/car lane names'
+   * sticky offset in timeline.scss. */
   private readonly stickyStackEl =
     viewChild<ElementRef<HTMLElement>>('stickyStack');
+  private readonly desktopBarEl =
+    viewChild<ElementRef<HTMLElement>>('desktopBar');
   private resizeObserver?: ResizeObserver;
 
   constructor() {
     effect(() => {
-      const el = this.editMode.isMobile() ? this.stickyStackEl()?.nativeElement : undefined;
+      const el = this.editMode.isMobile()
+        ? this.stickyStackEl()?.nativeElement
+        : this.desktopBarEl()?.nativeElement;
       this.resizeObserver?.disconnect();
       this.resizeObserver = undefined;
       if (!el) {
@@ -177,5 +198,13 @@ export class TripPage {
   exportPlan(): void {
     const trip = this.trip();
     if (trip) this.actions.exportPlan(trip);
+  }
+
+  /** Hides the "Locate places…" menu item entirely when no Maps key is set (#49). */
+  readonly mapsConfigured = GOOGLE_MAPS_CONFIGURED;
+
+  locatePlaces(): void {
+    const trip = this.trip();
+    if (trip) void this.actions.locatePlaces(trip);
   }
 }

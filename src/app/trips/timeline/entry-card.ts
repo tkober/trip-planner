@@ -74,6 +74,19 @@ const MODE_ICON: Record<TransportMode, string> = {
             </div>
           }
         </div>
+        @if (showLocateHint() && !hasLocation()) {
+          <div class="locate-hint">
+            <mat-icon>location_off</mat-icon>
+            <span>No location</span>
+            <button
+              type="button"
+              class="locate-link"
+              (click)="$event.stopPropagation(); locate.emit(entry())"
+            >
+              Locate
+            </button>
+          </div>
+        }
       } @else {
         <div class="time-col">
           <div class="start">{{ startTime() }}</div>
@@ -87,6 +100,19 @@ const MODE_ICON: Record<TransportMode, string> = {
             <div class="subtitle">{{ sub }}</div>
           }
         </div>
+        @if (showLocateHint() && !hasLocation()) {
+          <div class="locate-hint">
+            <mat-icon>location_off</mat-icon>
+            <span>No location</span>
+            <button
+              type="button"
+              class="locate-link"
+              (click)="$event.stopPropagation(); locate.emit(entry())"
+            >
+              Locate
+            </button>
+          </div>
+        }
       }
       <div class="right-cluster">
         <div class="icon-tile">
@@ -143,6 +169,21 @@ export class EntryCard {
   readonly edit = output<TimelineEntry>();
   readonly delete = output<TimelineEntry>();
   readonly move = output<TimelineEntry>();
+  /** D6, #50: shows a "No location" hint + "Locate" action when the entry has
+   * no `GeoPoint` at all — off by default so List/Columns/Week render
+   * unchanged; only the Map view's list panel sets this. */
+  readonly showLocateHint = input(false);
+  readonly locate = output<TimelineEntry>();
+
+  /** Whether the entry has at least one geocoded point (activity `geo`, or
+   * either transport endpoint) — drives the Map view's "No location" hint
+   * and its "entries without location" counter. */
+  readonly hasLocation = computed(() => {
+    const e = this.entry();
+    if (e.kind === 'activity') return !!e.activity!.geo;
+    const t = e.transport!;
+    return !!(t.fromGeo || t.toGeo);
+  });
 
   /**
    * The drag handle only renders in mobile edit mode. On desktop the whole

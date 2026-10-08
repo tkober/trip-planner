@@ -8,12 +8,15 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { CarReservationDto, CostInfo } from '../../models/trip.model';
+import { CarReservationDto, CostInfo, GeoPoint } from '../../models/trip.model';
 import { DateField } from '../../shared/date-field/date-field';
 import { ColorField } from '../../shared/color/color-field';
 import { CostFieldset } from '../../shared/cost/cost-fieldset';
 import { pickCost } from '../../shared/cost/cost';
 import { environment } from '../../../environments/environment';
+import { GeoField } from '../../shared/geo/geo-field/geo-field';
+import { countryForZone } from '../../shared/geo/zone-country';
+import { GOOGLE_MAPS_CONFIGURED } from '../../shared/geo/maps-configured';
 
 export interface CarReservationDialogData {
   car?: CarReservationDto;
@@ -21,6 +24,8 @@ export interface CarReservationDialogData {
   defaultDropoff: string;
   /** Default tint for this reservation (its position-based colour). */
   defaultColor: string;
+  /** Trip's destination zone — region bias for the "Locate" buttons (#49). */
+  destinationZone: string;
   newId: () => string;
 }
 
@@ -35,6 +40,7 @@ export interface CarReservationDialogData {
     DateField,
     ColorField,
     CostFieldset,
+    GeoField,
   ],
   templateUrl: './car-reservation-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -69,6 +75,10 @@ export class CarReservationDialog {
   );
   readonly pickupStationUrl = signal(this.data.car?.pickupStationUrl ?? '');
   readonly dropoffStationUrl = signal(this.data.car?.dropoffStationUrl ?? '');
+  readonly pickupGeo = signal<GeoPoint | undefined>(this.data.car?.pickupGeo);
+  readonly dropoffGeo = signal<GeoPoint | undefined>(this.data.car?.dropoffGeo);
+  readonly mapsConfigured = GOOGLE_MAPS_CONFIGURED;
+  readonly countryBias = countryForZone(this.data.destinationZone);
   readonly bookingUrl = signal(this.data.car?.bookingUrl ?? '');
   readonly bookingReference = signal(this.data.car?.bookingReference ?? '');
   readonly remarks = signal(this.data.car?.remarks ?? '');
@@ -115,6 +125,8 @@ export class CarReservationDialog {
       dropoffGoogleMapsUrl: this.dropoffGoogleMapsUrl().trim() || undefined,
       pickupStationUrl: this.pickupStationUrl().trim() || undefined,
       dropoffStationUrl: this.dropoffStationUrl().trim() || undefined,
+      pickupGeo: this.pickupGeo(),
+      dropoffGeo: this.dropoffGeo(),
       bookingUrl: this.bookingUrl().trim() || undefined,
       bookingReference: this.bookingReference().trim() || undefined,
       remarks: this.remarks().trim() || undefined,

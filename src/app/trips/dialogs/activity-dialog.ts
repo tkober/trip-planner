@@ -9,13 +9,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { ActivityDto, CostInfo, ZonedTime } from '../../models/trip.model';
+import { ActivityDto, CostInfo, GeoPoint, ZonedTime } from '../../models/trip.model';
 import { ZonedTimeField } from '../../shared/zoned-time-field/zoned-time-field';
 import { ColorField } from '../../shared/color/color-field';
 import { ACTIVITY_COLOR } from '../../shared/color/color';
 import { CostFieldset } from '../../shared/cost/cost-fieldset';
 import { pickCost } from '../../shared/cost/cost';
 import { environment } from '../../../environments/environment';
+import { GeoField } from '../../shared/geo/geo-field/geo-field';
+import { countryForZone } from '../../shared/geo/zone-country';
+import { GOOGLE_MAPS_CONFIGURED } from '../../shared/geo/maps-configured';
 
 export interface ActivityDialogData {
   activity?: ActivityDto;
@@ -37,6 +40,7 @@ export interface ActivityDialogData {
     ZonedTimeField,
     ColorField,
     CostFieldset,
+    GeoField,
   ],
   templateUrl: './activity-dialog.html',
   styleUrl: './entity-dialog.scss',
@@ -64,6 +68,9 @@ export class ActivityDialog {
   );
   readonly location = signal(this.data.activity?.location ?? '');
   readonly googleMapsUrl = signal(this.data.activity?.googleMapsUrl ?? '');
+  readonly geo = signal<GeoPoint | undefined>(this.data.activity?.geo);
+  readonly mapsConfigured = GOOGLE_MAPS_CONFIGURED;
+  readonly countryBias = countryForZone(this.data.defaultZone);
   readonly bookingUrl = signal(this.data.activity?.bookingUrl ?? '');
   readonly notes = signal(this.data.activity?.notes ?? '');
   readonly cost = signal<CostInfo>(pickCost(this.data.activity));
@@ -89,6 +96,7 @@ export class ActivityDialog {
       end: this.hasEnd() && this.end().dateTime ? this.end() : undefined,
       location: this.location().trim() || undefined,
       googleMapsUrl: this.googleMapsUrl().trim() || undefined,
+      geo: this.geo(),
       bookingUrl: this.bookingUrl().trim() || undefined,
       notes: this.notes().trim() || undefined,
       color: this.color() || undefined,

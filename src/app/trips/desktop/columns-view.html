@@ -1,0 +1,118 @@
+@if (trip(); as t) {
+  <app-trip-strip
+    [trip]="t"
+    [selected]="visibleDates()"
+    [today]="todayKey()"
+    (dayClick)="onStripClick($event)"
+  />
+
+  <div class="toolbar">
+    <button
+      matIconButton
+      (click)="prev($event)"
+      matTooltip="Previous day (Shift: previous {{ columnCount() }})"
+      aria-label="Previous day"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <button
+      matIconButton
+      (click)="next($event)"
+      matTooltip="Next day (Shift: next {{ columnCount() }})"
+      aria-label="Next day"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+    <button
+      matButton
+      [disabled]="!todayEnabled()"
+      (click)="jumpToToday()"
+    >
+      Today
+    </button>
+    <span class="range-label">{{ rangeLabel() }}</span>
+  </div>
+
+  <div #columnsArea class="columns-area" [style.height.px]="columnsHeight()">
+    @for (day of visibleDays(); track day.date; let i = $index) {
+      <div class="column">
+        <div class="col-header">
+          <div class="header-top">
+            <span class="day-num">Day {{ day.index }}</span>
+            <span class="day-date">{{ day.weekday }}, {{ day.dayOfMonth }} {{ day.month }}</span>
+          </div>
+          @if (showZone(i)) {
+            <div class="day-zone">{{ destZoneLabel() }}</div>
+          }
+          @if (stayText(day); as text) {
+            <button
+              type="button"
+              class="stay-line"
+              [style.--stay-color]="day.stay.color || null"
+              [disabled]="!day.stay.accommodation"
+              (click)="day.stay.accommodation && openAccommodation(day.stay.accommodation)"
+            >
+              <mat-icon>bed</mat-icon>
+              <span>{{ text }}</span>
+            </button>
+          }
+        </div>
+
+        <div class="col-body">
+          @for (item of day.items; track $index) {
+            @if (item.kind === 'entry') {
+              <app-entry-card
+                [entry]="item.entry"
+                [destZone]="destZone()"
+                (open)="openEntry(item.entry)"
+                (edit)="editEntry(item.entry)"
+                (delete)="deleteEntry(item.entry)"
+                (move)="moveEntry(item.entry)"
+              />
+              @if (item.arrivesLabel) {
+                <div class="arrives-row">
+                  <mat-icon>south_east</mat-icon>
+                  <span>{{ item.arrivesLabel }}</span>
+                </div>
+              }
+            } @else {
+              <button
+                type="button"
+                class="car-pill"
+                [style.--accent]="item.deadline.color"
+                (click)="openCar(item.deadline.car)"
+              >
+                <mat-icon class="pill-icon">{{
+                  item.deadline.kind === 'pickup' ? 'key' : 'keyboard_return'
+                }}</mat-icon>
+                <span class="pill-label">{{ item.deadline.label }}</span>
+                @if (item.deadline.time) {
+                  <span class="pill-time">{{ item.deadline.time }}</span>
+                }
+                <span class="pill-name">{{ item.deadline.car.name }}</span>
+              </button>
+            }
+          }
+          @if (!day.items.length) {
+            <p class="empty">Nothing planned</p>
+          }
+        </div>
+
+        <div class="col-actions">
+          <button matButton class="add-btn" [matMenuTriggerFor]="addMenu">
+            <mat-icon>add</mat-icon>
+            Add
+          </button>
+          <mat-menu #addMenu="matMenu">
+            <button mat-menu-item (click)="addActivity(day.date)">
+              <mat-icon>local_activity</mat-icon><span>Activity</span>
+            </button>
+            <button mat-menu-item (click)="addTransport(day.date)">
+              <mat-icon>commute</mat-icon><span>Transport</span>
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+    }
+  </div>
+}

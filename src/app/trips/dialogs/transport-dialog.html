@@ -108,6 +108,9 @@
             <input matInput [ngModel]="fromStop()" (ngModelChange)="fromStop.set($event)" name="fromStop" />
           </mat-form-field>
         }
+        @defer (when mapsConfigured) {
+          <app-geo-field [query]="fromQuery()" [countryBias]="countryBias" [(value)]="fromGeo" />
+        }
       </section>
 
       <section class="leg">
@@ -143,6 +146,9 @@
             <mat-label>To stop (optional)</mat-label>
             <input matInput [ngModel]="toStop()" (ngModelChange)="toStop.set($event)" name="toStop" />
           </mat-form-field>
+        }
+        @defer (when mapsConfigured) {
+          <app-geo-field [query]="toQuery()" [countryBias]="countryBias" [(value)]="toGeo" />
         }
       </section>
     </div>

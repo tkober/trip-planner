@@ -1,0 +1,18 @@
+@if (mapsReady() && pins().length) {
+  <google-map
+    [height]="height()"
+    width="100%"
+    [center]="center()"
+    [zoom]="14"
+    [mapId]="mapId"
+    [options]="mapOptions"
+  >
+    @for (pin of pins(); track pin.point.lat + ',' + pin.point.lng) {
+      <map-advanced-marker
+        [position]="{ lat: pin.point.lat, lng: pin.point.lng }"
+        [content]="pinContent(pin.color)"
+        [title]="pin.label ?? ''"
+      />
+    }
+  </google-map>
+}

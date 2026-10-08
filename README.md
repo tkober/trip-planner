@@ -2,6 +2,9 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.0.
 
+See [CLAUDE.md](CLAUDE.md) for the full feature overview and architecture. To
+enable places/coordinates and maps (D5), see [GOOGLE_SETUP.md](GOOGLE_SETUP.md).
+
 ## Development server
 
 To start a local development server, run:

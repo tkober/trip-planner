@@ -1,0 +1,124 @@
+@if (trip(); as t) {
+  <app-trip-strip
+    [trip]="t"
+    [selected]="visibleDates()"
+    [today]="todayKey()"
+    (dayClick)="onStripClick($event)"
+  />
+
+  <div class="toolbar">
+    <button
+      matIconButton
+      (click)="prev($event)"
+      matTooltip="Previous {{ windowSize() }} days (Shift: previous day)"
+      aria-label="Previous week"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <button
+      matIconButton
+      (click)="next($event)"
+      matTooltip="Next {{ windowSize() }} days (Shift: next day)"
+      aria-label="Next week"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+    <button matButton [disabled]="!todayEnabled()" (click)="jumpToToday()">Today</button>
+    <span class="range-label">{{ rangeLabel() }}</span>
+    @if (placesLabel(); as places) {
+      <span class="places-label">· {{ places }}</span>
+    }
+  </div>
+
+  <div class="week-area">
+    <div class="week-header">
+      <div class="hour-rail-spacer"></div>
+      @for (day of visibleDays(); track day.date; let i = $index) {
+        <div class="day-header" [class.is-today]="day.date === todayKey()">
+          <span class="day-num">Day {{ day.index }}</span>
+          <span class="day-date">{{ day.weekday }}, {{ day.dayOfMonth }} {{ day.month }}</span>
+          @if (i === 0) {
+            <span class="day-zone">{{ destZoneLabel() }}</span>
+          }
+        </div>
+      }
+    </div>
+
+    <div #gridArea class="grid-scroll" [style.max-height.px]="gridAvailableHeight()">
+      <div class="grid-inner" [style.height.px]="gridContentHeight()">
+        <div class="hour-rail">
+          @for (h of hourMarks(); track h) {
+            <div class="hour-mark" [style.top.px]="hourOffset(h)">
+              {{ formatHour(h) }}
+            </div>
+          }
+        </div>
+
+        @for (day of visibleDays(); track day.date) {
+          <div class="day-col" (click)="onSlotClick($event, day.date)">
+            @for (h of hourMarks(); track h) {
+              <div class="hour-line" [style.top.px]="hourOffset(h)"></div>
+            }
+
+            @if (day.date === todayKey() && nowTop() !== undefined) {
+              <div class="now-line" [style.top.px]="nowTop()"></div>
+            }
+
+            @for (dl of deadlinesFor(day.date); track dl.key) {
+              <button
+                type="button"
+                class="deadline-line"
+                [style.top.px]="dl.top"
+                [style.--accent]="dl.color"
+                (click)="$event.stopPropagation(); openCar(dl.car)"
+              >
+                <span class="deadline-label">{{ dl.label }} {{ dl.time }} · {{ dl.car.name }}</span>
+              </button>
+            }
+
+            @for (block of blocksFor(day.date); track block.key) {
+              <button
+                type="button"
+                class="week-block"
+                [class.no-end]="block.noEnd"
+                [class.compact]="block.compact"
+                [style.top.px]="block.top"
+                [style.height.px]="block.height"
+                [style.left.%]="block.leftPct"
+                [style.width.%]="block.widthPct"
+                [style.--accent]="block.color"
+                (click)="$event.stopPropagation(); openEntry(block.entry)"
+              >
+                @if (block.continuesFromPrev) {
+                  <mat-icon class="continue-marker from-prev">subdirectory_arrow_right</mat-icon>
+                }
+                @if (block.compact) {
+                  <div class="block-row">
+                    <mat-icon class="block-icon">{{ block.icon }}</mat-icon>
+                    <span class="block-title single-line">{{ block.title }}</span>
+                    @if (block.showTime && block.timeLabel) {
+                      <span class="block-time">{{ block.timeLabel }}</span>
+                    }
+                  </div>
+                } @else {
+                  <div class="block-top">
+                    <mat-icon class="block-icon">{{ block.icon }}</mat-icon>
+                    @if (block.showTime && block.timeLabel) {
+                      <span class="block-time">{{ block.timeLabel }}</span>
+                    }
+                  </div>
+                  <div class="block-title wrap" [style.--title-lines]="block.titleLines">
+                    {{ block.title }}
+                  </div>
+                }
+                @if (block.continuesToNext) {
+                  <mat-icon class="continue-marker to-next">south</mat-icon>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -251,6 +251,14 @@
       }
     </div>
 
+    @if (mapsConfigured && geoPins().length) {
+      @defer (on viewport) {
+        <app-geo-map [pins]="geoPins()" height="180px" />
+      } @placeholder {
+        <div class="geo-map-placeholder"></div>
+      }
+    }
+
     @if (secondaryLinks().length) {
       <div class="secondary-links">
         @for (link of secondaryLinks(); track link.id) {

@@ -7,7 +7,7 @@
  * standalone and reusable by the dialog and sheet hosts alike.
  */
 import { DateTime } from 'luxon';
-import { TransportDto, ZonedTime } from '../../models/trip.model';
+import { GeoPoint, TransportDto, ZonedTime } from '../../models/trip.model';
 import { transportLabel } from '../../shared/transport-format';
 import { formatDate } from '../../shared/format/date-format';
 import { zoneCity } from '../../shared/format/date-format';
@@ -345,4 +345,41 @@ export function zonedMoment(
       ? undefined
       : `${secondaryDt.toFormat('ccc, d LLL')} · ${secondaryDt.toFormat('HH:mm')} in ${zoneCity(secondaryZoneId)}`,
   };
+}
+
+/** One pin for the details view's mini map (D5, #49) — structurally what `GeoMap` takes. */
+export interface DetailsGeoPin {
+  point: GeoPoint;
+  color: string;
+  label?: string;
+}
+
+/**
+ * Every geocoded point relevant to this entity, tinted with its own accent
+ * colour (`data.accent`) — an accommodation/activity has at most one; a car
+ * reservation or transport leg may show both endpoints (pickup/dropoff,
+ * from/to). Empty when nothing is located yet.
+ */
+export function detailsGeoPins(data: DetailsDialogData): DetailsGeoPin[] {
+  const pins: DetailsGeoPin[] = [];
+  const { accent } = data;
+  if (data.accommodation?.geo) {
+    pins.push({ point: data.accommodation.geo, color: accent, label: data.accommodation.name });
+  }
+  if (data.activity?.geo) {
+    pins.push({ point: data.activity.geo, color: accent, label: data.activity.title });
+  }
+  if (data.carReservation?.pickupGeo) {
+    pins.push({ point: data.carReservation.pickupGeo, color: accent, label: 'Pickup' });
+  }
+  if (data.carReservation?.dropoffGeo) {
+    pins.push({ point: data.carReservation.dropoffGeo, color: accent, label: 'Return' });
+  }
+  if (data.transport?.fromGeo) {
+    pins.push({ point: data.transport.fromGeo, color: accent, label: 'From' });
+  }
+  if (data.transport?.toGeo) {
+    pins.push({ point: data.transport.toGeo, color: accent, label: 'To' });
+  }
+  return pins;
 }

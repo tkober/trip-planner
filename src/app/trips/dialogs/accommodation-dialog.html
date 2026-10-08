@@ -32,6 +32,14 @@
       <input matInput [ngModel]="address()" (ngModelChange)="address.set($event)" name="address" />
     </mat-form-field>
 
+    @defer (when mapsConfigured) {
+      <app-geo-field
+        [query]="address() || fullName() || name()"
+        [countryBias]="countryBias"
+        [(value)]="geo"
+      />
+    }
+
     <mat-form-field class="full-width">
       <mat-label>Google Maps link (optional)</mat-label>
       <input matInput type="url" [ngModel]="googleMapsUrl()" (ngModelChange)="googleMapsUrl.set($event)" name="maps" />
