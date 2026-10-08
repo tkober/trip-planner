@@ -454,6 +454,82 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
     pills were silently collapsing to ~8px tall at narrower widths because
     flex children of `.col-body` shrink by default — fixed with
     `flex-shrink: 0`.
+- **Desktop Week view (D4, #48)**, part of the #44 epic, desktop only: the
+  view switcher now offers **List · Columns · Week**
+  (`TimelineViewModeService.available`), and `TimelineHost` renders
+  [WeekView](src/app/trips/desktop/week-view.ts) for the `'week'` mode —
+  same `TripStrip`-on-top structure as Columns, but the content below is an
+  **hour-grid week calendar** instead of day columns, so it needs its own
+  read of `trip.activities`/`trip.transport` (real time spans) rather than
+  Columns' per-day `buildTripDayModel` bucketing (`buildTripDayModel` is
+  still used here too, but only for the day metadata fed to `TripStrip` and
+  the column headers).
+  - **The visible window is 7 days (5 below 1100px)**, not the
+    width-scaled column count Columns uses —
+    [week-layout.ts](src/app/trips/desktop/week-layout.ts)'s
+    `computeWeekWindowSize`. Window *navigation* reuses Columns'
+    `clampWindowStart`/`navigateWindow`/`initialWindowStart` directly (today's
+    week when the trip is running, else Day 1), just with this fixed size —
+    **prev/next shift by the whole window, Shift by 1 day** (the opposite of
+    Columns' plain-1/Shift-window convention, per the issue). A strip click
+    makes the clicked day the **start** of the new window (not a minimal
+    shift like Columns' `windowContaining`), since "the week begins where you
+    click" is the issue's whole point (a 19-day trip in three clicks). Global
+    ←/→ mirror the toolbar, Shift again meaning 1 day; skipped in a form
+    control or inside `TripStrip`.
+  - **The hour grid**: range = earliest start / latest end across every
+    block on the visible days, rounded outward to full hours, never narrower
+    than 08:00–20:00 (`computeHourRange`); row height = `availableHeight /
+    hourCount`, floored at 28px/hour — once that floor is hit the grid's
+    content height exceeds the viewport and `.grid-scroll` scrolls instead of
+    shrinking rows further (`computeRowHeight`). No hotel/car bands render in
+    the grid (those stay in `TripStrip` per the epic) — the header row is
+    just "Day 8" + "Mon, 23 Nov" per column, zone label on the first column.
+  - **Blocks**: each activity/transport is resolved to a destination-tz wall
+    time span (`WeekView.rawSpans`, via `TimeZoneService.inZone`) — an entry
+    without an end gets a synthetic 1h span and a dashed bottom edge. A span
+    crossing one or more destination-tz midnights is cut into per-day
+    segments by the pure, unit-tested `splitAcrossDays`
+    (week-layout.ts): the first segment runs to 24:00 with a
+    "continues to next day" arrow, continuation segments start at 00:00 with
+    a "continues from previous day" arrow, honouring the same "end at exactly
+    midnight doesn't count as crossing" rule `day-span.ts`'s `localDayKey`
+    uses elsewhere (`normalizeEndOfDay`). Same-day overlaps are laid out side
+    by side (never covering each other) by the pure, unit-tested `packLanes`
+    — a greedy interval-graph sweep that clusters only genuinely overlapping
+    blocks, so an unrelated later block never inflates an earlier cluster's
+    width. Each block shows a left colour stripe + light tint (the same
+    `activityColor`/`transportColor` helpers as the List/Columns), an icon,
+    the title (activity) or route (`FROM → TO`, transport), and the start
+    time once the block is tall enough to hold it. Car pickup/return
+    deadlines render directly on the grid as a thin coloured line with a
+    "Fetch by 08:00 · Rental Car" label at their time (not a pill, unlike
+    Columns) — they don't participate in lane packing. A now-line
+    (`--now` red, same token as the List/Columns) crosses today's column at
+    the current time when it falls inside the hour range.
+  - **Actions**: a block click opens the entry's details
+    (`TripActionsService.openEntry`); a car deadline click opens the car's
+    details. Clicking an **empty** hour slot computes the clicked hour from
+    the pointer's offset within the day column and calls
+    `TripActionsService.addActivity(trip, date, hour)` — `addActivity` grew
+    an optional `hour` parameter (defaults to the previous hard-coded 09:00
+    when omitted) purely to carry this prefill; every other caller
+    (Columns, the List) is unaffected.
+  - Verified with the dev server + chrome-devtools MCP against the
+    Herbsturlaub trip: 1440×900 and 3440×1440 (week 21–27 Nov, Day 6–12,
+    toolbar label "21 – 27 Nov · Day 6–12 · Okayama · Takamatsu · Kochi ·
+    Matsuyama · Kyoto Kawaramachi"), 1000×700 (5-day window after a strip
+    click); block click → details, an empty-slot click → "Add activity"
+    prefilled with the clicked day/hour (cancelled); prev/next/Shift and a
+    strip click moving the window's start day; a synthetic running trip
+    (Today enabled, initial window at today's week, Today jumps back); the
+    trip's one real midnight-crossing entry (the return flight, Day
+    19 → the following day) rendering with a trailing "continues" arrow at
+    the bottom of the grid, clipped cleanly at the trip's last day (no
+    virtual day beyond it — out of scope per the issue, which only asks for
+    the List's leading/trailing virtual days in Columns/Week's shared
+    `TripStrip`, not the hour grid itself); mobile at 390×844 confirmed
+    unchanged (forced to List, switcher absent).
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry

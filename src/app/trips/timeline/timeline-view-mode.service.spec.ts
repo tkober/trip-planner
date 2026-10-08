@@ -33,11 +33,11 @@ describe('TimelineViewModeService', () => {
     expect(service.mode()).toBe('list');
   });
 
-  it('list and columns are available (D3, #47)', () => {
+  it('list, columns and week are available (D4, #48)', () => {
     configure();
     const service = TestBed.inject(TimelineViewModeService);
 
-    expect(service.available.map((o) => o.mode)).toEqual(['list', 'columns']);
+    expect(service.available.map((o) => o.mode)).toEqual(['list', 'columns', 'week']);
   });
 
   it('persists a mode change and survives a new service instance', () => {
@@ -56,7 +56,7 @@ describe('TimelineViewModeService', () => {
     const storage = configure();
     const service = TestBed.inject(TimelineViewModeService);
 
-    service.setMode('week' as never);
+    service.setMode('map' as never);
     expect(service.mode()).toBe('list');
     expect(storage.getItem('trip-planner.timeline-view')).toBeNull();
   });

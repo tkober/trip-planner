@@ -424,10 +424,16 @@ export class TripActionsService {
 
   // --- Activity ------------------------------------------------------------
 
-  addActivity(trip: TripDto, date: string): void {
+  /**
+   * `hour` (0-23) prefills the time-of-day instead of the usual 09:00 default
+   * — used by the Week view (D4, #48) when a day's empty hour slot is
+   * clicked. Every other caller omits it and keeps the previous behaviour.
+   */
+  addActivity(trip: TripDto, date: string, hour?: number): void {
+    const h = hour === undefined ? '09' : String(Math.min(23, Math.max(0, hour))).padStart(2, '0');
     const data: ActivityDialogData = {
       defaultZone: trip.destinationTimeZone,
-      defaultDateTime: `${date}T09:00`,
+      defaultDateTime: `${date}T${h}:00`,
       newId: () => this.store.newId(),
     };
     this.dialog

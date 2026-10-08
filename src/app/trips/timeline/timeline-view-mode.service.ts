@@ -56,7 +56,8 @@ export class TimelineViewModeService {
 
   /** Options the segmented control actually renders — grows with D4/D6. */
   readonly available: readonly TimelineViewModeOption[] = ALL_MODES.filter(
-    (option) => option.mode === 'list' || option.mode === 'columns',
+    (option) =>
+      option.mode === 'list' || option.mode === 'columns' || option.mode === 'week',
   );
 
   readonly mode = signal<TimelineViewModeId>(this.readPersisted());
