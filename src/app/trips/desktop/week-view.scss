@@ -1,0 +1,278 @@
+// D4 (#48): Week view. Desktop only (mounted by TimelineHost only when
+// `EditModeService.isMobile()` is false), full-width content (see
+// TripPage.useFullWidthContent / .trip-content.full-width).
+
+:host {
+  display: block;
+}
+
+app-trip-strip {
+  display: block;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+}
+
+.range-label {
+  margin-left: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--app-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.places-label {
+  font-size: 0.85rem;
+  color: var(--app-ink-3);
+}
+
+$hour-rail-width: 56px;
+
+.week-area {
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--app-surface);
+}
+
+.week-header {
+  display: flex;
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface);
+}
+
+.hour-rail-spacer {
+  flex: 0 0 $hour-rail-width;
+}
+
+.day-header {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  border-left: 1px solid var(--app-line);
+
+  &.is-today {
+    background: color-mix(in srgb, var(--mat-sys-primary) 6%, white);
+  }
+}
+
+.day-num {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--mat-sys-primary);
+}
+
+.day-date {
+  font-size: 0.78rem;
+  color: var(--app-ink-2);
+}
+
+.day-zone {
+  font-size: 0.68rem;
+  color: var(--app-ink-3);
+}
+
+.grid-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.grid-inner {
+  position: relative;
+  display: flex;
+}
+
+.hour-rail {
+  flex: 0 0 $hour-rail-width;
+  position: relative;
+}
+
+.hour-mark {
+  position: absolute;
+  left: 0;
+  right: 6px;
+  text-align: right;
+  transform: translateY(-50%);
+  font-size: 0.68rem;
+  color: var(--app-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.day-col {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  border-left: 1px solid var(--app-line);
+  cursor: pointer;
+}
+
+.hour-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--app-line);
+}
+
+.now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--now);
+  z-index: 3;
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--now);
+  }
+}
+
+.deadline-line {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  height: 0;
+  border: none;
+  border-top: 2px solid var(--accent, var(--mat-sys-primary));
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 2;
+  text-align: left;
+
+  .deadline-label {
+    position: relative;
+    top: -0.7rem;
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--accent, var(--mat-sys-primary));
+    background: var(--app-surface);
+    padding: 0 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+}
+
+.week-block {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  border-left: 3px solid var(--accent, var(--mat-sys-primary));
+  background: color-mix(in srgb, var(--accent, var(--mat-sys-primary)) 14%, white);
+  border-radius: 4px;
+  padding: 0.15rem 0.35rem;
+  margin: 0 1px;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  &:hover {
+    filter: brightness(0.97);
+  }
+
+  &.no-end {
+    border-bottom: 2px dashed var(--accent, var(--mat-sys-primary));
+  }
+}
+
+// Short block (~1 hour row or less): the original single-row layout —
+// icon, ellipsized title, time, all inline.
+.block-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+// Taller block: icon + time pinned to the top, the title below — left aligned
+// at the top of the block (not vertically centred) and free to wrap onto
+// as many lines as `titleLines` (computed from the block's height) allows.
+.block-top {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.block-icon {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--accent, var(--mat-sys-primary));
+}
+
+.block-title {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--app-ink);
+  min-width: 0;
+
+  &.single-line {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &.wrap {
+    margin-top: 0.19rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    // Fed through a custom property: Angular's `[style.webkitLineClamp]`
+    // binding emits an unprefixed, invalid property name.
+    -webkit-line-clamp: var(--title-lines, 1);
+    line-clamp: var(--title-lines, 1);
+    overflow: hidden;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+  }
+}
+
+.block-time {
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  color: var(--app-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.continue-marker {
+  position: absolute;
+  font-size: 0.85rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--accent, var(--mat-sys-primary));
+
+  &.from-prev {
+    top: 1px;
+    right: 2px;
+  }
+
+  &.to-next {
+    bottom: 1px;
+    right: 2px;
+  }
+}
