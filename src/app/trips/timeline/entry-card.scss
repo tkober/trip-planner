@@ -216,9 +216,11 @@
 }
 
 // D6 (#50), Map view's list panel only (`showLocateHint`): a subtle
-// "No location" row, full width via the same flex-wrap trick as `.up-next-label`.
+// "No location" row, full width via the same flex-wrap trick as `.up-next-label`,
+// ordered after the right cluster so the type icon stays on the first row.
 .locate-hint {
   flex: 0 0 100%;
+  order: 1;
   display: flex;
   align-items: center;
   gap: 0.3rem;

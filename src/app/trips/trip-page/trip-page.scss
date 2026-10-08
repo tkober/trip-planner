@@ -220,6 +220,10 @@
   // bar's full width instead — not used yet, see TripPage.useFullWidthContent.
   &.full-width {
     max-width: none;
+    // Columns/Week/Map size themselves to the viewport bottom (each leaves a
+    // 1rem gap there), so the list's tall bottom padding would only make the
+    // page scroll.
+    padding-bottom: 0;
   }
 }
 

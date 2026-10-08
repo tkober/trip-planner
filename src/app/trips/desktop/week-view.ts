@@ -267,7 +267,7 @@ export class WeekView {
   updateHeight(): void {
     const el = this.gridAreaEl()?.nativeElement;
     if (!el) return;
-    const top = el.getBoundingClientRect().top;
+    const top = el.getBoundingClientRect().top + window.scrollY;
     const next = Math.max(200, Math.floor(window.innerHeight - top - 16));
     // Avoid writing an unchanged value every render (afterRender fires on
     // every CD pass) — keeps this a no-op once the layout has settled.

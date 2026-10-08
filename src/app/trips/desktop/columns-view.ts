@@ -187,8 +187,8 @@ export class ColumnsView {
   updateHeight(): void {
     const el = this.columnsAreaEl()?.nativeElement;
     if (!el) return;
-    const top = el.getBoundingClientRect().top;
-    this.columnsHeight.set(Math.max(240, Math.floor(window.innerHeight - top)));
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    this.columnsHeight.set(Math.max(240, Math.floor(window.innerHeight - top - 16)));
   }
 
   // --- Navigation ------------------------------------------------------------

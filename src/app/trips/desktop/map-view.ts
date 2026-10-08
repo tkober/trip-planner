@@ -150,6 +150,10 @@ export class MapView {
       if (!el) return;
       this.resizeObserver = new ResizeObserver(() => this.updateHeight());
       this.resizeObserver.observe(el);
+      // The strip above lays out its bars after this first render, which
+      // moves the row down — re-measure whenever it changes height too.
+      const strip = this.host.nativeElement.querySelector('app-trip-strip');
+      if (strip) this.resizeObserver.observe(strip);
       this.updateHeight();
     });
     this.destroyRef.onDestroy(() => this.resizeObserver?.disconnect());
@@ -393,6 +397,7 @@ export class MapView {
 
   private readonly mapRef = viewChild(GoogleMap);
 
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly mapRowEl = viewChild<ElementRef<HTMLElement>>('mapRow');
   private resizeObserver?: ResizeObserver;
   readonly rowHeight = signal(400);
@@ -400,8 +405,10 @@ export class MapView {
   updateHeight(): void {
     const el = this.mapRowEl()?.nativeElement;
     if (!el) return;
-    const top = el.getBoundingClientRect().top;
-    this.rowHeight.set(Math.max(240, Math.floor(window.innerHeight - top)));
+    // Document-relative, so a page that is already scrolled doesn't inflate
+    // the row (which would then keep the page scrollable).
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    this.rowHeight.set(Math.max(240, Math.floor(window.innerHeight - top - 16)));
   }
 
   private markerTitle(m: MapMarker): string {
