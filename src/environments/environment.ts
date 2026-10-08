@@ -21,7 +21,7 @@ const runtime: any =
 const backend =
   runtime.storageBackend === 'http' || runtime.storageBackend === 'indexeddb'
     ? runtime.storageBackend
-    : "indexeddb";
+    : "http";
 
 /** Normalize a runtime override (comma string or array) to a non-empty list. */
 const splitList = (value: unknown): string[] | undefined => {
@@ -45,7 +45,7 @@ export const environment = {
   /** Persistence backend: "indexeddb" (browser-local) or "http" (FastAPI). */
   storageBackend: backend,
   /** Base URL of the backend API when storageBackend === "http". */
-  apiBaseUrl: runtime.apiBaseUrl || "http://localhost:8000",
+  apiBaseUrl: runtime.apiBaseUrl || "http://127.0.0.1:8000",
   /** Selectable options for a train's "kind" field. */
   trainKinds: splitList(runtime.trainKinds) ?? ["Local train","Rapid","Limited express","Shinkansen"],
   /** Selectable options for a bus's "kind" field. */
