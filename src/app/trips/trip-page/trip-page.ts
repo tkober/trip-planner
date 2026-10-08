@@ -103,17 +103,14 @@ export class TripPage {
   });
 
   /** Desktop top bar's muted context line, e.g. "Starts in 39 days · 16 Nov –
-   * 4 Dec · Tokyo GMT+9" — the mobile context label plus the date range and
-   * destination zone, reusing the same helpers (`zoneLabel`'s " · " between
-   * city and offset is squashed to a space here to match the design's
-   * tighter "Tokyo GMT+9" wording). */
+   * 4 Dec 2026 · Tokyo · GMT+9" — the mobile context label plus the date
+   * range and destination zone. */
   readonly desktopContextLabel = computed(() => {
     const t = this.trip();
     if (!t) return '';
     const context = tripContextLabel(t, DateTime.now());
     const range = formatRange(t.startDate, t.endDate);
-    const zone = zoneLabel(t.destinationTimeZone).replace(' · ', ' ');
-    return `${context} · ${range} · ${zone}`;
+    return `${context} · ${range} · ${zoneLabel(t.destinationTimeZone)}`;
   });
 
   /** Opt-in for later desktop timeline views (Columns/Week/Map, D3/D4/D6)

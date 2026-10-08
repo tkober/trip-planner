@@ -352,7 +352,7 @@ Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
   on **desktop** (D1, #45) a full-width sticky **top bar** (64px, `--app-surface`,
   `--app-line` bottom border) replacing the old grey side panel — back arrow +
   trip title + a muted one-line context (`tripContextLabel` + the date range +
-  destination zone, e.g. "Starts in 39 days · 16 Nov – 4 Dec · Tokyo GMT+9") on
+  destination zone, e.g. "Starts in 39 days · 16 Nov – 4 Dec 2026 · Tokyo · GMT+9") on
   the left, the section tabs centred (text pills, the active one a soft-primary
   rounded pill — icon-only + `matTooltip` below ~1200px, where paddings also
   tighten and the context line truncates), then on the right the **view
