@@ -48,7 +48,7 @@
             <button
               type="button"
               class="stay-line"
-              [style.color]="day.stay.color || null"
+              [style.--stay-color]="day.stay.color || null"
               [disabled]="!day.stay.accommodation"
               (click)="day.stay.accommodation && openAccommodation(day.stay.accommodation)"
             >
