@@ -312,6 +312,22 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   - Purely presentational/interaction — no data model or TypeScript logic
     change beyond `TimelineNavService`'s marker registry and `TimelineView`'s
     toolbar computeds (`toolbarDays`, `currentDayLabel`, `todayEnabled`).
+- **Desktop header + view switcher (D1, #45)**, part of the #44 desktop-views
+  epic, desktop only (mobile unchanged): the trip shell's grey `side-panel` is
+  gone on desktop, replaced by a full-width sticky **top bar** — see the
+  `TripPage` bullet under "Architecture" above for the bar's layout and the
+  new `TimelineHost`/`TimelineViewModeService`. Only the **List** view exists
+  yet, rendering the unchanged `TimelineView`; the segmented view switcher
+  (List · Columns · Week · Map in the design) only ever shows the one
+  implemented segment. The List timeline and every other section keep
+  roughly their previous ~1000px content width, now centred under the bar
+  instead of sitting beside the old 260px panel. The R10 hotel/car lane
+  sticky names (`.stay-sticky`/`.car-sticky`) now clear the sticky bar via
+  `--app-bar-height` — the same CSS variable `TripPage` already measured for
+  the mobile sticky stack (via `ResizeObserver`), now also measured for the
+  desktop bar. Purely a shell/chrome change — no timeline data or behaviour
+  changed, and the plan export (PNG/PDF) is unaffected (it never renders
+  `TripPage`).
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
@@ -333,15 +349,39 @@ attachments, trip duplication, dark-mode toggle, undo.
 Routes ([src/app/app.routes.ts](src/app/app.routes.ts)):
 - `/trips` → [TripList](src/app/trips/trip-list/trip-list.ts) (dashboard).
 - `/trips/:id` → [TripPage](src/app/trips/trip-page/trip-page.ts) — the trip shell:
-  a fixed left **side panel** (back button, trip name + compact details, section
-  nav, trip-actions menu) plus a `<router-outlet>` for the active section. On
-  mobile the side panel is replaced outright by a **sticky app bar** (back,
-  title + a `tripContextLabel` subtitle, the R1 Read/Editing toggle, the same
-  trip-actions kebab menu) and a **fixed bottom nav** (Timeline / Overview /
-  Stays / Transport / a "More" `mat-menu` for Car rentals, Reservations, and
-  the remaining kebab items) — see "Responsive layout" below. It has
-  six child routes (deep-linkable), defaulting to `timeline`:
-  - `timeline` → [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid.
+  on **desktop** (D1, #45) a full-width sticky **top bar** (64px, `--app-surface`,
+  `--app-line` bottom border) replacing the old grey side panel — back arrow +
+  trip title + a muted one-line context (`tripContextLabel` + the date range +
+  destination zone, e.g. "Starts in 39 days · 16 Nov – 4 Dec · Tokyo GMT+9") on
+  the left, the section tabs centred (text pills, the active one a soft-primary
+  rounded pill — icon-only + `matTooltip` below ~1200px, where paddings also
+  tighten and the context line truncates), then on the right the **view
+  switcher** (timeline route only, see below) and the same trip-actions kebab.
+  On **mobile** the side panel is replaced outright by a **sticky app bar**
+  (back, title + a `tripContextLabel` subtitle, the R1 Read/Editing toggle, the
+  same trip-actions kebab menu) and a **fixed bottom nav** (Timeline / Overview
+  / Stays / Transport / a "More" `mat-menu` for Car rentals, Reservations, and
+  the remaining kebab items) — see "Responsive layout" below. Either way a
+  `<router-outlet>` hosts the active section, centred under the bar at the
+  side panel's old ~1000px content width (`.trip-content`, desktop only; an
+  opt-in `.full-width` class exists for later desktop timeline views that want
+  the bar's full width — not used yet). It has six child routes
+  (deep-linkable), defaulting to `timeline`:
+  - `timeline` → [TimelineHost](src/app/trips/timeline/timeline-host.ts) — a
+    thin `@switch` over `TimelineViewModeService.mode()` that renders the
+    active desktop view; only `'list'` exists yet (D1, #45), so it always
+    renders [TimelineView](src/app/trips/timeline/timeline.ts) — the day grid,
+    unchanged. D3/D4/D6 add a `@case` each for Columns/Week/Map. The desktop
+    **view switcher** (segmented control in the TripPage top bar, icon + label
+    from 1700px wide, icon-only + `matTooltip` below that) reads/writes
+    [TimelineViewModeService](src/app/trips/timeline/timeline-view-mode.service.ts)
+    — a `mode` signal persisted per device in `localStorage`
+    (`trip-planner.timeline-view`), injectable-storage pattern like
+    `EditModeService`; `available` (currently just List) gates both the
+    switcher's segments and the host's `@switch`, so an unimplemented view
+    simply doesn't appear (not shown disabled), and an unknown/unavailable
+    stored value falls back to `'list'`. The switcher itself only renders on
+    the Timeline route and never on mobile.
   - `overview` → [OverviewView](src/app/trips/views/overview-view.ts) — trip facts
     (dates, length, zones, description), a **Trip cost** section (total / paid /
     outstanding in EUR + per-category breakdown + the per-currency exchange-rate

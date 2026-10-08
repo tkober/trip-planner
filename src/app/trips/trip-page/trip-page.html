@@ -1,39 +1,64 @@
 @if (trip(); as t) {
   <div class="trip-layout">
-    <aside class="side-panel">
-      <div class="panel-top">
-        <button matIconButton (click)="back()" aria-label="Back to trips">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-        <button
-          matIconButton
-          [matMenuTriggerFor]="tripMenu"
-          aria-label="Trip actions"
-        >
-          <mat-icon>more_vert</mat-icon>
-        </button>
-      </div>
+    <!-- Desktop-only top bar, replacing the old grey side panel (D1, #45):
+         back + title/context on the left, the section tabs in the middle,
+         the (timeline-only) view switcher + trip kebab on the right. Hidden
+         outright on mobile, which renders its own app bar below instead. -->
+    @if (!editMode.isMobile()) {
+      <header #desktopBar class="desktop-bar">
+        <div class="bar-left">
+          <button matIconButton (click)="back()" aria-label="Back to trips">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <div class="bar-title-group">
+            <h1 class="bar-title">{{ t.title }}</h1>
+            <p class="bar-context">{{ desktopContextLabel() }}</p>
+          </div>
+        </div>
 
-      <div class="trip-meta">
-        <h1>{{ t.title }}</h1>
-        <p class="dates">{{ formatRange(t.startDate, t.endDate) }}</p>
-        <p class="length">{{ lengthLabel() }}</p>
-        <p class="zone">{{ zoneLabel(t.destinationTimeZone) }}</p>
-      </div>
+        <nav class="bar-tabs">
+          @for (item of nav; track item.path) {
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              class="tab"
+              [matTooltip]="item.label"
+              matTooltipPosition="below"
+            >
+              <mat-icon>{{ item.icon }}</mat-icon>
+              <span class="tab-label">{{ item.label }}</span>
+            </a>
+          }
+        </nav>
 
-      <nav class="section-nav">
-        @for (item of nav; track item.path) {
-          <a
-            [routerLink]="item.path"
-            routerLinkActive="active"
-            class="nav-item"
+        <div class="bar-right">
+          @if (onTimelineRoute()) {
+            <div class="view-switcher" role="group" aria-label="Timeline view">
+              @for (opt of viewMode.available; track opt.mode) {
+                <button
+                  type="button"
+                  class="segment"
+                  [class.active]="viewMode.mode() === opt.mode"
+                  [matTooltip]="opt.label"
+                  matTooltipPosition="below"
+                  (click)="viewMode.setMode(opt.mode)"
+                >
+                  <mat-icon>{{ opt.icon }}</mat-icon>
+                  <span class="segment-label">{{ opt.label }}</span>
+                </button>
+              }
+            </div>
+          }
+          <button
+            matIconButton
+            [matMenuTriggerFor]="tripMenu"
+            aria-label="Trip actions"
           >
-            <mat-icon>{{ item.icon }}</mat-icon>
-            <span>{{ item.label }}</span>
-          </a>
-        }
-      </nav>
-    </aside>
+            <mat-icon>more_vert</mat-icon>
+          </button>
+        </div>
+      </header>
+    }
 
     <!-- Mobile-only app bar, replacing the side panel (see trip-page.scss). -->
     @if (editMode.isMobile()) {
@@ -112,7 +137,7 @@
       </button>
     </mat-menu>
 
-    <main class="trip-content">
+    <main class="trip-content" [class.full-width]="useFullWidthContent()">
       <router-outlet />
     </main>
 

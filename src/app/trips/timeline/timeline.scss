@@ -142,11 +142,15 @@
 
   .stay-sticky {
     position: sticky;
-    top: 1rem;
+    // D1 (#45): the desktop top bar is sticky too now, so this must clear it
+    // rather than the old bare 1rem — `--app-bar-height` is set by TripPage
+    // (0px when it isn't rendered, e.g. in the plan export, where this stays
+    // harmlessly non-sticky anyway, see the comment on `.stay-label` above).
+    top: calc(var(--app-bar-height, 0px) + 1rem);
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-height: calc(100vh - 2rem);
+    max-height: calc(100vh - var(--app-bar-height, 0px) - 2rem);
     overflow: hidden;
     padding: 0.5rem 0;
   }
