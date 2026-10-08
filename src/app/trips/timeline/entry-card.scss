@@ -215,6 +215,37 @@
   margin-bottom: 0.1rem;
 }
 
+// D6 (#50), Map view's list panel only (`showLocateHint`): a subtle
+// "No location" row, full width via the same flex-wrap trick as `.up-next-label`,
+// ordered after the right cluster so the type icon stays on the first row.
+.locate-hint {
+  flex: 0 0 100%;
+  order: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.1rem;
+  font-size: 0.74rem;
+  color: var(--app-ink-3);
+
+  mat-icon {
+    font-size: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .locate-link {
+    padding: 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    font-size: inherit;
+    color: var(--mat-sys-primary);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
 // Mobile edit-mode only (see EntryCard.showHandle) — CDK drags from here
 // instead of the whole card, so a scroll gesture over the card body no longer
 // starts a drag by accident.

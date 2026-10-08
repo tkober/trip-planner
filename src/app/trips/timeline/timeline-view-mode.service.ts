@@ -1,4 +1,5 @@
 import { Injectable, InjectionToken, inject, signal } from '@angular/core';
+import { GOOGLE_MAPS_CONFIGURED } from '../../shared/geo/maps-configured';
 
 /** The four desktop timeline views from the design (#44). */
 export type TimelineViewModeId = 'list' | 'columns' | 'week' | 'map';
@@ -54,10 +55,16 @@ export const TIMELINE_VIEW_MODE_STORAGE =
 export class TimelineViewModeService {
   private readonly storage = inject(TIMELINE_VIEW_MODE_STORAGE);
 
-  /** Options the segmented control actually renders — grows with D4/D6. */
+  /** Options the segmented control actually renders. `'map'` (D6, #50) only
+   * appears when a Google Maps key is configured — with none, the Map view
+   * never shows, and a previously-persisted 'map' falls back to 'list' (see
+   * `readPersisted` below). */
   readonly available: readonly TimelineViewModeOption[] = ALL_MODES.filter(
     (option) =>
-      option.mode === 'list' || option.mode === 'columns' || option.mode === 'week',
+      option.mode === 'list' ||
+      option.mode === 'columns' ||
+      option.mode === 'week' ||
+      (option.mode === 'map' && GOOGLE_MAPS_CONFIGURED),
   );
 
   readonly mode = signal<TimelineViewModeId>(this.readPersisted());

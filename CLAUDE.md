@@ -614,6 +614,102 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
     entities as untyped `dict`s, so the new `geo`/`pickupGeo`/`dropoffGeo`/
     `fromGeo`/`toGeo` fields (and schema v9 generally) round-trip through it
     unmodified; it has no test suite to run.
+- **Desktop Map view (D6, #50)**, part of the #44 epic, desktop only, needs
+  D5: the view switcher now offers **List · Columns · Week · Map** —
+  `'map'` is added to `TimelineViewModeService.available` only when
+  `GOOGLE_MAPS_CONFIGURED` (D5), so without a key Map never appears and a
+  previously-persisted `'map'` choice falls back to `'list'` (the usual
+  `isAvailable` check, no special-casing needed). `TimelineHost` renders
+  [MapView](src/app/trips/desktop/map-view.ts) for `'map'` inside an
+  `@defer (on immediate)` block so it (and the `@angular/google-maps` bits it
+  uses) stays out of the initial bundle exactly like the D5 pieces, reachable
+  only once a key is configured — initial bundle unchanged at **546.28 kB
+  raw / 137.92 kB transfer** (same as D5's number); `map-view` is its own
+  **18.07 kB / 5.49 kB** lazy chunk.
+  - **Layout**: `TripStrip` (D2) over the full content width, same as
+    Columns/Week; below it a fixed **560–640px** (`clamp`) list panel on the
+    left — the selected day(s) in the mobile/Columns day-block style (day
+    header, `dayStayInfo` stay line, `EntryCard`, car pills), scrolling on
+    its own — and the Google map filling the rest of the width and the full
+    remaining height on the right.
+  - **Selection**: one day by default (today's column when the trip is
+    running, else Day 1 — `initialSelectedDate`); a plain strip click selects
+    just that day, Shift+click extends the range from the last plain click
+    (the inclusive span between the two in trip order — `selectionRange`).
+    `TripStrip` grew a second output, `dayClickModified` (`{ date, shiftKey
+    }`), alongside the existing `dayClick` purely for this — Columns/Week
+    keep using the original `dayClick` unchanged. Scrolling the list panel
+    updates the active day to whichever day's header sits at/just above the
+    panel's own top (`activeDayFromScroll`, a day-header position registry
+    read on the panel's `scroll` event) — also the "strong" day on the map
+    (the rest of the selection renders faded).
+  - **The draw plan is pure and unit-tested**,
+    [map-layout.ts](src/app/trips/desktop/map-layout.ts)
+    (`buildDayMapContent`/`buildMapContent`): per selected day, a running
+    per-day marker number (shared by activities and transport, in time
+    order) — a located activity gets a numbered marker in its `activityColor`;
+    a transport leg with both `fromGeo`/`toGeo` gets a geodesic line in its
+    `transportColor` (dashed for flights, via a Maps JS `icons` line-symbol —
+    polylines have no native dash style) instead of a marker; a leg with only
+    one located endpoint gets a single numbered marker there; the night's
+    covering accommodation gets a bed marker in its own stay colour, only
+    when that accommodation itself has a `geo`. `countWithoutLocation` sums
+    entries with no location at all (neither transport endpoint, no activity
+    `geo`) across the selection, for the counter chip below.
+  - **Rendering is imperative, not `<map-advanced-marker>`/`<map-polyline>`
+    template children**: `MapView.drawOverlays()` places/removes
+    `google.maps.marker.AdvancedMarkerElement`/`google.maps.Polyline`
+    objects by hand on every content change, each one in its own try/catch.
+    This followed from testing with a deliberately fake key (no real key
+    available in this environment): under an invalid key the map instance is
+    left in a degraded state (Google shows its own "Oops!" overlay), and
+    `AdvancedMarkerElement`'s constructor itself throws there — letting
+    Angular's own marker/polyline *directives* bind to that broken map made
+    the thrown error recur on every selection change and stall the app's
+    (zoneless) change detection app-wide, not just the map. Managing the
+    overlays directly keeps each failure local to that one marker/line, so
+    the rest of the app — the list panel, the strip's own selection
+    highlight, every other view — stays fully interactive regardless. A
+    separate, much cheaper effect handles hover/click linking by mutating
+    the already-placed marker `content` `HTMLElement`s directly (border/scale
+    toggle, no Google Maps API calls), so it can't hit the same failure mode.
+  - **Linking**: hovering an `EntryCard` in the list (a `.entry-wrap`
+    wrapper's `mouseenter`/`mouseleave`) sets a shared `hoverEntryId`, which
+    the effect above reflects onto that entry's marker(s); a marker's own
+    `content` div mirrors the same events back. Clicking a marker scrolls the
+    list to that entry (`scrollIntoView` + a brief highlight,
+    `clickedEntryId`); double-clicking it opens the entry's details
+    (`TripActionsService.openEntry`).
+  - **Entries without a location**: `EntryCard` grew an opt-in
+    `showLocateHint` input (default `false`, so List/Columns/Week render
+    exactly as before) and a `hasLocation`/`locate` output — set only by
+    MapView's list panel, it adds a subtle "No location · Locate" row that
+    opens the entry's edit dialog (where D5's "Locate" field lives). The
+    map's top-left **counter chip** ("N entries without location") opens the
+    existing trip-wide `TripActionsService.locatePlaces()` dialog.
+  - **Style**: light, restrained Map ID styling via the existing
+    `GoogleMapsLoaderService.mapId` (no footage-archive dark look); no Routes
+    API — every transport line is a straight geodesic line, per the issue.
+  - Verified with the dev server + chrome-devtools MCP and a **deliberately
+    fake key** (`googleMapsApiKey: 'fake-key-for-layout'` — no real key
+    available in this environment): Map appears in the switcher; layout at
+    1440×900 and 3440×1440 (Day 8, Shikoku with the rental car, and Day 1,
+    arrival with flights — both given synthetic `GeoPoint`s on the imported
+    Herbsturlaub trip for the located-entry/line code paths); Shift+click a
+    strip range (Day 8–10); list scroll → active day; the "No location"
+    hints + counter chip (Day 1's flights are deliberately left unlocated);
+    hover linking (`hoverEntryId` verified via the component); no console
+    errors across repeated day/range switches — Google's own "Oops! Something
+    went wrong" overlay shows (expected, invalid key) but never throws into
+    the app. Polyline creation under the fake key was confirmed directly (3
+    polylines for Day 8); `AdvancedMarkerElement` construction itself throws
+    under an invalid key (confirmed directly too) — each is individually
+    try/caught, so this is a cosmetic limitation of testing without a real
+    key, not a behaviour difference a real key would also show. Also verified
+    with **no key**: Map absent from the switcher, a stored `'map'` choice
+    falls back to `'list'`, no console errors. Tiles/pins rendering for real
+    and the "zoomed/panned, animated" feel of `fitBounds` on a day change
+    need a real Google Maps key to confirm visually.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry

@@ -87,6 +87,9 @@ export class TripStrip {
 
   /** A day cell was clicked (or focus moved there via the keyboard). */
   readonly dayClick = output<string>();
+  /** Same click, plus whether Shift was held — D6 (#50) Map view's range
+   * selection; unused by Columns/Week, which only listen to `dayClick`. */
+  readonly dayClickModified = output<{ date: string; shiftKey: boolean }>();
 
   private readonly model = computed(() => buildTripDayModel(this.trip(), this.tz));
   readonly days = computed(() => this.model().days);
@@ -167,12 +170,13 @@ export class TripStrip {
     return `Day ${day.index}, ${day.weekday} ${day.dayOfMonth} ${day.month}`;
   }
 
-  onCellClick(date: string): void {
+  onCellClick(date: string, event?: MouseEvent): void {
     if (this.suppressNextClick) {
       this.suppressNextClick = false;
       return;
     }
     this.dayClick.emit(date);
+    this.dayClickModified.emit({ date, shiftKey: !!event?.shiftKey });
   }
 
   /** Keyboard arrow: move focus + selection to the previous/next real day. */
