@@ -34,11 +34,14 @@
 
 .car-sticky {
   position: sticky;
-  top: 1rem;
+  // D1 (#45): clear the sticky desktop top bar the same way the hotel lane's
+  // `.stay-sticky` does (see timeline.scss) — `--app-bar-height` is 0px when
+  // it isn't rendered (e.g. the plan export).
+  top: calc(var(--app-bar-height, 0px) + 1rem);
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100vh - var(--app-bar-height, 0px) - 2rem);
   overflow: hidden;
   padding: 0.5rem 0;
 }
