@@ -13,7 +13,7 @@ import {
   TripDto,
 } from '../models/trip.model';
 import { TripStore } from './trip-store';
-import { TimeZoneService } from './time-zone.service';
+import { TimeZoneService, TripDay } from './time-zone.service';
 import { ImportExportService } from './import-export.service';
 import { ExchangeRateService } from './exchange-rate.service';
 import { ExportService } from './export.service';
@@ -24,6 +24,12 @@ import {
 import { anonymizeTrip } from '../shared/export/anonymize';
 import { tripToMarkdown } from '../shared/export/trip-markdown';
 import { downloadBlob, slugify } from '../shared/download';
+import { formatDay } from '../shared/format/date-format';
+import {
+  MoveDayDialog,
+  MoveDayDialogData,
+} from '../trips/timeline/move-day-dialog';
+import { deltaDaysBetween, shiftZonedTime } from '../trips/timeline/entry-move';
 import {
   TripFormDialog,
   TripFormResult,
@@ -538,6 +544,71 @@ export class TripActionsService {
   deleteEntry(trip: TripDto, entry: TimelineEntry): void {
     if (entry.activity) void this.deleteActivity(trip, entry.activity);
     else if (entry.transport) void this.deleteTransport(trip, entry.transport);
+  }
+
+  /**
+   * "Move to another day…" (the List's kebab, and Columns, D3 #47): pick a
+   * day from `days` (the caller's own real days, destination tz) and shift
+   * the entry there, keeping its time of day. Extracted out of `TimelineView`
+   * (which also calls this for its drag-drop) so Columns can reuse the same
+   * dialog/confirm/shift flow instead of its own copy.
+   */
+  moveEntry(trip: TripDto, entry: TimelineEntry, days: TripDay[]): void {
+    const data: MoveDayDialogData = {
+      days,
+      currentDate: this.tz.dayKeyLocal(entry.start),
+    };
+    this.dialog
+      .open(MoveDayDialog, { data })
+      .afterClosed()
+      .subscribe(async (targetDate?: string) => {
+        if (targetDate) await this.moveEntryToDay(trip, entry, targetDate);
+      });
+  }
+
+  /**
+   * Shift an activity/transport entry to `targetDate` (its destination-tz
+   * day), keeping its time of day. Shared by drag-drop
+   * (`TimelineView.onEntryDropped`) and `moveEntry` above.
+   */
+  async moveEntryToDay(
+    trip: TripDto,
+    entry: TimelineEntry,
+    targetDate: string,
+  ): Promise<void> {
+    const currentKey = this.tz.dayKeyLocal(entry.start);
+    const deltaDays = deltaDaysBetween(currentKey, targetDate);
+    if (deltaDays === 0) return;
+
+    const label =
+      entry.activity?.title ??
+      (entry.transport ? transportLabel(entry.transport) : undefined) ??
+      'item';
+    const confirmed = await this.confirm({
+      title: 'Move item?',
+      message: `Move "${label}" to ${formatDay(targetDate)}? Its time of day is kept.`,
+      confirmLabel: 'Move',
+    });
+    if (!confirmed) return;
+
+    if (entry.activity) {
+      await this.store.upsertActivity(trip, {
+        ...entry.activity,
+        start: shiftZonedTime(entry.activity.start, deltaDays),
+        end: entry.activity.end
+          ? shiftZonedTime(entry.activity.end, deltaDays)
+          : undefined,
+      });
+    } else if (entry.transport) {
+      await this.store.upsertTransport(trip, {
+        ...entry.transport,
+        start: shiftZonedTime(entry.transport.start, deltaDays),
+        end: entry.transport.end
+          ? shiftZonedTime(entry.transport.end, deltaDays)
+          : undefined,
+      });
+    }
+    this.snack.open('Item moved', undefined, { duration: 2000 });
   }
 
   // --- Helpers -------------------------------------------------------------

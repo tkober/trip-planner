@@ -44,19 +44,19 @@ export const TIMELINE_VIEW_MODE_STORAGE =
  * device in `localStorage` (key `trip-planner.timeline-view`), following the
  * same injectable-storage pattern as `EditModeService`.
  *
- * Only `'list'` is wired up in this issue — `available` is the single gate
- * both the segmented control (`TripPage`) and `TimelineHost`'s `@switch` read,
- * so the remaining options simply don't exist yet (not shown disabled); D3,
- * D4 and D6 add them one at a time. A stored value that is unknown or not
- * (yet) available falls back to `'list'`.
+ * `available` is the single gate both the segmented control (`TripPage`) and
+ * `TimelineHost`'s `@switch` read, so a mode that isn't wired up yet simply
+ * doesn't exist (not shown disabled). D3 (#47) adds `'columns'`; D4/D6 add
+ * `'week'`/`'map'` the same way. A stored value that is unknown or not (yet)
+ * available falls back to `'list'`.
  */
 @Injectable({ providedIn: 'root' })
 export class TimelineViewModeService {
   private readonly storage = inject(TIMELINE_VIEW_MODE_STORAGE);
 
-  /** Options the segmented control actually renders — grows with D3/D4/D6. */
+  /** Options the segmented control actually renders — grows with D4/D6. */
   readonly available: readonly TimelineViewModeOption[] = ALL_MODES.filter(
-    (option) => option.mode === 'list',
+    (option) => option.mode === 'list' || option.mode === 'columns',
   );
 
   readonly mode = signal<TimelineViewModeId>(this.readPersisted());
