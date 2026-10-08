@@ -241,6 +241,10 @@ $hour-rail-width: 56px;
     margin-top: 0.19rem;
     display: -webkit-box;
     -webkit-box-orient: vertical;
+    // Fed through a custom property: Angular's `[style.webkitLineClamp]`
+    // binding emits an unprefixed, invalid property name.
+    -webkit-line-clamp: var(--title-lines, 1);
+    line-clamp: var(--title-lines, 1);
     overflow: hidden;
     white-space: normal;
     overflow-wrap: anywhere;
