@@ -328,6 +328,64 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   desktop bar. Purely a shell/chrome change — no timeline data or behaviour
   changed, and the plan export (PNG/PDF) is unaffected (it never renders
   `TripPage`).
+- **Desktop day model + trip strip (D2, #46)**, part of the #44 epic, not yet
+  mounted anywhere (D3 wires it into Columns first): a pure per-day helper,
+  [trip-day-model.ts](src/app/trips/desktop/trip-day-model.ts)
+  `buildTripDayModel(trip, tz)`, reads the same ingredients `TimelineView.layout()`
+  does — car pickup/return deadlines, the `dayStayInfo` line, the boundary-leg
+  detection for the virtual departure/return day — as a fresh, independent read
+  of `TripDto` + `TimeZoneService`; the List view's own straddle/split/continues
+  machinery is untouched. Unlike the List's floating straddle cards, a
+  day-crossing entry here stays on its **start day** and gets an `arrivesLabel`
+  ("arrives Day 14") instead — kept simple since nothing here needs to render a
+  card spanning the boundary. Per real day it returns the destination-tz date,
+  weekday/day-of-month/month, the time-sorted `items` (entries + car deadlines),
+  and the `dayStayInfo` `stay`/`car` lines (so `stay.accommodation`/
+  `car.reservation` are the covering stay/rental); it also reports the leading/
+  trailing virtual-day info (home-tz weekday/date + city) when the trip has an
+  international boundary flight at either edge. Thoroughly unit-tested
+  ([trip-day-model.spec.ts](src/app/trips/desktop/trip-day-model.spec.ts)): a
+  Herbsturlaub-like trip, a hotel-switch day, a one-day car rental, a flight
+  crossing the date line, and an empty day.
+  [TripStrip](src/app/trips/desktop/trip-strip.ts) is the horizontal strip
+  Columns/Week/Map (D3-D6) will share directly under the top bar — per the epic,
+  it's the **only** place stays/cars render as bars for the new desktop views.
+  Built on `buildTripDayModel`: each day cell shows weekday/date/"Day N" (the
+  last `primary`-coloured when selected) plus up to 6 type-coloured dots for
+  that day's entries; continuous accommodation bars run from the middle of
+  check-in day to the middle of check-out day (the List's half-day-handoff
+  convention), white name, ellipsis + `matTooltip` when too short; car bars sit
+  below, thinner, a light tint of the car colour with a border, icon + company.
+  A selected range (`selected` input, a list of date keys) renders as one
+  continuous soft-primary (`#dfe6f6`) fill with no gaps, via a dedicated
+  absolutely-positioned layer painted with `z-index: -1` *inside* `.track`'s own
+  stacking context (`.track { z-index: 0 }`) — without that, a plain
+  `position: relative` ancestor doesn't form a stacking context, so a
+  negative-z-index child escapes to the page's root context and ends up hidden
+  behind unrelated content instead of just behind its own siblings. Today gets a
+  small now-colour mark under the date. Clicking a day emits `dayClick`;
+  clicking a stay/car bar opens its details via the same
+  `TripActionsService.openAccommodation`/`openCarReservation` the List uses.
+  **Sizing**, the core of the issue: each day is
+  `clamp(56px, available-width / day-count, 160px)`, read via `ResizeObserver`
+  on the scroll viewport — when the trip fits, cells stretch up to 160px and the
+  strip centers; otherwise it scrolls horizontally with native trackpad swipe
+  left alone, a vertical wheel gesture translated to `scrollLeft` only while
+  overflowing, mouse drag-to-scroll (pointer events, a done element goes to the
+  pointer; the eventual click is explicitly suppressed when the drag moved more
+  than a few px, since a plain `click` fires regardless of distance), arrow
+  buttons + a soft edge fade shown only when there's more that direction,
+  `scroll-behavior: smooth`, `scroll-snap-type: x proximity` on day boundaries,
+  no visible scrollbar, and keyboard ←/→ on a focused day button that moves
+  focus to the next/previous day, scrolls it into view, and emits `dayClick` for
+  it. A selected range outside the viewport auto-scrolls into view (centered
+  when it fits, else flush) whenever `selected`/the day list/the day width
+  change. Manually verified (dev server + chrome-devtools MCP, no automated
+  component test yet — D3 adds one once the strip has a real mount): the
+  Herbsturlaub trip at 1440×900 and 3440×1440 and a 45-day synthetic trip
+  (extra stays/activities/a car rental appended) at 1440×900 (scrolled to the
+  middle, both arrows visible) and 900×700, plus scripted wheel/drag/keyboard/
+  arrow-button interactions and the stay/car bar click→details wiring.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
