@@ -54,7 +54,7 @@
             [class.today]="day.date === today()"
             [attr.aria-label]="dayAriaLabel(day)"
             [attr.aria-pressed]="isSelected(day.date)"
-            (click)="onCellClick(day.date)"
+            (click)="onCellClick(day.date, $event)"
             (keydown.arrowleft)="onArrowKey($event, -1, i)"
             (keydown.arrowright)="onArrowKey($event, 1, i)"
           >

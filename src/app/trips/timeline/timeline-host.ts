@@ -3,6 +3,7 @@ import { TimelineView } from './timeline';
 import { TimelineViewModeService } from './timeline-view-mode.service';
 import { ColumnsView } from '../desktop/columns-view';
 import { WeekView } from '../desktop/week-view';
+import { MapView } from '../desktop/map-view';
 import { EditModeService } from '../../services/edit-mode.service';
 
 /**
@@ -17,7 +18,7 @@ import { EditModeService } from '../../services/edit-mode.service';
  */
 @Component({
   selector: 'app-timeline-host',
-  imports: [TimelineView, ColumnsView, WeekView],
+  imports: [TimelineView, ColumnsView, WeekView, MapView],
   template: `
     @switch (editMode.isMobile() ? 'list' : viewMode.mode()) {
       @case ('columns') {
@@ -25,6 +26,16 @@ import { EditModeService } from '../../services/edit-mode.service';
       }
       @case ('week') {
         <app-week-view [id]="id()" />
+      }
+      @case ('map') {
+        <!-- D6 (#50): only reachable when GOOGLE_MAPS_CONFIGURED gated
+             TimelineViewModeService.available to include 'map', so this
+             @defer is the sole place MapView (and the @angular/google-maps
+             bits it pulls in) gets requested — keeps it out of the initial
+             bundle with no key configured. -->
+        @defer (on immediate) {
+          <app-map-view [id]="id()" />
+        }
       }
       @case ('list') {
         <app-timeline-view [id]="id()" />
