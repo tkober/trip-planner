@@ -73,6 +73,11 @@ const MIGRATIONS: Record<number, TripMigration> = {
   // v8 adds the optional trip `exchangeRatesUpdatedAt` (when each rate was last
   // set). Absent on older documents, so this is an identity upgrade.
   [8]: (old) => old,
+  // v9 adds the optional `GeoPoint` fields (lat/lng/placeId/label): `geo` on
+  // accommodations/activities, `pickupGeo`/`dropoffGeo` on car reservations,
+  // `fromGeo`/`toGeo` on transport (#49). Absent on older documents, so this
+  // is an identity upgrade.
+  [9]: (old) => old,
 };
 
 /**

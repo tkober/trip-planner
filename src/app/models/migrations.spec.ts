@@ -85,6 +85,29 @@ describe('migrateTrip', () => {
     expect(result.carReservations[0].remarks).toBe('price: ¥12,000');
   });
 
+  it('is a no-op identity upgrade from pre-v9 (adds GeoPoint fields, #49)', () => {
+    const result = migrateTrip(
+      baseTrip({
+        schemaVersion: 8,
+        accommodations: [{ id: 'a1', name: 'Hotel', checkInDate: '2026-04-01', checkOutDate: '2026-04-02' }],
+      }),
+    );
+    expect(result.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(result.accommodations[0].geo).toBeUndefined();
+  });
+
+  it('round-trips an existing geo point unchanged', () => {
+    const geo = { lat: 35.6895, lng: 139.6917, placeId: 'abc', label: 'Tokyo' };
+    const result = migrateTrip(
+      baseTrip({
+        accommodations: [
+          { id: 'a1', name: 'Hotel', checkInDate: '2026-04-01', checkOutDate: '2026-04-02', geo },
+        ],
+      }),
+    );
+    expect(result.accommodations[0].geo).toEqual(geo);
+  });
+
   it('rejects a document from a newer app version', () => {
     expect(() => migrateTrip(baseTrip({ schemaVersion: SCHEMA_VERSION + 1 }))).toThrow(
       /newer version/,

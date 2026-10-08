@@ -129,6 +129,11 @@
       <button mat-menu-item (click)="addAccommodation()">
         <mat-icon>hotel</mat-icon><span>Add accommodation</span>
       </button>
+      @if (mapsConfigured) {
+        <button mat-menu-item (click)="locatePlaces()">
+          <mat-icon>pin_drop</mat-icon><span>Locate places…</span>
+        </button>
+      }
       <button mat-menu-item (click)="exportPlan()">
         <mat-icon>ios_share</mat-icon><span>Export plan…</span>
       </button>
@@ -183,6 +188,11 @@
           <mat-icon>confirmation_number</mat-icon><span>Reservations</span>
         </a>
         <mat-divider></mat-divider>
+        @if (mapsConfigured) {
+          <button mat-menu-item (click)="locatePlaces()">
+            <mat-icon>pin_drop</mat-icon><span>Locate places…</span>
+          </button>
+        }
         <button mat-menu-item (click)="exportPlan()">
           <mat-icon>ios_share</mat-icon><span>Export plan…</span>
         </button>

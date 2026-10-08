@@ -32,6 +32,7 @@ import { ExportHost } from '../export/export-host';
 import { DayStrip } from '../timeline/day-strip';
 import { formatRange, zoneLabel } from '../../shared/format/date-format';
 import { tripContextLabel } from '../../shared/format/trip-context';
+import { GOOGLE_MAPS_CONFIGURED } from '../../shared/geo/maps-configured';
 
 interface NavItem {
   path: string;
@@ -197,5 +198,13 @@ export class TripPage {
   exportPlan(): void {
     const trip = this.trip();
     if (trip) this.actions.exportPlan(trip);
+  }
+
+  /** Hides the "Locate places…" menu item entirely when no Maps key is set (#49). */
+  readonly mapsConfigured = GOOGLE_MAPS_CONFIGURED;
+
+  locatePlaces(): void {
+    const trip = this.trip();
+    if (trip) void this.actions.locatePlaces(trip);
   }
 }

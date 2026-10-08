@@ -9,6 +9,7 @@
  *
  * Supported keys: defaultDepartureTimeZone, defaultTripTimeZone,
  * storageBackend ("indexeddb" | "http"), apiBaseUrl, trainKinds, busKinds,
- * currencies (the last three as comma-separated strings or arrays).
+ * currencies (the last three as comma-separated strings or arrays),
+ * googleMapsApiKey, googleMapsMapId (D5, #49 — empty = maps disabled).
  */
 window.__TRIP_PLANNER_ENV__ = {};

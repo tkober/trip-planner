@@ -26,6 +26,7 @@ function sampleTrip(): TripDto {
         color: '#1565c0',
         checkInDate: '2026-04-01',
         checkOutDate: '2026-04-05',
+        geo: { lat: 35.6895, lng: 139.6917, label: '1-2-3 Chiyoda, Tokyo' },
       },
     ],
     carReservations: [
@@ -34,6 +35,8 @@ function sampleTrip(): TripDto {
         name: 'Toyota Aqua',
         pickupLocation: 'Naha Airport',
         dropoffLocation: 'Naha City',
+        pickupGeo: { lat: 26.1958, lng: 127.6458 },
+        dropoffGeo: { lat: 26.2124, lng: 127.6809 },
         pickupDate: '2026-04-05',
         dropoffDate: '2026-04-08',
         pickupGoogleMapsUrl: 'https://maps.example/pick',
@@ -57,6 +60,7 @@ function sampleTrip(): TripDto {
         googleMapsUrl: 'https://maps.example/teamlab',
         bookingUrl: 'https://booking.example/teamlab',
         notes: 'Booked timeslot 10:00',
+        geo: { lat: 35.6267, lng: 139.7987 },
       },
     ],
     transport: [
@@ -67,6 +71,8 @@ function sampleTrip(): TripDto {
         end: { dateTime: '2026-04-02T06:00', zone: 'Asia/Tokyo' },
         fromLocation: 'Berlin',
         toLocation: 'Tokyo',
+        fromGeo: { lat: 52.3667, lng: 13.5033 },
+        toGeo: { lat: 35.5494, lng: 139.7798 },
         airline: 'ANA',
         flightNumber: 'NH216',
         bookingUrl: 'https://booking.example/flight',
@@ -142,6 +148,29 @@ describe('anonymizeTrip', () => {
     expect(out.activities[0].googleMapsUrl).toBeUndefined();
     // Short name (timeline label) is kept.
     expect(out.accommodations[0].name).toBe('Hotel Tokyo');
+    // The accommodation's precise coordinates go with its address (#49).
+    expect(out.accommodations[0].geo).toBeUndefined();
+  });
+
+  it('strips geo coordinates (#49) under locations, not addresses, for activities/transport/car', () => {
+    const out = anonymizeTrip(sampleTrip(), { ...NONE, locations: true });
+    expect(out.activities[0].geo).toBeUndefined();
+    expect(out.carReservations[0].pickupGeo).toBeUndefined();
+    expect(out.carReservations[0].dropoffGeo).toBeUndefined();
+    expect(out.transport[0].fromGeo).toBeUndefined();
+    expect(out.transport[0].toGeo).toBeUndefined();
+  });
+
+  it('keeps every geo field when neither addresses nor locations is selected', () => {
+    const out = anonymizeTrip(sampleTrip(), { ...NONE, notes: true, costs: true });
+    expect(out.accommodations[0].geo).toEqual({
+      lat: 35.6895,
+      lng: 139.6917,
+      label: '1-2-3 Chiyoda, Tokyo',
+    });
+    expect(out.activities[0].geo).toEqual({ lat: 35.6267, lng: 139.7987 });
+    expect(out.carReservations[0].pickupGeo).toBeDefined();
+    expect(out.transport[0].fromGeo).toBeDefined();
   });
 
   it('keeps the booking reference under every category', () => {

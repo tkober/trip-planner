@@ -6,7 +6,22 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
+
+/**
+ * A geocoded point (D5, #49). Optional on the entities/endpoints below —
+ * absent means "not located yet". `placeId`/`label` are whatever the
+ * Geocoding API returned (or were cleared by a manual drag), kept only for
+ * display — nothing re-derives from them.
+ */
+export interface GeoPoint {
+  lat: number;
+  lng: number;
+  /** Google Place ID of the geocoded result, when it came from a geocode. */
+  placeId?: string;
+  /** Formatted address / label shown next to the pin. */
+  label?: string;
+}
 
 /**
  * Structured cost / payment information shared by every priced entity
@@ -49,6 +64,8 @@ export interface AccommodationDto extends CostInfo {
   fullName?: string;
   address?: string;
   googleMapsUrl?: string;
+  /** Geocoded (or manually placed) coordinates for the address, if any. */
+  geo?: GeoPoint;
   bookingUrl?: string;
   remarks?: string;
   /** Explicit accent colour (hex). When unset a default tint applies. */
@@ -86,6 +103,9 @@ export interface CarReservationDto extends CostInfo {
   dropoffTime?: string;
   pickupGoogleMapsUrl?: string;
   dropoffGoogleMapsUrl?: string;
+  /** Geocoded (or manually placed) coordinates for the pickup/return locations. */
+  pickupGeo?: GeoPoint;
+  dropoffGeo?: GeoPoint;
   /** Free link for the pickup station (e.g. branch page), separate from the map. */
   pickupStationUrl?: string;
   /** Free link for the return station (e.g. branch page), separate from the map. */
@@ -106,6 +126,8 @@ export interface ActivityDto extends CostInfo {
   end?: ZonedTime;
   location?: string;
   googleMapsUrl?: string;
+  /** Geocoded (or manually placed) coordinates for the location/title. */
+  geo?: GeoPoint;
   bookingUrl?: string;
   notes?: string;
   /** Explicit accent colour (hex). When unset the activity default applies. */
@@ -126,6 +148,9 @@ export interface TransportDto extends CostInfo {
   /** City / generic place of departure and arrival (e.g. "Tokyo"). */
   fromLocation?: string;
   toLocation?: string;
+  /** Geocoded (or manually placed) coordinates for the departure/arrival endpoint. */
+  fromGeo?: GeoPoint;
+  toGeo?: GeoPoint;
   // Flight-specific (only meaningful when mode === 'flight'):
   airline?: string;
   flightNumber?: string;
