@@ -113,10 +113,10 @@ export class TripPage {
     return `${context} · ${range} · ${zoneLabel(t.destinationTimeZone)}`;
   });
 
-  /** Opt-in for later desktop timeline views (Columns/Week/Map, D3/D4/D6)
-   * that want the bar's full width instead of the centered ~1000px content
-   * column — see `.trip-content.full-width` in trip-page.scss. Not used yet:
-   * `TimelineViewModeService.available` only has `'list'` in this issue. */
+  /** Opt-in for the desktop timeline views that want the bar's full width
+   * instead of the centered ~1000px content column — see
+   * `.trip-content.full-width` in trip-page.scss. Columns (D3, #47) is the
+   * first to use it; Week/Map (D4/D6) will too. */
   readonly useFullWidthContent = computed(
     () => this.onTimelineRoute() && this.viewMode.mode() !== 'list',
   );

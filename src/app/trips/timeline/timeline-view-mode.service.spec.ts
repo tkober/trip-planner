@@ -33,11 +33,11 @@ describe('TimelineViewModeService', () => {
     expect(service.mode()).toBe('list');
   });
 
-  it('only list is available in this issue', () => {
+  it('list and columns are available (D3, #47)', () => {
     configure();
     const service = TestBed.inject(TimelineViewModeService);
 
-    expect(service.available.map((o) => o.mode)).toEqual(['list']);
+    expect(service.available.map((o) => o.mode)).toEqual(['list', 'columns']);
   });
 
   it('persists a mode change and survives a new service instance', () => {
@@ -56,9 +56,18 @@ describe('TimelineViewModeService', () => {
     const storage = configure();
     const service = TestBed.inject(TimelineViewModeService);
 
-    service.setMode('columns' as never);
+    service.setMode('week' as never);
     expect(service.mode()).toBe('list');
     expect(storage.getItem('trip-planner.timeline-view')).toBeNull();
+  });
+
+  it('switches to columns and persists it', () => {
+    const storage = configure();
+    const service = TestBed.inject(TimelineViewModeService);
+
+    service.setMode('columns');
+    expect(service.mode()).toBe('columns');
+    expect(storage.getItem('trip-planner.timeline-view')).toBe('columns');
   });
 
   it('falls back to list for an unavailable value found in storage', () => {

@@ -316,10 +316,10 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   epic, desktop only (mobile unchanged): the trip shell's grey `side-panel` is
   gone on desktop, replaced by a full-width sticky **top bar** — see the
   `TripPage` bullet under "Architecture" above for the bar's layout and the
-  new `TimelineHost`/`TimelineViewModeService`. Only the **List** view exists
-  yet, rendering the unchanged `TimelineView`; the segmented view switcher
-  (List · Columns · Week · Map in the design) only ever shows the one
-  implemented segment. The List timeline and every other section keep
+  new `TimelineHost`/`TimelineViewModeService`. **List** and, since D3 (#47),
+  **Columns** exist; the segmented view switcher (List · Columns · Week · Map
+  in the design) only ever shows the implemented segments — see the D3 bullet
+  below for Columns. The List timeline and every other section keep
   roughly their previous ~1000px content width, now centred under the bar
   instead of sitting beside the old 260px panel. The R10 hotel/car lane
   sticky names (`.stay-sticky`/`.car-sticky`) now clear the sticky bar via
@@ -386,6 +386,74 @@ Data lives in the browser (IndexedDB); plans can be exported/imported as JSON.
   (extra stays/activities/a car rental appended) at 1440×900 (scrolled to the
   middle, both arrows visible) and 900×700, plus scripted wheel/drag/keyboard/
   arrow-button interactions and the stay/car bar click→details wiring.
+- **Desktop Columns view (D3, #47)**, part of the #44 epic, desktop only: the
+  view switcher (D1) now offers **List · Columns**
+  (`TimelineViewModeService.available`), and `TimelineHost` renders
+  [ColumnsView](src/app/trips/desktop/columns-view.ts) for the `'columns'`
+  mode — forced back to `'list'` on mobile regardless of a persisted desktop
+  choice (`TimelineHost` reads `EditModeService.isMobile()`), since the
+  switcher never renders there. `TripStrip` (D2) sits at the top at the full
+  content width (`TripPage.useFullWidthContent`); below it a slim toolbar
+  (prev/next, Shift = a whole window, a "Today" button enabled only while the
+  trip is running, and the visible range label "22 – 24 Nov · Day 7–9") and
+  then **N day columns** side by side, each built on `buildTripDayModel` (D2)
+  and reusing `EntryCard` unmodified from the List.
+  - **Column count and the visible window** (first visible day + column
+    count) are pure, unit-tested helpers in
+    [columns-layout.ts](src/app/trips/desktop/columns-layout.ts):
+    `computeColumnCount` (`clamp(2, floor(width / 380), 7)`, read via
+    `ResizeObserver`), `clampWindowStart`/`navigateWindow` (prev/next,
+    keeping the window inside the trip's bounds), `windowContaining` (a strip
+    click moves the window the minimal amount needed to make that day
+    visible, not re-centered) and `initialWindowStart` (today's column when
+    the trip is running, else Day 1). On resize the first visible day is
+    kept (just reclamped to the new column count) rather than recentering.
+    Global ←/→ (Shift = a window) mirror the toolbar buttons, skipped while
+    focus is in a form control or inside `TripStrip` (which handles its own
+    arrow keys to move focus between day cells).
+  - **A column** reads like the mobile view: "Day 8" (indigo, bold) + "Mon,
+    23 Nov", the destination zone label only on the window's first column
+    (it never changes between real days within one trip), the `dayStayInfo`
+    stay line with a bed icon — plus, on a check-in day, the accommodation's
+    full name appended ("Takamatsu → Kochi · Dormy Inn Kochi") — and **no**
+    coloured hotel/car box (per the epic, those bars live only in
+    `TripStrip`). Car pickup/return deadlines render as the same pill
+    concept as the List's `.car-pill` (a small, desktop-only duplicate in
+    columns-view.scss rather than an extraction, since the List's version
+    also carries R5 mobile-only overrides this view never needs),
+    interleaved by time with the entry cards exactly as `buildTripDayModel`
+    sorts them. A day-crossing entry stays on its start column with the
+    model's `arrivesLabel` ("arrives Day 14") underneath. An empty day shows
+    "Nothing planned". Each column scrolls independently
+    (`overflow-y: auto`, `flex-shrink: 0` on every row so a tall day scrolls
+    instead of squashing its cards) to fill the remaining viewport height
+    under the sticky top bar, measured via `getBoundingClientRect()` on
+    resize/window-resize rather than CSS alone (the page's own padding made a
+    pure `calc()` fragile).
+  - **Actions** reuse `TripActionsService` directly — `openEntry`/
+    `editEntry`/`deleteEntry`/`addActivity`/`addTransport`/
+    `openAccommodation`/`openCarReservation` were already shared; **`moveEntry`**
+    (the "Move to another day…" dialog + the confirm/shift/snackbar flow) was
+    extracted out of `TimelineView` into `TripActionsService.moveEntry`/
+    `moveEntryToDay` so Columns and the List now share one implementation —
+    `TimelineView`'s own drag-drop (`onEntryDropped`) and kebab (`moveEntry`)
+    just call it, with no change to the List's behaviour. The entry kebab
+    (reused from `EntryCard`, always in the DOM) and the per-column "Add"
+    button reveal on hover/focus via scoped CSS
+    (`app-entry-card ::ng-deep .entry-menu`), not a template change. Drag &
+    drop between columns is explicitly out of scope (follow-up, per the
+    issue).
+  - Verified with the dev server + chrome-devtools MCP against the
+    Herbsturlaub trip: 1440×900 (Day 7–9, 3 columns) and 3440×1440 (Day 7–13,
+    7 columns, keeping the first visible day across the resize) and 960×700
+    (2 columns); Day 1 (inbound flight correct on the first real day); an
+    empty day; a synthetic running trip (Today enabled, initial window at
+    today, Today button jumps back); details/edit/add/move/delete exercised
+    through the real dialogs; mobile at 390×844 confirmed unchanged (forced
+    to List, switcher absent). Caught and fixed in the process: car-deadline
+    pills were silently collapsing to ~8px tall at narrower widths because
+    flex children of `.col-body` shrink by default — fixed with
+    `flex-shrink: 0`.
 - GitHub Pages deploy workflow.
 
 **Not yet done / ideas:** same-day manual reordering (currently time-sorted), per-entry
