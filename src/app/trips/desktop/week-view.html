@@ -48,7 +48,7 @@
       <div class="grid-inner" [style.height.px]="gridContentHeight()">
         <div class="hour-rail">
           @for (h of hourMarks(); track h) {
-            <div class="hour-mark" [style.top.px]="(h - hourRange().startHour) * rowHeight()">
+            <div class="hour-mark" [style.top.px]="hourOffset(h)">
               {{ formatHour(h) }}
             </div>
           }
@@ -57,7 +57,7 @@
         @for (day of visibleDays(); track day.date) {
           <div class="day-col" (click)="onSlotClick($event, day.date)">
             @for (h of hourMarks(); track h) {
-              <div class="hour-line" [style.top.px]="(h - hourRange().startHour) * rowHeight()"></div>
+              <div class="hour-line" [style.top.px]="hourOffset(h)"></div>
             }
 
             @if (day.date === todayKey() && nowTop() !== undefined) {
@@ -81,6 +81,7 @@
                 type="button"
                 class="week-block"
                 [class.no-end]="block.noEnd"
+                [class.compact]="block.compact"
                 [style.top.px]="block.top"
                 [style.height.px]="block.height"
                 [style.left.%]="block.leftPct"
@@ -91,13 +92,25 @@
                 @if (block.continuesFromPrev) {
                   <mat-icon class="continue-marker from-prev">subdirectory_arrow_right</mat-icon>
                 }
-                <div class="block-body">
-                  <mat-icon class="block-icon">{{ block.icon }}</mat-icon>
-                  <span class="block-title">{{ block.title }}</span>
-                  @if (block.showTime && block.timeLabel) {
-                    <span class="block-time">{{ block.timeLabel }}</span>
-                  }
-                </div>
+                @if (block.compact) {
+                  <div class="block-row">
+                    <mat-icon class="block-icon">{{ block.icon }}</mat-icon>
+                    <span class="block-title single-line">{{ block.title }}</span>
+                    @if (block.showTime && block.timeLabel) {
+                      <span class="block-time">{{ block.timeLabel }}</span>
+                    }
+                  </div>
+                } @else {
+                  <div class="block-top">
+                    <mat-icon class="block-icon">{{ block.icon }}</mat-icon>
+                    @if (block.showTime && block.timeLabel) {
+                      <span class="block-time">{{ block.timeLabel }}</span>
+                    }
+                  </div>
+                  <div class="block-title wrap" [style.webkitLineClamp]="block.titleLines">
+                    {{ block.title }}
+                  </div>
+                }
                 @if (block.continuesToNext) {
                   <mat-icon class="continue-marker to-next">south</mat-icon>
                 }

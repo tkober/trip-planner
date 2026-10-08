@@ -3,6 +3,7 @@ import {
   DestroyRef,
   ElementRef,
   afterNextRender,
+  afterRenderEffect,
   computed,
   effect,
   inject,
@@ -67,6 +68,10 @@ interface WeekBlock {
   title: string;
   timeLabel: string;
   showTime: boolean;
+  /** True for a block ~1 hour row tall or shorter: single-line ellipsis title. */
+  compact: boolean;
+  /** For a non-compact block: how many lines the wrapped title may use (fits the block's height). */
+  titleLines: number;
   noEnd: boolean;
   continuesFromPrev: boolean;
   continuesToNext: boolean;
@@ -94,6 +99,24 @@ interface RawSpan {
 }
 
 const MIN_BLOCK_HEIGHT_FOR_TIME = 30;
+
+/** Top/bottom breathing room inside the hour grid so the first/last hour
+ * label (vertically centred on its gridline via `translateY(-50%)`) isn't
+ * clipped by the scroll container's edge. */
+const GRID_VERTICAL_PADDING = 10;
+
+// --- Block title layout (review fix: tall/narrow blocks were truncating and
+// vertically centering their title instead of wrapping it top-down) --------
+/** A block at/under ~1 hour row keeps the old single-row icon+title+time layout. */
+const COMPACT_HEIGHT_FACTOR = 1.15;
+/** Reserved height (px) for the icon+time row atop a non-compact block. */
+const BLOCK_TOP_ROW_HEIGHT = 16;
+/** Vertical padding (px) the `.week-block` CSS applies (top + bottom). */
+const BLOCK_VERTICAL_PADDING = 6;
+/** Gap (px) between the top row and the wrapped title. */
+const TITLE_MARGIN_TOP = 3;
+/** Line height (px) of the wrapped title text (0.74rem @ ~1.25 line-height). */
+const TITLE_LINE_HEIGHT = 15;
 
 /**
  * Desktop D4 (#48): the "Week" timeline view — an hour-grid week calendar
@@ -159,7 +182,7 @@ export class WeekView {
 
   // --- Window size + visible window ----------------------------------------
 
-  private readonly gridAreaEl = viewChild.required<ElementRef<HTMLElement>>('gridArea');
+  private readonly gridAreaEl = viewChild<ElementRef<HTMLElement>>('gridArea');
   private readonly availableWidth = signal(0);
   private resizeObserver?: ResizeObserver;
 
@@ -203,16 +226,25 @@ export class WeekView {
 
   constructor() {
     afterNextRender(() => {
-      const el = this.gridAreaEl().nativeElement;
+      const el = this.gridAreaEl()?.nativeElement;
+      if (!el) return;
       this.resizeObserver = new ResizeObserver(() => {
         this.availableWidth.set(el.clientWidth);
-        this.updateHeight();
       });
       this.resizeObserver.observe(el);
       this.availableWidth.set(el.clientWidth);
-      this.updateHeight();
     });
     this.destroyRef.onDestroy(() => this.resizeObserver?.disconnect());
+
+    // Re-measure the available height on every render (not just once / on
+    // window resize): the strip and the day-header row above the grid can
+    // change height after our first paint (fonts loading, the strip's own
+    // async bar layout, a toolbar label wrapping differently), and a stale
+    // measurement from before that settled was exactly what let the grid run
+    // past the viewport bottom. `afterRenderEffect`'s 'read' phase runs after
+    // every change-detection pass for as long as this component is alive, so
+    // the measurement always reflects the DOM as currently laid out.
+    afterRenderEffect({ read: () => this.updateHeight() });
 
     // Initial window, once: today's position when the trip is running, else Day 1.
     effect(() => {
@@ -236,7 +268,10 @@ export class WeekView {
     const el = this.gridAreaEl()?.nativeElement;
     if (!el) return;
     const top = el.getBoundingClientRect().top;
-    this.gridAvailableHeight.set(Math.max(200, Math.floor(window.innerHeight - top - 16)));
+    const next = Math.max(200, Math.floor(window.innerHeight - top - 16));
+    // Avoid writing an unchanged value every render (afterRender fires on
+    // every CD pass) — keeps this a no-op once the layout has settled.
+    if (next !== this.gridAvailableHeight()) this.gridAvailableHeight.set(next);
   }
 
   // --- Navigation: prev/next shift by the window size, Shift = 1 day --------
@@ -345,15 +380,27 @@ export class WeekView {
     return Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i);
   });
 
-  readonly rowHeight = computed(() => computeRowHeight(this.hourCount(), this.gridAvailableHeight()));
-  readonly gridContentHeight = computed(() => this.rowHeight() * this.hourCount());
+  readonly rowHeight = computed(() =>
+    computeRowHeight(
+      this.hourCount(),
+      Math.max(0, this.gridAvailableHeight() - GRID_VERTICAL_PADDING * 2),
+    ),
+  );
+  readonly gridContentHeight = computed(
+    () => this.rowHeight() * this.hourCount() + GRID_VERTICAL_PADDING * 2,
+  );
 
   formatHour(h: number): string {
     return `${String(h % 24).padStart(2, '0')}:00`;
   }
 
+  /** Pixel offset for a given hour-of-day mark/gridline, incl. the top padding. */
+  hourOffset(hour: number): number {
+    return GRID_VERTICAL_PADDING + (hour - this.hourRange().startHour) * this.rowHeight();
+  }
+
   private minutesToTop(minutes: number): number {
-    return ((minutes / 60) - this.hourRange().startHour) * this.rowHeight();
+    return GRID_VERTICAL_PADDING + (minutes / 60 - this.hourRange().startHour) * this.rowHeight();
   }
 
   /** Lane-packed, positioned blocks for one visible day. */
@@ -369,6 +416,16 @@ export class WeekView {
       const widthPct = 100 / placement.lanes;
       const top = this.minutesToTop(s.startMin);
       const height = Math.max(this.rowHeight() / 2, this.minutesToTop(s.endMin) - top);
+      const compact = height <= this.rowHeight() * COMPACT_HEIGHT_FACTOR;
+      const titleLines = compact
+        ? 1
+        : Math.max(
+            1,
+            Math.floor(
+              (height - BLOCK_VERTICAL_PADDING - BLOCK_TOP_ROW_HEIGHT - TITLE_MARGIN_TOP) /
+                TITLE_LINE_HEIGHT,
+            ),
+          );
       return {
         key: id,
         entry,
@@ -382,6 +439,8 @@ export class WeekView {
         title: this.entryTitle(entry),
         timeLabel: this.timeLabel(s.span, s.date, s.startMin),
         showTime: height >= MIN_BLOCK_HEIGHT_FOR_TIME,
+        compact,
+        titleLines,
         noEnd: s.span.noEnd,
         continuesFromPrev: s.continuesFromPrev,
         continuesToNext: s.continuesToNext,
@@ -475,7 +534,7 @@ export class WeekView {
   onSlotClick(event: MouseEvent, date: string): void {
     const target = event.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
-    const y = event.clientY - rect.top;
+    const y = event.clientY - rect.top - GRID_VERTICAL_PADDING;
     const hour = this.hourRange().startHour + Math.floor(y / this.rowHeight());
     const trip = this.trip();
     if (trip) this.actions.addActivity(trip, date, Math.min(23, Math.max(0, hour)));
