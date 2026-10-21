@@ -138,8 +138,9 @@ export function reservationStatusLabel(
 
 /**
  * Summary counts for the Reservations view's lead line, e.g.
- * "1 of 5 booked · 1 bookable now · 3 not open yet". Departed windows are
- * excluded from every bucket — the line is about what's left to do.
+ * "1 of 5 booked · 1 bookable now · 3 not open yet". `booked` counts every
+ * booked leg, departed or not, so the lead stays true after the trip; the
+ * other two buckets only count legs that still need booking.
  */
 export interface ReservationSummary {
   /** Total reservable legs, departed or not (the "of N" in the lead). */
@@ -153,39 +154,28 @@ export function reservationSummary(
   windows: ReservationWindow[],
   now: DateTime = DateTime.now(),
 ): ReservationSummary {
-  let booked = 0;
-  let bookableNow = 0;
-  let notOpenYet = 0;
-  for (const window of windows) {
-    switch (reservationStatus(window, now)) {
-      case 'booked':
-        booked++;
-        break;
-      case 'open':
-        bookableNow++;
-        break;
-      case 'upcoming':
-        notOpenYet++;
-        break;
-      // 'departed' is not counted in any bucket.
-    }
-  }
-  return { total: windows.length, booked, bookableNow, notOpenYet };
+  const statuses = windows.map((w) => reservationStatus(w, now));
+  return {
+    total: windows.length,
+    booked: windows.filter((w) => w.transport.booked).length,
+    bookableNow: statuses.filter((s) => s === 'open').length,
+    notOpenYet: statuses.filter((s) => s === 'upcoming').length,
+  };
 }
 
 /**
- * "1 of 5 booked · 1 bookable now · 3 not open yet" — zero parts are omitted,
- * except the leading "x of y booked" count, which always shows. Returns
- * undefined when there is nothing to summarize.
+ * ["1 of 5 booked", "1 bookable now", "3 not open yet"] — zero parts are
+ * omitted, except the leading "x of y booked" count, which always shows (the
+ * view sets it in bold). Undefined when there is nothing to summarize.
  */
-export function reservationSummaryLine(
+export function reservationSummaryParts(
   summary: ReservationSummary,
-): string | undefined {
+): string[] | undefined {
   if (summary.total === 0) return undefined;
   const parts = [`${summary.booked} of ${summary.total} booked`];
   if (summary.bookableNow > 0) parts.push(`${summary.bookableNow} bookable now`);
   if (summary.notOpenYet > 0) parts.push(`${summary.notOpenYet} not open yet`);
-  return parts.join(' · ');
+  return parts;
 }
 
 /** Windows whose reminder is still useful: not booked, not departed. */

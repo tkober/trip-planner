@@ -1049,9 +1049,10 @@ Reservations ([src/app/shared/reservation/reservation.ts](src/app/shared/reserva
   its window has opened yet. `reservationStatusLabel` adds the `'Booked'` case
   alongside "Bookable now" / "Booking opens in N days" / "Departed".
 - `reservationSummary` buckets a trip's windows into `{ total, booked, bookableNow,
-  notOpenYet }` (departed windows count toward none of them), and
-  `reservationSummaryLine` formats "1 of 5 booked · 1 bookable now · 3 not open yet"
-  — the "x of y booked" lead always shows, the other two parts drop when zero. The
+  notOpenYet }` (`booked` counts every booked leg, departed or not, so the lead
+  stays true after the trip; the other two only count legs still to book), and
+  `reservationSummaryParts` returns ["1 of 5 booked", "1 bookable now", "3 not open
+  yet"] — the "x of y booked" lead always shows, the other two parts drop when zero. The
   Reservations view (`ReservationsView`) renders it under the `.rule` paragraph, lead
   bold per the mockup.
 - `remindableWindows` filters out booked *and* departed windows — "All reminders

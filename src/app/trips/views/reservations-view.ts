@@ -13,7 +13,7 @@ import {
   ReservationWindow,
   reservationStatus,
   reservationStatusLabel,
-  reservationSummaryLine,
+  reservationSummaryParts,
   reservationSummary,
   reservationWindows,
   SMART_EX_URL,
@@ -103,9 +103,9 @@ export class ReservationsView {
    */
   readonly summary = computed<{ lead: string; rest?: string } | undefined>(
     () => {
-      const line = reservationSummaryLine(reservationSummary(this.windows()));
-      if (!line) return undefined;
-      const [lead, ...rest] = line.split(' · ');
+      const parts = reservationSummaryParts(reservationSummary(this.windows()));
+      if (!parts) return undefined;
+      const [lead, ...rest] = parts;
       return { lead, rest: rest.length ? rest.join(' · ') : undefined };
     },
   );

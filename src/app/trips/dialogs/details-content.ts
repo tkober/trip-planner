@@ -13,6 +13,7 @@ import { environment } from '../../../environments/environment';
 import {
   isReservable,
   reservationOpensAt,
+  reservationStatus,
   reservationStatusLabel,
   ReservationWindow,
   SMART_EX_URL,
@@ -292,9 +293,10 @@ export class DetailsContent {
     return this.data().transport?.booked ? 'Booked' : '';
   });
 
-  readonly isBookedStatus = computed<boolean>(
-    () => this.reservationStatusLabel() === 'Booked',
-  );
+  readonly isBookedStatus = computed<boolean>(() => {
+    const r = this.reservation();
+    return r ? reservationStatus(r) === 'booked' : !!this.data().transport?.booked;
+  });
 
   private readonly timetableUrl = computed<string | undefined>(() => {
     const t = this.data().transport;

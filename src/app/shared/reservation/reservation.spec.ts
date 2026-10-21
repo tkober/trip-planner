@@ -8,7 +8,7 @@ import {
   reservationStatus,
   reservationStatusLabel,
   reservationSummary,
-  reservationSummaryLine,
+  reservationSummaryParts,
   reservationWindows,
   timetableSearchUrl,
 } from './reservation';
@@ -222,7 +222,7 @@ describe('reservationStatus / daysUntilOpening', () => {
   });
 });
 
-describe('reservationSummary / reservationSummaryLine', () => {
+describe('reservationSummary / reservationSummaryParts', () => {
   const at = (iso: string) => DateTime.fromISO(iso, { zone: 'Asia/Tokyo' });
   const windowFor = (
     id: string,
@@ -235,27 +235,28 @@ describe('reservationSummary / reservationSummaryLine', () => {
     opensAt: { dateTime: opensAt, zone: 'Asia/Tokyo' },
   });
 
-  it('buckets booked / bookable now / not open yet, excluding departed', () => {
+  it('buckets booked / bookable now / not open yet; departed only counts when booked', () => {
     const windows = [
       windowFor('booked', '2026-10-01T10:00', '2026-11-01T06:00', { booked: true }),
       windowFor('open', '2026-10-01T10:00', '2026-11-21T06:00'),
       windowFor('upcoming', '2026-12-01T10:00', '2026-12-21T06:00'),
       windowFor('departed', '2026-01-01T10:00', '2026-01-02T06:00'),
+      windowFor('departed-booked', '2026-01-01T10:00', '2026-01-02T06:00', { booked: true }),
     ];
     const now = at('2026-10-21T10:00');
     const summary = reservationSummary(windows, now);
-    expect(summary).toEqual({ total: 4, booked: 1, bookableNow: 1, notOpenYet: 1 });
+    expect(summary).toEqual({ total: 5, booked: 2, bookableNow: 1, notOpenYet: 1 });
   });
 
   it('formats the lead line, omitting zero parts but keeping the "x of y booked" lead', () => {
     expect(
-      reservationSummaryLine({ total: 5, booked: 1, bookableNow: 1, notOpenYet: 3 }),
-    ).toBe('1 of 5 booked · 1 bookable now · 3 not open yet');
+      reservationSummaryParts({ total: 5, booked: 1, bookableNow: 1, notOpenYet: 3 }),
+    ).toEqual(['1 of 5 booked', '1 bookable now', '3 not open yet']);
     expect(
-      reservationSummaryLine({ total: 2, booked: 2, bookableNow: 0, notOpenYet: 0 }),
-    ).toBe('2 of 2 booked');
+      reservationSummaryParts({ total: 2, booked: 2, bookableNow: 0, notOpenYet: 0 }),
+    ).toEqual(['2 of 2 booked']);
     expect(
-      reservationSummaryLine({ total: 0, booked: 0, bookableNow: 0, notOpenYet: 0 }),
+      reservationSummaryParts({ total: 0, booked: 0, bookableNow: 0, notOpenYet: 0 }),
     ).toBeUndefined();
   });
 });
