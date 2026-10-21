@@ -66,8 +66,11 @@ const MODE_ICON: Record<TransportMode, string> = {
               }
             </div>
           </div>
-          @if (details().length) {
+          @if (booked() || details().length) {
             <div class="chips">
+              @if (booked()) {
+                <span class="chip booked"><mat-icon>check_circle</mat-icon>Booked</span>
+              }
               @for (line of details(); track $index) {
                 <span class="chip">{{ line }}</span>
               }
@@ -262,6 +265,9 @@ export class EntryCard {
         return [];
     }
   });
+
+  /** #58: a first "Booked" chip, for any booked transport mode. */
+  readonly booked = computed(() => !!this.entry().transport?.booked);
 
   /**
    * Start/end time in the destination tz (the timeline's primary reference),

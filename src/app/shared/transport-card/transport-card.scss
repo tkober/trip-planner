@@ -43,6 +43,10 @@
   @include card.detail-chip;
 }
 
+.chip.booked {
+  @include card.booked-chip;
+}
+
 .right-cluster {
   flex-shrink: 0;
   display: flex;

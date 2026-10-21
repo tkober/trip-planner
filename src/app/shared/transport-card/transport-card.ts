@@ -70,6 +70,8 @@ export class TransportCard {
     () => this.role() ?? MODE_LABEL[this.transport().mode],
   );
   readonly accent = computed(() => transportColor(this.transport()));
+  /** #58: shows a "Booked" chip first in the chip row, for any mode. */
+  readonly booked = computed(() => !!this.transport().booked);
 
   readonly from = computed(() => transportFrom(this.transport()));
   readonly to = computed(() => transportTo(this.transport()));

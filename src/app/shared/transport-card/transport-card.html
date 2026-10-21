@@ -61,8 +61,11 @@
       }
     </div>
 
-    @if (details().length) {
+    @if (booked() || details().length) {
       <div class="chips">
+        @if (booked()) {
+          <span class="chip booked"><mat-icon>check_circle</mat-icon>Booked</span>
+        }
         @for (line of details(); track $index) {
           <span class="chip">{{ line }}</span>
         }
