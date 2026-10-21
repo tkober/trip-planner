@@ -6,7 +6,7 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 /**
  * A geocoded point (D5, #49). Optional on the entities/endpoints below —
@@ -181,6 +181,8 @@ export interface TransportDto extends CostInfo {
   bookingUrl?: string;
   /** Booking / confirmation number (often there is no booking link). */
   bookingReference?: string;
+  /** Whether this leg/seat is actually booked — distinct from `alreadyPaid` (#58). */
+  booked?: boolean;
   notes?: string;
   /** Explicit accent colour (hex). When unset the mode's default applies. */
   color?: string;
