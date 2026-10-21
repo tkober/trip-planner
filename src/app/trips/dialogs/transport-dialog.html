@@ -155,11 +155,6 @@
 
     <hr class="divider" />
 
-    <mat-form-field class="full-width">
-      <mat-label>Booking link (optional)</mat-label>
-      <input matInput type="url" [ngModel]="bookingUrl()" (ngModelChange)="bookingUrl.set($event)" name="booking" />
-    </mat-form-field>
-
     <div class="leg-head">
       <p class="section-label">Booking</p>
       <mat-checkbox [ngModel]="booked()" (ngModelChange)="booked.set($event)" name="booked">
@@ -170,6 +165,30 @@
     <mat-form-field class="full-width">
       <mat-label>Booking reference (optional)</mat-label>
       <input matInput [ngModel]="bookingReference()" (ngModelChange)="onBookingReferenceChange($event)" name="bookingRef" placeholder="e.g. confirmation number" />
+    </mat-form-field>
+
+    @if (isTrain()) {
+      <div class="row">
+        <mat-form-field>
+          <mat-label>Car (optional)</mat-label>
+          <input matInput [ngModel]="trainCar()" (ngModelChange)="trainCar.set($event)" name="trainCar" placeholder="e.g. 6" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Seat (optional)</mat-label>
+          <input matInput [ngModel]="seat()" (ngModelChange)="seat.set($event)" name="seat" placeholder="e.g. 20-C" />
+        </mat-form-field>
+      </div>
+    }
+    @if (isFlight() || isBus()) {
+      <mat-form-field class="full-width">
+        <mat-label>Seat (optional)</mat-label>
+        <input matInput [ngModel]="seat()" (ngModelChange)="seat.set($event)" name="seat" placeholder="e.g. 34A" />
+      </mat-form-field>
+    }
+
+    <mat-form-field class="full-width">
+      <mat-label>Booking link (optional)</mat-label>
+      <input matInput type="url" [ngModel]="bookingUrl()" (ngModelChange)="bookingUrl.set($event)" name="booking" />
     </mat-form-field>
 
     <mat-form-field class="full-width">

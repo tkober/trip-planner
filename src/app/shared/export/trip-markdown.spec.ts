@@ -124,6 +124,18 @@ describe('tripToMarkdown', () => {
     expect(mdUnbooked).not.toContain('- Booked: yes');
   });
 
+  it('lists the seat label after the booked line, omitting it when unset (#59)', () => {
+    const trip = sampleTrip();
+    trip.transport[0].trainCar = undefined;
+    trip.transport[0].seat = '34A';
+    const md = tripToMarkdown(trip, tz);
+    expect(md).toContain('  - Booked: yes\n  - Seat: Seat 34A');
+
+    const withoutSeat = sampleTrip();
+    const mdWithoutSeat = tripToMarkdown(withoutSeat, tz);
+    expect(mdWithoutSeat).not.toContain('- Seat:');
+  });
+
   it('buckets a day-crossing flight under its destination-tz start day', () => {
     const md = tripToMarkdown(sampleTrip(), tz);
     // Departs Berlin Apr 1 11:00 (= Tokyo Apr 1 18:00) → Day 1, even though it

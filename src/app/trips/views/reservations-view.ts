@@ -27,7 +27,7 @@ import {
 } from '../../shared/calendar/reservation-ics';
 import { buildIcs, ICS_MIME_TYPE } from '../../shared/calendar/ics';
 import { downloadBlob } from '../../shared/download';
-import { transportLabel } from '../../shared/transport-format';
+import { seatLabel, transportLabel } from '../../shared/transport-format';
 
 /** One booking window as the view renders it. */
 interface ReservationRow {
@@ -47,6 +47,8 @@ interface ReservationRow {
   sameZone: boolean;
   /** "Sat, 21 Nov 2026 · 06:15" — the departure this window is for. */
   departure: string;
+  /** "Car 6 · Seat 20-C" (#59), when set. */
+  seat?: string;
   status: ReservationStatus;
   statusLabel: string;
   booked: boolean;
@@ -166,6 +168,7 @@ export class ReservationsView {
       opensSecondaryZone: dual.secondaryZoneAbbr,
       sameZone: dual.sameZone,
       departure: this.tz.format(t.start, "ccc, d LLL yyyy '·' HH:mm"),
+      seat: seatLabel(t),
       status,
       statusLabel: reservationStatusLabel(window),
       booked: status === 'booked',

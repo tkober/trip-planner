@@ -13,7 +13,7 @@ import {
   SMART_EX_URL,
   timetableSearchUrl,
 } from '../reservation/reservation';
-import { transportLabel } from '../transport-format';
+import { seatLabel, transportLabel } from '../transport-format';
 import { formatMoney } from '../cost/cost';
 import { slugify } from '../download';
 import { buildIcs, IcsEvent } from './ics';
@@ -114,6 +114,8 @@ function descriptionLines(
     );
   }
   if (t.bookingReference) lines.push(`Booking ref.: ${t.bookingReference}`);
+  const seat = seatLabel(t);
+  if (seat) lines.push(`Seat: ${seat}`);
   if (t.totalPrice != null) {
     lines.push(`Price: ${formatMoney(t.totalPrice, t.currency)}`);
   }

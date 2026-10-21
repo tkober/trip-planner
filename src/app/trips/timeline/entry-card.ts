@@ -8,6 +8,7 @@ import { TimeZoneService } from '../../services/time-zone.service';
 import { EditModeService } from '../../services/edit-mode.service';
 import { activityColor, transportColor } from '../../shared/color/color';
 import {
+  seatLabel,
   transportFrom,
   transportFromDetail,
   transportTo,
@@ -66,10 +67,13 @@ const MODE_ICON: Record<TransportMode, string> = {
               }
             </div>
           </div>
-          @if (booked() || details().length) {
+          @if (booked() || seat() || details().length) {
             <div class="chips">
               @if (booked()) {
                 <span class="chip booked"><mat-icon>check_circle</mat-icon>Booked</span>
+              }
+              @if (seat(); as s) {
+                <span class="chip">{{ s }}</span>
               }
               @for (line of details(); track $index) {
                 <span class="chip">{{ line }}</span>
@@ -268,6 +272,11 @@ export class EntryCard {
 
   /** #58: a first "Booked" chip, for any booked transport mode. */
   readonly booked = computed(() => !!this.entry().transport?.booked);
+  /** #59: a seat chip right after "Booked", before the mode-detail chips. */
+  readonly seat = computed(() => {
+    const t = this.entry().transport;
+    return t ? seatLabel(t) : undefined;
+  });
 
   /**
    * Start/end time in the destination tz (the timeline's primary reference),

@@ -141,6 +141,26 @@ describe('migrateTrip', () => {
     expect('booked' in result.transport[2]).toBe(false);
   });
 
+  it('round-trips trainCar/seat unchanged through the v11 identity step', () => {
+    const result = migrateTrip(
+      baseTrip({
+        schemaVersion: 10,
+        transport: [
+          {
+            id: 't1',
+            mode: 'train',
+            start: { dateTime: '2026-04-02T09:00', zone: 'Asia/Tokyo' },
+            trainCar: '6',
+            seat: '20-C',
+          },
+        ],
+      }),
+    );
+    expect(result.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(result.transport[0].trainCar).toBe('6');
+    expect(result.transport[0].seat).toBe('20-C');
+  });
+
   it('rejects a document from a newer app version', () => {
     expect(() => migrateTrip(baseTrip({ schemaVersion: SCHEMA_VERSION + 1 }))).toThrow(
       /newer version/,

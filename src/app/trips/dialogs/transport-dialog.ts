@@ -132,6 +132,9 @@ export class TransportDialog {
   readonly toPlatform = signal(this.data.transport?.toPlatform ?? '');
   readonly trainName = signal(this.data.transport?.trainName ?? '');
   readonly trainKind = signal(this.data.transport?.trainKind ?? '');
+  readonly trainCar = signal(this.data.transport?.trainCar ?? '');
+  // Shared by train + flight + bus (#59)
+  readonly seat = signal(this.data.transport?.seat ?? '');
   // Bus-specific
   readonly fromStop = signal(this.data.transport?.fromStop ?? '');
   readonly toStop = signal(this.data.transport?.toStop ?? '');
@@ -186,6 +189,9 @@ export class TransportDialog {
     const bus = (v: string) => (this.isBus() ? v.trim() || undefined : undefined);
     const trainOrBus = (v: string) =>
       this.isTrain() || this.isBus() ? v.trim() || undefined : undefined;
+    // Seat applies to every mode except car (#59).
+    const seated = (v: string) =>
+      this.mode() !== 'car' ? v.trim() || undefined : undefined;
 
     const result: TransportDto = {
       id: this.id,
@@ -210,6 +216,9 @@ export class TransportDialog {
       toPlatform: train(this.toPlatform()),
       trainName: train(this.trainName()),
       trainKind: train(this.trainKind()),
+      trainCar: train(this.trainCar()),
+      // Shared by train + flight + bus (#59)
+      seat: seated(this.seat()),
       // Bus
       fromStop: bus(this.fromStop()),
       toStop: bus(this.toStop()),

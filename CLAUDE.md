@@ -1072,9 +1072,34 @@ Reservations ([src/app/shared/reservation/reservation.ts](src/app/shared/reserva
   reference into an **empty** field ticks it automatically (only on that empty →
   filled transition — unticking by hand still sticks). Saved as `booked: true` or
   omitted (`|| undefined`), same pattern as `alreadyPaid` in `CostFieldset`.
-  Car/seat fields are out of scope here (#59).
+- **Car/seat fields (#59)**: the edit dialog's former free-floating "Booking link" +
+  "Booking" checkbox are now one **Booking block** — the "Booking" section label
+  row with the Booked checkbox on the right, then Booking reference, then (for a
+  train) **Car + Seat** side by side in a two-column `.row` (stacks to one column
+  at phone width, same as the other paired fields) or (for a flight/bus) **Seat**
+  alone full-width — nothing for car mode — then Booking link; Notes and cost stay
+  below as before. `TransportDto.trainCar?: string` (train only, e.g. "6") and
+  `seat?: string` (train/flight/bus, e.g. "20-C", "34A", or free text like
+  "20-C, 20-D" for two people) are saved mode-specifically on `save()`, same
+  `train`/`seated` clearing pattern as the other per-mode fields (car gets
+  neither). The one pure formatter,
+  [transport-format.ts](src/app/shared/transport-format.ts) `seatLabel(t)`
+  ("Car 6 · Seat 20-C", "Car 6", "Seat 20-C", or `undefined` — `trainCar` only
+  counts for trains), is reused everywhere below instead of each surface
+  re-deriving the string. Notes are never parsed for this — it was free text
+  before and stays that way; nothing migrates the old "Car.6 Seat.20-C" notes.
+- The details dialog gets a new **Seat** fact group directly under "Booking ref."
+  (`seatGroup` in [details-view.logic.ts](src/app/trips/dialogs/details-view.logic.ts)):
+  one unlabeled row, `seatLabel(t)`, rendered with a new `FactRow.emphasis` flag
+  (same size/weight as the booking-ref value, 600, but not monospace — a plain
+  bold phrase reads better than the reference's monospace treatment). The
+  Reservations view gets a matching "Seat" row under "Booking ref." in its own
+  `<dl>`, and `TransportCard`/`EntryCard` get a seat chip (plain `detail-chip`
+  style) directly after the "Booked" chip, ahead of the mode-detail chips.
 - `trip-markdown.ts` adds a `- Booked: yes` line next to a transport's booking ref
-  when `booked` is set; `anonymize.ts` leaves `booked` alone (not sensitive).
+  when `booked` is set; `anonymize.ts` leaves `booked` alone (not sensitive). It
+  adds a `- Seat: Car 6 · Seat 20-C` line right after it (#59) — also left alone
+  by anonymization (not sensitive, like `booked`).
 - [ics.ts](src/app/shared/calendar/ics.ts) is a minimal RFC 5545 writer (CRLF,
   75-octet folding that counts *bytes*, TEXT escaping, optional `VALARM`); times are
   written as **UTC stamps**, so no `VTIMEZONE` is needed and every calendar renders
@@ -1083,7 +1108,8 @@ Reservations ([src/app/shared/reservation/reservation.ts](src/app/shared/reserva
   that event (summary, all leg details in both zones, booking + timetable links,
   two alarms: 20:00 home time the evening before, at least 3 h ahead, since
   10:00 JST is the middle of the night in Europe, and 15 minutes before
-  opening; a stable `UID` so re-imports update in place).
+  opening; a stable `UID` so re-imports update in place). Its description grew a
+  `Seat: …` line right after `Booking ref.: …` (#59), same `seatLabel` helper.
 - Both the details dialog and the Reservations view call these and download via
   [download.ts](src/app/shared/download.ts) — no service, no store round-trip.
   The Reservations view is **not** part of the plan export document.
@@ -1365,11 +1391,11 @@ ActivityDto extends CostInfo { id, title, start, end?, location?, googleMapsUrl?
                     bookingUrl?, notes?, color? }
 TransportDto extends CostInfo { id, mode: flight|train|bus|car, start, end?,
                fromLocation?, toLocation?, bookingUrl?, bookingReference?, booked?,
-               notes?, color?,
+               seat?, notes?, color?,
                // flight-only: airline?, flightNumber?, fromAirport?, toAirport?,
                //              fromTerminal?, toTerminal?
                // train-only:  fromStation?, toStation?, fromPlatform?,
-               //              toPlatform?, trainName?, trainKind?
+               //              toPlatform?, trainName?, trainKind?, trainCar?
                // bus-only:    fromStop?, toStop?, busKind?
                // train + bus: line?, operator? }
 ```
@@ -1440,9 +1466,22 @@ reserved and paid at the machine) — was an additive **schema v10** step (#58).
 Its migration sets `booked: true` on every transport entry that already
 carries a non-empty `bookingReference` (a reference implies a booking); every
 other entry is left untouched — `booked: false` is never written, only ever
-absent. Car rentals, accommodations and activities are unaffected (car/seat
-fields are a separate issue, #59). See "Reservations" below for how it feeds
-the status precedence, the Reservations-view summary, and the reminder filter.
+absent. Car rentals, accommodations and activities are unaffected. See
+"Reservations" below for how it feeds the status precedence, the
+Reservations-view summary, and the reminder filter.
+
+Adding the optional `TransportDto.trainCar` (train only, e.g. "6") and `seat`
+(train/flight/bus, e.g. "20-C", "34A", or free text for two people like
+"20-C, 20-D") — the car/seat info that used to be typed into `notes` by hand
+("Car.6 Seat.20-C") — was an additive **schema v11** step (#59; no data
+transform, notes are never parsed). The one pure formatter, `seatLabel(t)` in
+[transport-format.ts](src/app/shared/transport-format.ts), renders "Car 6 ·
+Seat 20-C" / "Car 6" / "Seat 20-C" / `undefined` (only considering `trainCar`
+for trains) and is shared by the edit dialog's save-time clearing, the
+details-dialog "Seat" fact group, the Reservations view's "Seat" row, the
+`TransportCard`/`EntryCard` seat chip, the Markdown export's "- Seat: …" line
+and the reservation `.ics` description's "Seat: …" line. See "Reservations"
+below for the Booking-block dialog layout and every one of those surfaces.
 
 Every entity may carry an optional `color` (a hex accent). When unset, a default
 applies: accommodations and car reservations each cycle their own distinct tints by

@@ -45,6 +45,7 @@ import {
   notesGroup,
   QuickAction,
   quickActionsFor,
+  seatGroup,
   SecondaryLink,
   secondaryLinksFor,
   zonedMoment,
@@ -385,6 +386,7 @@ export class DetailsContent {
     const groups = [
       detailFactsGroup(data),
       bookingReferenceGroup(data),
+      seatGroup(data),
       this.reservationGroup(),
       notesGroup(data),
       costGroup(data),

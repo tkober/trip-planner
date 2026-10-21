@@ -14,6 +14,7 @@ import {
   detailsSubtitle,
   notesGroup,
   quickActionsFor,
+  seatGroup,
   secondaryLinksFor,
   zonedMoment,
 } from './details-view.logic';
@@ -302,6 +303,34 @@ describe('details-view.logic', () => {
 
     it('is undefined with no reference', () => {
       expect(bookingReferenceGroup({ ...BASE, carReservation: car() })).toBeUndefined();
+    });
+  });
+
+  describe('seatGroup', () => {
+    it('train with car and seat: emphasized, single unlabeled row', () => {
+      const data: DetailsDialogData = {
+        ...BASE,
+        kind: 'transport',
+        transport: train({ trainCar: '6', seat: '20-C' }),
+      };
+      expect(seatGroup(data)).toEqual({
+        label: 'Seat',
+        rows: [{ label: '', value: 'Car 6 · Seat 20-C', emphasis: true }],
+      });
+    });
+
+    it('flight: seat only, no car', () => {
+      const data: DetailsDialogData = {
+        ...BASE,
+        kind: 'transport',
+        transport: flight({ seat: '34A' }),
+      };
+      expect(seatGroup(data)?.rows[0].value).toBe('Seat 34A');
+    });
+
+    it('is undefined for non-transport and for transport with no car/seat', () => {
+      expect(seatGroup({ ...BASE, accommodation: accommodation() })).toBeUndefined();
+      expect(seatGroup({ ...BASE, kind: 'transport', transport: train() })).toBeUndefined();
     });
   });
 

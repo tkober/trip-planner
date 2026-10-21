@@ -92,6 +92,10 @@ const MIGRATIONS: Record<number, TripMigration> = {
         )
       : old.transport,
   }),
+  // v11 adds the optional transport `trainCar` (train only) and `seat` (train/
+  // flight/bus) free-text fields — the car/seat info that used to live in
+  // notes (#59). Absent on older documents, so this is an identity upgrade.
+  [11]: (old) => old,
 };
 
 /**
