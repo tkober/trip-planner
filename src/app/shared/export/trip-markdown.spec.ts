@@ -74,6 +74,7 @@ function sampleTrip(): TripDto {
         airline: 'ANA',
         flightNumber: 'NH216',
         bookingReference: 'FL-XYZ789',
+        booked: true,
       },
     ],
   };
@@ -111,6 +112,28 @@ describe('tripToMarkdown', () => {
   it('lists the flight booking reference', () => {
     const md = tripToMarkdown(sampleTrip(), tz);
     expect(md).toContain('  - Booking ref: FL-XYZ789');
+  });
+
+  it('marks a booked transport leg, omitting the line when unbooked (#58)', () => {
+    const md = tripToMarkdown(sampleTrip(), tz);
+    expect(md).toContain('  - Booked: yes');
+
+    const trip = sampleTrip();
+    trip.transport[0].booked = undefined;
+    const mdUnbooked = tripToMarkdown(trip, tz);
+    expect(mdUnbooked).not.toContain('- Booked: yes');
+  });
+
+  it('lists the seat label after the booked line, omitting it when unset (#59)', () => {
+    const trip = sampleTrip();
+    trip.transport[0].trainCar = undefined;
+    trip.transport[0].seat = '34A';
+    const md = tripToMarkdown(trip, tz);
+    expect(md).toContain('  - Booked: yes\n  - Seat: Seat 34A');
+
+    const withoutSeat = sampleTrip();
+    const mdWithoutSeat = tripToMarkdown(withoutSeat, tz);
+    expect(mdWithoutSeat).not.toContain('- Seat:');
   });
 
   it('buckets a day-crossing flight under its destination-tz start day', () => {

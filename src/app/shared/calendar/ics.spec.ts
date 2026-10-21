@@ -115,6 +115,27 @@ describe('reservationEvent', () => {
     expect(text).toContain('world.jorudan.co.jp');
   });
 
+  it('includes the seat line after the booking ref, omitting it when unset (#59)', () => {
+    const withSeat = {
+      ...window,
+      transport: {
+        ...transport,
+        bookingReference: '2004',
+        trainCar: '6',
+        seat: '20-C',
+      },
+    };
+    const text = (
+      reservationEvent(withSeat, 'Europe/Berlin').description ?? []
+    ).join('\n');
+    expect(text).toContain('Booking ref.: 2004\nSeat: Car 6 · Seat 20-C');
+
+    const withoutSeat = (
+      reservationEvent(window, 'Europe/Berlin').description ?? []
+    ).join('\n');
+    expect(withoutSeat).not.toContain('Seat:');
+  });
+
   it("points URL at the leg's own booking link when it has one", () => {
     const own = {
       ...window,

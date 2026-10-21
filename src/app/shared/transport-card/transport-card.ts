@@ -6,6 +6,7 @@ import { TransportDto, TransportMode, ZonedTime } from '../../models/trip.model'
 import { TimeZoneService } from '../../services/time-zone.service';
 import { transportColor } from '../color/color';
 import {
+  seatLabel,
   transportFrom,
   transportFromDetail,
   transportTo,
@@ -70,6 +71,10 @@ export class TransportCard {
     () => this.role() ?? MODE_LABEL[this.transport().mode],
   );
   readonly accent = computed(() => transportColor(this.transport()));
+  /** #58: shows a "Booked" chip first in the chip row, for any mode. */
+  readonly booked = computed(() => !!this.transport().booked);
+  /** #59: a seat chip right after "Booked", before the mode-detail chips. */
+  readonly seat = computed(() => seatLabel(this.transport()));
 
   readonly from = computed(() => transportFrom(this.transport()));
   readonly to = computed(() => transportTo(this.transport()));

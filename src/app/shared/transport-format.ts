@@ -87,3 +87,19 @@ export function transportToDetail(t: TransportDto): string | undefined {
       return undefined;
   }
 }
+
+/**
+ * "Car 6 · Seat 20-C" — the reserved car/seat (#59), shared by every surface
+ * that shows it (details group, Reservations row, transport/timeline chips,
+ * markdown export, reservation .ics). `trainCar` only counts for trains (it's
+ * meaningless for a flight/bus); `seat` counts for train/flight/bus. Either
+ * part alone renders on its own; undefined when neither is set.
+ */
+export function seatLabel(t: TransportDto): string | undefined {
+  const car = t.mode === 'train' ? t.trainCar?.trim() : undefined;
+  const seat = t.seat?.trim();
+  if (car && seat) return `Car ${car} · Seat ${seat}`;
+  if (car) return `Car ${car}`;
+  if (seat) return `Seat ${seat}`;
+  return undefined;
+}

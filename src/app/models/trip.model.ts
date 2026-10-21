@@ -6,7 +6,7 @@
  */
 
 /** Current schema version, bumped when the persisted shape changes. */
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 11;
 
 /**
  * A geocoded point (D5, #49). Optional on the entities/endpoints below —
@@ -168,6 +168,13 @@ export interface TransportDto extends CostInfo {
   trainName?: string;
   /** Configurable type, e.g. "Shinkansen". See environment.trainKinds. */
   trainKind?: string;
+  /** Train car number, e.g. "6" (train only, #59). Free text. */
+  trainCar?: string;
+  /**
+   * Seat(s), e.g. "20-C", "34A", or "20-C, 20-D" for two people (train,
+   * flight, bus — #59). Free text.
+   */
+  seat?: string;
   // Bus-specific (only meaningful when mode === 'bus'):
   fromStop?: string;
   toStop?: string;
@@ -181,6 +188,8 @@ export interface TransportDto extends CostInfo {
   bookingUrl?: string;
   /** Booking / confirmation number (often there is no booking link). */
   bookingReference?: string;
+  /** Whether this leg/seat is actually booked — distinct from `alreadyPaid` (#58). */
+  booked?: boolean;
   notes?: string;
   /** Explicit accent colour (hex). When unset the mode's default applies. */
   color?: string;

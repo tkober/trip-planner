@@ -8,7 +8,7 @@
  */
 import { DateTime } from 'luxon';
 import { GeoPoint, TransportDto, ZonedTime } from '../../models/trip.model';
-import { transportLabel } from '../../shared/transport-format';
+import { seatLabel, transportLabel } from '../../shared/transport-format';
 import { formatDate } from '../../shared/format/date-format';
 import { zoneCity } from '../../shared/format/date-format';
 import { formatMoney } from '../../shared/cost/cost';
@@ -143,7 +143,8 @@ export function quickActionsFor(
     });
   }
 
-  if (hasReservation) {
+  // A booked leg no longer needs a booking reminder (#58).
+  if (hasReservation && !t?.booked) {
     actions.push({ id: 'reminder', icon: 'event', label: 'Reminder (.ics)', kind: 'ics' });
   }
 
@@ -208,6 +209,9 @@ export interface FactRow {
   multiline?: boolean;
   /** Monospace + user-selectable — the booking reference, read aloud/typed at a counter. */
   monospace?: boolean;
+  /** Same size/weight as a monospace value, but a regular (non-monospace)
+   *  font — the car/seat label (#59), which reads better as plain bold text. */
+  emphasis?: boolean;
 }
 
 export interface FactGroup {
@@ -262,6 +266,18 @@ export function bookingReferenceGroup(data: DetailsDialogData): FactGroup | unde
   return reference
     ? { label: 'Booking ref.', rows: [{ label: '', value: reference, monospace: true }] }
     : undefined;
+}
+
+/**
+ * "Seat" (#59): the reserved car/seat, directly under "Booking ref." — one
+ * row without a label, emphasized like the booking reference's value (same
+ * size, weight 600) but not monospace.
+ */
+export function seatGroup(data: DetailsDialogData): FactGroup | undefined {
+  const t = data.transport;
+  if (!t) return undefined;
+  const label = seatLabel(t);
+  return label ? { label: 'Seat', rows: [{ label: '', value: label, emphasis: true }] } : undefined;
 }
 
 /** "Remarks" (accommodation/car) or "Notes" (activity/transport). */

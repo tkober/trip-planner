@@ -132,6 +132,9 @@ export class TransportDialog {
   readonly toPlatform = signal(this.data.transport?.toPlatform ?? '');
   readonly trainName = signal(this.data.transport?.trainName ?? '');
   readonly trainKind = signal(this.data.transport?.trainKind ?? '');
+  readonly trainCar = signal(this.data.transport?.trainCar ?? '');
+  // Shared by train + flight + bus (#59)
+  readonly seat = signal(this.data.transport?.seat ?? '');
   // Bus-specific
   readonly fromStop = signal(this.data.transport?.fromStop ?? '');
   readonly toStop = signal(this.data.transport?.toStop ?? '');
@@ -141,6 +144,7 @@ export class TransportDialog {
   readonly operator = signal(this.data.transport?.operator ?? '');
   readonly bookingUrl = signal(this.data.transport?.bookingUrl ?? '');
   readonly bookingReference = signal(this.data.transport?.bookingReference ?? '');
+  readonly booked = signal(this.data.transport?.booked ?? false);
   readonly notes = signal(this.data.transport?.notes ?? '');
   readonly cost = signal<CostInfo>(pickCost(this.data.transport));
   readonly currencies = environment.currencies;
@@ -148,6 +152,19 @@ export class TransportDialog {
   /** Default swatch follows the selected mode's colour. */
   readonly defaultColor = computed(() => TRANSPORT_MODE_COLOR[this.mode()]);
   readonly error = signal('');
+
+  /**
+   * Typing a reference into an empty field ticks Booked automatically — only
+   * on that empty → filled transition, so it can still be unticked by hand
+   * afterwards without the next keystroke re-ticking it.
+   */
+  onBookingReferenceChange(value: string): void {
+    const wasEmpty = !this.bookingReference().trim();
+    this.bookingReference.set(value);
+    if (wasEmpty && value.trim()) {
+      this.booked.set(true);
+    }
+  }
 
   setMode(mode: TransportMode): void {
     this.mode.set(mode);
@@ -172,6 +189,9 @@ export class TransportDialog {
     const bus = (v: string) => (this.isBus() ? v.trim() || undefined : undefined);
     const trainOrBus = (v: string) =>
       this.isTrain() || this.isBus() ? v.trim() || undefined : undefined;
+    // Seat applies to every mode except car (#59).
+    const seated = (v: string) =>
+      this.mode() !== 'car' ? v.trim() || undefined : undefined;
 
     const result: TransportDto = {
       id: this.id,
@@ -196,6 +216,9 @@ export class TransportDialog {
       toPlatform: train(this.toPlatform()),
       trainName: train(this.trainName()),
       trainKind: train(this.trainKind()),
+      trainCar: train(this.trainCar()),
+      // Shared by train + flight + bus (#59)
+      seat: seated(this.seat()),
       // Bus
       fromStop: bus(this.fromStop()),
       toStop: bus(this.toStop()),
@@ -205,6 +228,7 @@ export class TransportDialog {
       operator: trainOrBus(this.operator()),
       bookingUrl: this.bookingUrl().trim() || undefined,
       bookingReference: this.bookingReference().trim() || undefined,
+      booked: this.booked() || undefined,
       notes: this.notes().trim() || undefined,
       color: this.color() || undefined,
       ...this.cost(),

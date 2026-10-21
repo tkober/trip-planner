@@ -63,6 +63,9 @@
 }
 
 .reservation-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   width: fit-content;
   margin: 0.4rem 0 0;
   padding: 0.05rem 0.45rem;
@@ -71,6 +74,17 @@
   color: var(--mat-sys-on-secondary-container);
   font-size: 0.75rem;
   white-space: nowrap;
+
+  &.booked {
+    background: var(--app-ok-bg);
+    color: var(--app-ok-ink);
+  }
+}
+
+.status-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
 }
 
 .kebab {
@@ -381,6 +395,13 @@
       font-weight: 600;
       letter-spacing: 0.02em;
       user-select: all;
+    }
+
+    // The seat label (#59) — same size/weight as `.mono`, but the regular
+    // (non-monospace) font reads better for a short "Car 6 · Seat 20-C" phrase.
+    &.emphasis {
+      font-size: 0.95rem;
+      font-weight: 600;
     }
   }
 }

@@ -4,7 +4,7 @@
       <h2>Reservations</h2>
       <button
         matButton="filled"
-        [disabled]="!rows().length"
+        [disabled]="!hasRemindable()"
         (click)="downloadAll()"
       >
         <mat-icon>event</mat-icon> All reminders (.ics)
@@ -16,6 +16,15 @@
       departure — when that day does not exist in the previous month, from the
       1st of the departure month. Shown for: {{ reservableKinds }}.
     </p>
+
+    @if (summary(); as s) {
+      <p class="summary">
+        <strong>{{ s.lead }}</strong>
+        @if (s.rest) {
+          {{ ' · ' + s.rest }}
+        }
+      </p>
+    }
 
     @if (rows().length) {
       @for (row of rows(); track row.transport.id) {
@@ -31,7 +40,11 @@
             <span
               class="status status-inline"
               [class.open]="row.status === 'open'"
+              [class.booked]="row.booked"
             >
+              @if (row.booked) {
+                <mat-icon class="status-icon">check_circle</mat-icon>
+              }
               {{ row.statusLabel }}
             </span>
             <dl>
@@ -52,6 +65,10 @@
               @if (row.transport.bookingReference) {
                 <dt>Booking ref.</dt>
                 <dd>{{ row.transport.bookingReference }}</dd>
+              }
+              @if (row.seat) {
+                <dt>Seat</dt>
+                <dd>{{ row.seat }}</dd>
               }
             </dl>
             <div class="links">
@@ -74,17 +91,23 @@
             <span
               class="status status-aside"
               [class.open]="row.status === 'open'"
+              [class.booked]="row.booked"
             >
+              @if (row.booked) {
+                <mat-icon class="status-icon">check_circle</mat-icon>
+              }
               {{ row.statusLabel }}
             </span>
-            <button
-              matIconButton
-              aria-label="Download reservation reminder (.ics)"
-              title="Download reservation reminder (.ics)"
-              (click)="download(row)"
-            >
-              <mat-icon>event</mat-icon>
-            </button>
+            @if (!row.booked) {
+              <button
+                matIconButton
+                aria-label="Download reservation reminder (.ics)"
+                title="Download reservation reminder (.ics)"
+                (click)="download(row)"
+              >
+                <mat-icon>event</mat-icon>
+              </button>
+            }
           </div>
         </article>
       }

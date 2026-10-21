@@ -22,6 +22,7 @@ import {
 } from '../../models/trip.model';
 import { TimeZoneService } from '../../services/time-zone.service';
 import {
+  seatLabel,
   transportFrom,
   transportFromDetail,
   transportTo,
@@ -250,6 +251,9 @@ export function tripToMarkdown(
     }
     if (t.bookingUrl) out.push(`  - Booking: ${t.bookingUrl}`);
     if (t.bookingReference) out.push(`  - Booking ref: ${t.bookingReference}`);
+    if (t.booked) out.push(`  - Booked: yes`);
+    const seat = seatLabel(t);
+    if (seat) out.push(`  - Seat: ${seat}`);
     out.push(...costLines(t, '  '));
     if (t.notes) out.push(`  - Notes: ${t.notes}`);
     return out;

@@ -78,6 +78,24 @@ const MIGRATIONS: Record<number, TripMigration> = {
   // `fromGeo`/`toGeo` on transport (#49). Absent on older documents, so this
   // is an identity upgrade.
   [9]: (old) => old,
+  // v10 adds the optional transport `booked` flag (#58), distinct from
+  // `alreadyPaid`. A transport entry that already carries a booking reference
+  // is, by definition, booked — set `booked: true` on those; leave every
+  // other entry untouched (no `booked: false` is ever written).
+  [10]: (old) => ({
+    ...old,
+    transport: Array.isArray(old.transport)
+      ? old.transport.map((t: any) =>
+          t && typeof t.bookingReference === 'string' && t.bookingReference.trim()
+            ? { ...t, booked: true }
+            : t,
+        )
+      : old.transport,
+  }),
+  // v11 adds the optional transport `trainCar` (train only) and `seat` (train/
+  // flight/bus) free-text fields — the car/seat info that used to live in
+  // notes (#59). Absent on older documents, so this is an identity upgrade.
+  [11]: (old) => old,
 };
 
 /**

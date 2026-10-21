@@ -8,10 +8,13 @@ import { TripActionsService } from '../../services/trip-actions.service';
 import { environment } from '../../../environments/environment';
 import {
   RESERVATION_OPENING_HOUR,
+  remindableWindows,
   ReservationStatus,
   ReservationWindow,
   reservationStatus,
   reservationStatusLabel,
+  reservationSummaryParts,
+  reservationSummary,
   reservationWindows,
   SMART_EX_URL,
   timetableSearchUrl,
@@ -24,7 +27,7 @@ import {
 } from '../../shared/calendar/reservation-ics';
 import { buildIcs, ICS_MIME_TYPE } from '../../shared/calendar/ics';
 import { downloadBlob } from '../../shared/download';
-import { transportLabel } from '../../shared/transport-format';
+import { seatLabel, transportLabel } from '../../shared/transport-format';
 
 /** One booking window as the view renders it. */
 interface ReservationRow {
@@ -44,8 +47,11 @@ interface ReservationRow {
   sameZone: boolean;
   /** "Sat, 21 Nov 2026 · 06:15" — the departure this window is for. */
   departure: string;
+  /** "Car 6 · Seat 20-C" (#59), when set. */
+  seat?: string;
   status: ReservationStatus;
   statusLabel: string;
+  booked: boolean;
   timetableUrl?: string;
   color?: string;
 }
@@ -93,10 +99,30 @@ export class ReservationsView {
     return this.windows().map((window) => this.toRow(window, trip));
   });
 
-  /** All of the trip's booking reminders as one calendar file. */
+  /**
+   * "1 of 5 booked" (bold lead) · "1 bookable now · 3 not open yet" (rest),
+   * split so the template can bold only the lead, as in the mockup.
+   */
+  readonly summary = computed<{ lead: string; rest?: string } | undefined>(
+    () => {
+      const parts = reservationSummaryParts(reservationSummary(this.windows()));
+      if (!parts) return undefined;
+      const [lead, ...rest] = parts;
+      return { lead, rest: rest.length ? rest.join(' · ') : undefined };
+    },
+  );
+
+  /** Windows still worth a reminder — not booked, not departed. */
+  private readonly remindable = computed<ReservationWindow[]>(() =>
+    remindableWindows(this.windows()),
+  );
+
+  readonly hasRemindable = computed<boolean>(() => this.remindable().length > 0);
+
+  /** All of the trip's still-open booking reminders as one calendar file. */
   downloadAll(): void {
     const trip = this.trip();
-    const windows = this.windows();
+    const windows = this.remindable();
     if (!trip || !windows.length) return;
     const ics = reservationsIcs(windows, trip.homeTimeZone);
     downloadBlob(
@@ -142,8 +168,10 @@ export class ReservationsView {
       opensSecondaryZone: dual.secondaryZoneAbbr,
       sameZone: dual.sameZone,
       departure: this.tz.format(t.start, "ccc, d LLL yyyy '·' HH:mm"),
+      seat: seatLabel(t),
       status,
       statusLabel: reservationStatusLabel(window),
+      booked: status === 'booked',
       timetableUrl: timetableSearchUrl(t),
       color: t.color,
     };

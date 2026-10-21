@@ -33,8 +33,8 @@ export interface ReservationWindow {
   opensAt: ZonedTime;
 }
 
-/** Where a window sits relative to "now". */
-export type ReservationStatus = 'upcoming' | 'open' | 'departed';
+/** Where a window sits relative to "now". Precedence: departed > booked > open / upcoming. */
+export type ReservationStatus = 'upcoming' | 'open' | 'booked' | 'departed';
 
 /** Case-insensitive membership test for the configured kinds. */
 export function isReservable(
@@ -91,12 +91,17 @@ export function reservationWindows(
     .sort((a, b) => millis(a.opensAt) - millis(b.opensAt));
 }
 
-/** Whether booking has opened yet — and whether the train has already left. */
+/**
+ * Whether booking has opened yet, whether the leg is already booked, and
+ * whether the train has already left. Precedence: departed > booked > open /
+ * upcoming — a booked seat on a departed train still reads as "departed".
+ */
 export function reservationStatus(
   window: ReservationWindow,
   now: DateTime = DateTime.now(),
 ): ReservationStatus {
   if (millis(window.departure) <= now.toMillis()) return 'departed';
+  if (window.transport.booked) return 'booked';
   return millis(window.opensAt) <= now.toMillis() ? 'open' : 'upcoming';
 }
 
@@ -112,7 +117,7 @@ export function daysUntilOpening(
   return diffMs <= 0 ? 0 : Math.ceil(diffMs / 86_400_000);
 }
 
-/** "Booking opens in 12 days" / "Bookable now" / "Departed". */
+/** "Booking opens in 12 days" / "Bookable now" / "Booked" / "Departed". */
 export function reservationStatusLabel(
   window: ReservationWindow,
   now: DateTime = DateTime.now(),
@@ -120,6 +125,8 @@ export function reservationStatusLabel(
   switch (reservationStatus(window, now)) {
     case 'open':
       return 'Bookable now';
+    case 'booked':
+      return 'Booked';
     case 'departed':
       return 'Departed';
     default: {
@@ -127,6 +134,59 @@ export function reservationStatusLabel(
       return `Booking opens in ${days} day${days === 1 ? '' : 's'}`;
     }
   }
+}
+
+/**
+ * Summary counts for the Reservations view's lead line, e.g.
+ * "1 of 5 booked · 1 bookable now · 3 not open yet". `booked` counts every
+ * booked leg, departed or not, so the lead stays true after the trip; the
+ * other two buckets only count legs that still need booking.
+ */
+export interface ReservationSummary {
+  /** Total reservable legs, departed or not (the "of N" in the lead). */
+  total: number;
+  booked: number;
+  bookableNow: number;
+  notOpenYet: number;
+}
+
+export function reservationSummary(
+  windows: ReservationWindow[],
+  now: DateTime = DateTime.now(),
+): ReservationSummary {
+  const statuses = windows.map((w) => reservationStatus(w, now));
+  return {
+    total: windows.length,
+    booked: windows.filter((w) => w.transport.booked).length,
+    bookableNow: statuses.filter((s) => s === 'open').length,
+    notOpenYet: statuses.filter((s) => s === 'upcoming').length,
+  };
+}
+
+/**
+ * ["1 of 5 booked", "1 bookable now", "3 not open yet"] — zero parts are
+ * omitted, except the leading "x of y booked" count, which always shows (the
+ * view sets it in bold). Undefined when there is nothing to summarize.
+ */
+export function reservationSummaryParts(
+  summary: ReservationSummary,
+): string[] | undefined {
+  if (summary.total === 0) return undefined;
+  const parts = [`${summary.booked} of ${summary.total} booked`];
+  if (summary.bookableNow > 0) parts.push(`${summary.bookableNow} bookable now`);
+  if (summary.notOpenYet > 0) parts.push(`${summary.notOpenYet} not open yet`);
+  return parts;
+}
+
+/** Windows whose reminder is still useful: not booked, not departed. */
+export function remindableWindows(
+  windows: ReservationWindow[],
+  now: DateTime = DateTime.now(),
+): ReservationWindow[] {
+  return windows.filter((w) => {
+    const status = reservationStatus(w, now);
+    return status !== 'booked' && status !== 'departed';
+  });
 }
 
 /**

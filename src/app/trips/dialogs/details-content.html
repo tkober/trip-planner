@@ -7,7 +7,12 @@
         <p class="subtitle">{{ s }}</p>
       }
       @if (reservationStatusLabel(); as status) {
-        <p class="reservation-status">{{ status }}</p>
+        <p class="reservation-status" [class.booked]="isBookedStatus()">
+          @if (isBookedStatus()) {
+            <mat-icon class="status-icon">check_circle</mat-icon>
+          }
+          {{ status }}
+        </p>
       }
     </div>
     @if (editMode.editing()) {
@@ -281,6 +286,7 @@
               [class.multiline]="row.multiline"
               [class.full]="!row.label"
               [class.mono]="row.monospace"
+              [class.emphasis]="row.emphasis"
             >
               {{ row.value }}
             </dd>

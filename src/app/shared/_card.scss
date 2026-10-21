@@ -53,3 +53,18 @@
   text-overflow: ellipsis;
   max-width: 100%;
 }
+
+// "Booked" chip (#58): same shape as `detail-chip`, tonal green instead,
+// with a small leading check-circle icon. Always the first chip.
+@mixin booked-chip {
+  @include detail-chip;
+  gap: 0.15rem;
+  background: var(--app-ok-bg);
+  color: var(--app-ok-ink);
+
+  mat-icon {
+    width: 12px;
+    height: 12px;
+    font-size: 12px;
+  }
+}

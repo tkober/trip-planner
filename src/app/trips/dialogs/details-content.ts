@@ -13,6 +13,7 @@ import { environment } from '../../../environments/environment';
 import {
   isReservable,
   reservationOpensAt,
+  reservationStatus,
   reservationStatusLabel,
   ReservationWindow,
   SMART_EX_URL,
@@ -44,6 +45,7 @@ import {
   notesGroup,
   QuickAction,
   quickActionsFor,
+  seatGroup,
   SecondaryLink,
   secondaryLinksFor,
   zonedMoment,
@@ -281,9 +283,20 @@ export class DetailsContent {
     return opensAt ? { transport: t, departure: t.start, opensAt } : undefined;
   });
 
+  /**
+   * "Booked" / "Bookable now" / "Booking opens in N days" / "Departed" for a
+   * reservable train, or just "Booked" for any other booked transport (e.g. a
+   * flight) — those kinds have no booking window, but still track `booked`.
+   */
   readonly reservationStatusLabel = computed<string>(() => {
     const r = this.reservation();
-    return r ? reservationStatusLabel(r) : '';
+    if (r) return reservationStatusLabel(r);
+    return this.data().transport?.booked ? 'Booked' : '';
+  });
+
+  readonly isBookedStatus = computed<boolean>(() => {
+    const r = this.reservation();
+    return r ? reservationStatus(r) === 'booked' : !!this.data().transport?.booked;
   });
 
   private readonly timetableUrl = computed<string | undefined>(() => {
@@ -373,6 +386,7 @@ export class DetailsContent {
     const groups = [
       detailFactsGroup(data),
       bookingReferenceGroup(data),
+      seatGroup(data),
       this.reservationGroup(),
       notesGroup(data),
       costGroup(data),

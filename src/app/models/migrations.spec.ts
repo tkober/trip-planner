@@ -108,6 +108,59 @@ describe('migrateTrip', () => {
     expect(result.accommodations[0].geo).toEqual(geo);
   });
 
+  it('marks a pre-v10 transport entry with a booking reference as booked', () => {
+    const result = migrateTrip(
+      baseTrip({
+        schemaVersion: 9,
+        transport: [
+          {
+            id: 't1',
+            mode: 'train',
+            start: { dateTime: '2026-04-02T09:00', zone: 'Asia/Tokyo' },
+            bookingReference: '2004',
+          },
+          {
+            id: 't2',
+            mode: 'train',
+            start: { dateTime: '2026-04-03T09:00', zone: 'Asia/Tokyo' },
+            bookingReference: '  ',
+          },
+          {
+            id: 't3',
+            mode: 'flight',
+            start: { dateTime: '2026-04-04T09:00', zone: 'Asia/Tokyo' },
+          },
+        ],
+      }),
+    );
+    expect(result.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(result.transport[0].booked).toBe(true);
+    // a blank reference does not count as a booking
+    expect('booked' in result.transport[1]).toBe(false);
+    // no reference at all: left untouched, no `booked: false` written
+    expect('booked' in result.transport[2]).toBe(false);
+  });
+
+  it('round-trips trainCar/seat unchanged through the v11 identity step', () => {
+    const result = migrateTrip(
+      baseTrip({
+        schemaVersion: 10,
+        transport: [
+          {
+            id: 't1',
+            mode: 'train',
+            start: { dateTime: '2026-04-02T09:00', zone: 'Asia/Tokyo' },
+            trainCar: '6',
+            seat: '20-C',
+          },
+        ],
+      }),
+    );
+    expect(result.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(result.transport[0].trainCar).toBe('6');
+    expect(result.transport[0].seat).toBe('20-C');
+  });
+
   it('rejects a document from a newer app version', () => {
     expect(() => migrateTrip(baseTrip({ schemaVersion: SCHEMA_VERSION + 1 }))).toThrow(
       /newer version/,
