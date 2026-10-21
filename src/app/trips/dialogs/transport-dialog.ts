@@ -141,6 +141,7 @@ export class TransportDialog {
   readonly operator = signal(this.data.transport?.operator ?? '');
   readonly bookingUrl = signal(this.data.transport?.bookingUrl ?? '');
   readonly bookingReference = signal(this.data.transport?.bookingReference ?? '');
+  readonly booked = signal(this.data.transport?.booked ?? false);
   readonly notes = signal(this.data.transport?.notes ?? '');
   readonly cost = signal<CostInfo>(pickCost(this.data.transport));
   readonly currencies = environment.currencies;
@@ -148,6 +149,19 @@ export class TransportDialog {
   /** Default swatch follows the selected mode's colour. */
   readonly defaultColor = computed(() => TRANSPORT_MODE_COLOR[this.mode()]);
   readonly error = signal('');
+
+  /**
+   * Typing a reference into an empty field ticks Booked automatically — only
+   * on that empty → filled transition, so it can still be unticked by hand
+   * afterwards without the next keystroke re-ticking it.
+   */
+  onBookingReferenceChange(value: string): void {
+    const wasEmpty = !this.bookingReference().trim();
+    this.bookingReference.set(value);
+    if (wasEmpty && value.trim()) {
+      this.booked.set(true);
+    }
+  }
 
   setMode(mode: TransportMode): void {
     this.mode.set(mode);
@@ -205,6 +219,7 @@ export class TransportDialog {
       operator: trainOrBus(this.operator()),
       bookingUrl: this.bookingUrl().trim() || undefined,
       bookingReference: this.bookingReference().trim() || undefined,
+      booked: this.booked() || undefined,
       notes: this.notes().trim() || undefined,
       color: this.color() || undefined,
       ...this.cost(),

@@ -160,9 +160,16 @@
       <input matInput type="url" [ngModel]="bookingUrl()" (ngModelChange)="bookingUrl.set($event)" name="booking" />
     </mat-form-field>
 
+    <div class="leg-head">
+      <p class="section-label">Booking</p>
+      <mat-checkbox [ngModel]="booked()" (ngModelChange)="booked.set($event)" name="booked">
+        Booked
+      </mat-checkbox>
+    </div>
+
     <mat-form-field class="full-width">
       <mat-label>Booking reference (optional)</mat-label>
-      <input matInput [ngModel]="bookingReference()" (ngModelChange)="bookingReference.set($event)" name="bookingRef" placeholder="e.g. confirmation number" />
+      <input matInput [ngModel]="bookingReference()" (ngModelChange)="onBookingReferenceChange($event)" name="bookingRef" placeholder="e.g. confirmation number" />
     </mat-form-field>
 
     <mat-form-field class="full-width">
