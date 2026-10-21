@@ -8,6 +8,17 @@
   max-width: 70ch;
 }
 
+// "1 of 5 booked · 1 bookable now · 3 not open yet" — only the lead count is bold.
+.summary {
+  margin: 0 0 1.25rem;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.9rem;
+
+  strong {
+    color: var(--mat-sys-on-surface);
+  }
+}
+
 .link-button {
   background: none;
   border: none;
@@ -41,6 +52,9 @@
 // "Booking opens in 12 days" / "Bookable now" — the latter highlighted, since
 // that is the row you can act on right now.
 .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   padding: 0.05rem 0.45rem;
   border-radius: 999px;
   background: var(--mat-sys-surface-container-high);
@@ -52,6 +66,18 @@
     background: var(--mat-sys-primary);
     color: var(--mat-sys-on-primary);
   }
+
+  // Tonal, not filled — "Bookable now" stays the only filled pill.
+  &.booked {
+    background: var(--app-ok-bg);
+    color: var(--app-ok-ink);
+  }
+}
+
+.status-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
 }
 
 // The in-body copy of the pill is for phones only (see below).

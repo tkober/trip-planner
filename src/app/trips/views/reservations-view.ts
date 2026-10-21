@@ -8,10 +8,13 @@ import { TripActionsService } from '../../services/trip-actions.service';
 import { environment } from '../../../environments/environment';
 import {
   RESERVATION_OPENING_HOUR,
+  remindableWindows,
   ReservationStatus,
   ReservationWindow,
   reservationStatus,
   reservationStatusLabel,
+  reservationSummaryLine,
+  reservationSummary,
   reservationWindows,
   SMART_EX_URL,
   timetableSearchUrl,
@@ -46,6 +49,7 @@ interface ReservationRow {
   departure: string;
   status: ReservationStatus;
   statusLabel: string;
+  booked: boolean;
   timetableUrl?: string;
   color?: string;
 }
@@ -93,10 +97,30 @@ export class ReservationsView {
     return this.windows().map((window) => this.toRow(window, trip));
   });
 
-  /** All of the trip's booking reminders as one calendar file. */
+  /**
+   * "1 of 5 booked" (bold lead) · "1 bookable now · 3 not open yet" (rest),
+   * split so the template can bold only the lead, as in the mockup.
+   */
+  readonly summary = computed<{ lead: string; rest?: string } | undefined>(
+    () => {
+      const line = reservationSummaryLine(reservationSummary(this.windows()));
+      if (!line) return undefined;
+      const [lead, ...rest] = line.split(' · ');
+      return { lead, rest: rest.length ? rest.join(' · ') : undefined };
+    },
+  );
+
+  /** Windows still worth a reminder — not booked, not departed. */
+  private readonly remindable = computed<ReservationWindow[]>(() =>
+    remindableWindows(this.windows()),
+  );
+
+  readonly hasRemindable = computed<boolean>(() => this.remindable().length > 0);
+
+  /** All of the trip's still-open booking reminders as one calendar file. */
   downloadAll(): void {
     const trip = this.trip();
-    const windows = this.windows();
+    const windows = this.remindable();
     if (!trip || !windows.length) return;
     const ics = reservationsIcs(windows, trip.homeTimeZone);
     downloadBlob(
@@ -144,6 +168,7 @@ export class ReservationsView {
       departure: this.tz.format(t.start, "ccc, d LLL yyyy '·' HH:mm"),
       status,
       statusLabel: reservationStatusLabel(window),
+      booked: status === 'booked',
       timetableUrl: timetableSearchUrl(t),
       color: t.color,
     };
