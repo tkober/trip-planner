@@ -143,7 +143,8 @@ export function quickActionsFor(
     });
   }
 
-  if (hasReservation) {
+  // A booked leg no longer needs a booking reminder (#58).
+  if (hasReservation && !t?.booked) {
     actions.push({ id: 'reminder', icon: 'event', label: 'Reminder (.ics)', kind: 'ics' });
   }
 

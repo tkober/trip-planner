@@ -185,6 +185,15 @@ describe('details-view.logic', () => {
       expect(quickActionsFor(data, false).some((a) => a.id === 'reminder')).toBe(false);
       expect(quickActionsFor(data, true).some((a) => a.id === 'reminder')).toBe(true);
     });
+
+    it('hides the .ics reminder tile once the leg is booked (#58)', () => {
+      const data: DetailsDialogData = {
+        ...BASE,
+        kind: 'transport',
+        transport: train({ booked: true }),
+      };
+      expect(quickActionsFor(data, true).some((a) => a.id === 'reminder')).toBe(false);
+    });
   });
 
   describe('secondaryLinksFor', () => {

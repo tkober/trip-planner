@@ -281,10 +281,20 @@ export class DetailsContent {
     return opensAt ? { transport: t, departure: t.start, opensAt } : undefined;
   });
 
+  /**
+   * "Booked" / "Bookable now" / "Booking opens in N days" / "Departed" for a
+   * reservable train, or just "Booked" for any other booked transport (e.g. a
+   * flight) — those kinds have no booking window, but still track `booked`.
+   */
   readonly reservationStatusLabel = computed<string>(() => {
     const r = this.reservation();
-    return r ? reservationStatusLabel(r) : '';
+    if (r) return reservationStatusLabel(r);
+    return this.data().transport?.booked ? 'Booked' : '';
   });
+
+  readonly isBookedStatus = computed<boolean>(
+    () => this.reservationStatusLabel() === 'Booked',
+  );
 
   private readonly timetableUrl = computed<string | undefined>(() => {
     const t = this.data().transport;
