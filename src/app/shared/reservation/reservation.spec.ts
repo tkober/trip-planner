@@ -3,9 +3,12 @@ import { TransportDto, TripDto } from '../../models/trip.model';
 import {
   daysUntilOpening,
   isReservable,
+  remindableWindows,
   reservationOpensAt,
   reservationStatus,
   reservationStatusLabel,
+  reservationSummary,
+  reservationSummaryLine,
   reservationWindows,
   timetableSearchUrl,
 } from './reservation';
@@ -180,6 +183,22 @@ describe('reservationStatus / daysUntilOpening', () => {
     expect(reservationStatus(window, now)).toBe('departed');
   });
 
+  it('is booked once the leg is booked, even before/after the window opens', () => {
+    const booked = { ...window, transport: train({ booked: true }) };
+    expect(
+      reservationStatus(booked, DateTime.fromISO('2026-10-09T10:00', { zone: 'Asia/Tokyo' })),
+    ).toBe('booked');
+    expect(
+      reservationStatus(booked, DateTime.fromISO('2026-10-21T10:00', { zone: 'Asia/Tokyo' })),
+    ).toBe('booked');
+  });
+
+  it('precedence: departed beats booked', () => {
+    const booked = { ...window, transport: train({ booked: true }) };
+    const now = DateTime.fromISO('2026-11-21T06:16', { zone: 'Asia/Tokyo' });
+    expect(reservationStatus(booked, now)).toBe('departed');
+  });
+
   it('labels each status', () => {
     const at = (iso: string) => DateTime.fromISO(iso, { zone: 'Asia/Tokyo' });
     expect(reservationStatusLabel(window, at('2026-10-09T10:00'))).toBe(
@@ -194,6 +213,74 @@ describe('reservationStatus / daysUntilOpening', () => {
     expect(reservationStatusLabel(window, at('2026-11-21T06:16'))).toBe(
       'Departed',
     );
+    expect(
+      reservationStatusLabel(
+        { ...window, transport: train({ booked: true }) },
+        at('2026-10-21T10:00'),
+      ),
+    ).toBe('Booked');
+  });
+});
+
+describe('reservationSummary / reservationSummaryLine', () => {
+  const at = (iso: string) => DateTime.fromISO(iso, { zone: 'Asia/Tokyo' });
+  const windowFor = (
+    id: string,
+    opensAt: string,
+    departure: string,
+    overrides: Partial<TransportDto> = {},
+  ) => ({
+    transport: train({ id, ...overrides }),
+    departure: { dateTime: departure, zone: 'Asia/Tokyo' },
+    opensAt: { dateTime: opensAt, zone: 'Asia/Tokyo' },
+  });
+
+  it('buckets booked / bookable now / not open yet, excluding departed', () => {
+    const windows = [
+      windowFor('booked', '2026-10-01T10:00', '2026-11-01T06:00', { booked: true }),
+      windowFor('open', '2026-10-01T10:00', '2026-11-21T06:00'),
+      windowFor('upcoming', '2026-12-01T10:00', '2026-12-21T06:00'),
+      windowFor('departed', '2026-01-01T10:00', '2026-01-02T06:00'),
+    ];
+    const now = at('2026-10-21T10:00');
+    const summary = reservationSummary(windows, now);
+    expect(summary).toEqual({ total: 4, booked: 1, bookableNow: 1, notOpenYet: 1 });
+  });
+
+  it('formats the lead line, omitting zero parts but keeping the "x of y booked" lead', () => {
+    expect(
+      reservationSummaryLine({ total: 5, booked: 1, bookableNow: 1, notOpenYet: 3 }),
+    ).toBe('1 of 5 booked · 1 bookable now · 3 not open yet');
+    expect(
+      reservationSummaryLine({ total: 2, booked: 2, bookableNow: 0, notOpenYet: 0 }),
+    ).toBe('2 of 2 booked');
+    expect(
+      reservationSummaryLine({ total: 0, booked: 0, bookableNow: 0, notOpenYet: 0 }),
+    ).toBeUndefined();
+  });
+});
+
+describe('remindableWindows', () => {
+  it('excludes booked and departed windows', () => {
+    const now = DateTime.fromISO('2026-10-21T10:00', { zone: 'Asia/Tokyo' });
+    const windows = [
+      {
+        transport: train({ id: 'booked', booked: true }),
+        departure: { dateTime: '2026-11-21T06:15', zone: 'Asia/Tokyo' },
+        opensAt: { dateTime: '2026-10-21T10:00', zone: 'Asia/Tokyo' },
+      },
+      {
+        transport: train({ id: 'departed' }),
+        departure: { dateTime: '2026-10-01T06:15', zone: 'Asia/Tokyo' },
+        opensAt: { dateTime: '2026-09-01T10:00', zone: 'Asia/Tokyo' },
+      },
+      {
+        transport: train({ id: 'open' }),
+        departure: { dateTime: '2026-11-21T06:15', zone: 'Asia/Tokyo' },
+        opensAt: { dateTime: '2026-10-21T10:00', zone: 'Asia/Tokyo' },
+      },
+    ];
+    expect(remindableWindows(windows, now).map((w) => w.transport.id)).toEqual(['open']);
   });
 });
 
