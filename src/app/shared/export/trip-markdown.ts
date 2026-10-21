@@ -250,6 +250,7 @@ export function tripToMarkdown(
     }
     if (t.bookingUrl) out.push(`  - Booking: ${t.bookingUrl}`);
     if (t.bookingReference) out.push(`  - Booking ref: ${t.bookingReference}`);
+    if (t.booked) out.push(`  - Booked: yes`);
     out.push(...costLines(t, '  '));
     if (t.notes) out.push(`  - Notes: ${t.notes}`);
     return out;
